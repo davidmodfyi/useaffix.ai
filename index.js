@@ -12,6 +12,12 @@ const SQLiteStore = require('./middleware/session-store');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Trust proxy in production (required for secure cookies behind Render/etc)
+if (isProduction) {
+  app.set('trust proxy', 1);
+}
 
 // Generate a session secret (in production, use environment variable)
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
@@ -42,7 +48,7 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProduction,
     sameSite: 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   },
