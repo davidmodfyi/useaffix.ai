@@ -168,6 +168,10 @@ app.get('/modfyinew', (req, res) => {
   res.sendFile(path.join(__dirname, 'modfyinew.html'));
 });
 
+app.get('/strideforge', (req, res) => {
+  res.sendFile(path.join(__dirname, 'strideforge.html'));
+});
+
 // Clean up expired sessions periodically
 setInterval(() => {
   try {

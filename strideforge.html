@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StrideForge — Forge Your Run. Own Your Challenge.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fg: #f0f0f0;
+    --fg-dim: #8a8f98;
+    --bg: #0a0b0f;
+    --bg-card: #12141a;
+    --bg-card-hover: #1a1d25;
+    --accent: #00e87b;
+    --accent-dim: #00c466;
+    --accent-glow: rgba(0,232,123,0.15);
+    --hot: #ff3d6e;
+    --hot-glow: rgba(255,61,110,0.15);
+    --blue: #3d8bff;
+    --blue-glow: rgba(61,139,255,0.12);
+    --yellow: #ffd23d;
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 48px;
+    background: rgba(10,11,15,0.82);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    display: flex; align-items: center; gap: 10px;
+    text-decoration: none;
+  }
+  .logo svg { width: 32px; height: 32px; }
+  .nav-links { display: flex; gap: 32px; align-items: center; }
+  .nav-links a {
+    color: var(--fg-dim); text-decoration: none; font-size: 14px;
+    font-weight: 500; letter-spacing: 0.4px; transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--fg); }
+  .btn-primary {
+    background: var(--accent); color: #0a0b0f; border: none;
+    padding: 10px 24px; border-radius: 50px; font-weight: 700;
+    font-size: 14px; cursor: pointer; letter-spacing: 0.3px;
+    font-family: 'Outfit', sans-serif;
+    transition: transform 0.15s, box-shadow 0.2s;
+    text-decoration: none;
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 24px var(--accent-glow), 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .btn-outline {
+    background: transparent; border: 1.5px solid rgba(255,255,255,0.15);
+    color: var(--fg); padding: 10px 24px; border-radius: 50px;
+    font-weight: 600; font-size: 14px; cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    transition: border-color 0.2s, background 0.2s;
+    text-decoration: none;
+  }
+  .btn-outline:hover {
+    border-color: var(--accent);
+    background: rgba(0,232,123,0.06);
+  }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    padding: 120px 24px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; top: -30%; left: 50%; transform: translateX(-50%);
+    width: 900px; height: 900px;
+    background: radial-gradient(circle, var(--accent-glow) 0%, transparent 65%);
+    pointer-events: none;
+    animation: pulse-glow 6s ease-in-out infinite;
+  }
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 0.5; transform: translateX(-50%) scale(1); }
+    50% { opacity: 0.8; transform: translateX(-50%) scale(1.08); }
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 50px; padding: 6px 16px 6px 8px;
+    font-size: 13px; color: var(--fg-dim);
+    margin-bottom: 32px;
+    animation: fade-up 0.8s ease both;
+  }
+  .hero-badge .dot {
+    width: 8px; height: 8px; background: var(--accent);
+    border-radius: 50%; animation: blink 2s ease infinite;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .hero h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(64px, 10vw, 140px);
+    line-height: 0.92;
+    letter-spacing: 3px;
+    animation: fade-up 0.8s ease 0.1s both;
+  }
+  .hero h1 .accent { color: var(--accent); }
+  .hero h1 .hot { color: var(--hot); }
+  .hero-sub {
+    font-size: clamp(16px, 2vw, 20px);
+    color: var(--fg-dim);
+    max-width: 560px;
+    margin: 24px auto 40px;
+    line-height: 1.6;
+    font-weight: 300;
+    animation: fade-up 0.8s ease 0.2s both;
+  }
+  .hero-cta {
+    display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;
+    animation: fade-up 0.8s ease 0.3s both;
+  }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── PHONE MOCKUP ── */
+  .phone-section {
+    display: flex; justify-content: center;
+    padding: 0 24px 80px;
+    animation: fade-up 0.8s ease 0.4s both;
+  }
+  .phone-frame {
+    width: 280px; height: 560px;
+    background: var(--bg-card);
+    border-radius: 36px;
+    border: 2px solid rgba(255,255,255,0.08);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.5), 0 0 60px var(--accent-glow);
+  }
+  .phone-notch {
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 120px; height: 28px;
+    background: var(--bg);
+    border-radius: 0 0 18px 18px;
+    z-index: 2;
+  }
+  .phone-screen {
+    width: 100%; height: 100%;
+    padding: 40px 16px 16px;
+    display: flex; flex-direction: column;
+  }
+  .phone-map {
+    flex: 1;
+    background: #161a22;
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .phone-map svg { width: 100%; height: 100%; }
+  .map-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+  .map-route {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .map-route svg {
+    width: 80%; height: auto;
+  }
+  .phone-stats {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 8px; margin-top: 12px;
+  }
+  .phone-stat {
+    background: rgba(255,255,255,0.04);
+    border-radius: 10px;
+    padding: 10px 6px;
+    text-align: center;
+  }
+  .phone-stat .val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px; font-weight: 600;
+    color: var(--accent);
+  }
+  .phone-stat .label {
+    font-size: 10px; color: var(--fg-dim);
+    margin-top: 2px; text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .phone-challenge-bar {
+    margin-top: 10px;
+    background: rgba(255,61,110,0.1);
+    border: 1px solid rgba(255,61,110,0.2);
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .phone-challenge-bar .icon {
+    width: 28px; height: 28px;
+    background: var(--hot);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+  }
+  .phone-challenge-bar .text {
+    font-size: 11px; font-weight: 500; line-height: 1.3;
+  }
+  .phone-challenge-bar .text span {
+    color: var(--hot); font-weight: 700;
+  }
+
+  /* ── SOCIAL PROOF BAR ── */
+  .proof-bar {
+    display: flex; align-items: center; justify-content: center;
+    gap: 48px; padding: 40px 24px;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    flex-wrap: wrap;
+  }
+  .proof-stat {
+    text-align: center;
+  }
+  .proof-stat .num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px;
+    color: var(--fg);
+    letter-spacing: 1px;
+  }
+  .proof-stat .num .a { color: var(--accent); }
+  .proof-stat .desc {
+    font-size: 13px; color: var(--fg-dim); margin-top: 2px;
+  }
+
+  /* ── FEATURES ── */
+  .section {
+    padding: 100px 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(40px, 5vw, 64px);
+    letter-spacing: 2px;
+    line-height: 1;
+    margin-bottom: 16px;
+  }
+  .section-sub {
+    font-size: 17px;
+    color: var(--fg-dim);
+    max-width: 520px;
+    line-height: 1.6;
+    font-weight: 300;
+    margin-bottom: 56px;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+  }
+  .feature-card {
+    background: var(--bg-card);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: var(--radius);
+    padding: 36px 32px;
+    transition: border-color 0.3s, background 0.3s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .feature-card:hover {
+    border-color: rgba(255,255,255,0.1);
+    background: var(--bg-card-hover);
+    transform: translateY(-2px);
+  }
+  .feature-card::after {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .feature-card:hover::after { opacity: 1; }
+  .feature-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    margin-bottom: 20px;
+  }
+  .feature-icon.green { background: var(--accent-glow); }
+  .feature-icon.pink { background: var(--hot-glow); }
+  .feature-icon.blue { background: var(--blue-glow); }
+  .feature-icon.yellow { background: rgba(255,210,61,0.12); }
+  .feature-card h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .feature-card p {
+    font-size: 14px;
+    color: var(--fg-dim);
+    line-height: 1.65;
+  }
+  .feature-tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 4px;
+    padding: 3px 8px;
+    margin-top: 14px;
+    color: var(--fg-dim);
+  }
+
+  /* ── HOW IT WORKS ── */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 32px;
+    counter-reset: step;
+  }
+  .step {
+    position: relative;
+    padding-left: 0;
+  }
+  .step-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 72px;
+    color: rgba(255,255,255,0.04);
+    line-height: 1;
+    margin-bottom: -10px;
+  }
+  .step h3 {
+    font-size: 18px; font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .step p {
+    font-size: 14px; color: var(--fg-dim);
+    line-height: 1.6;
+  }
+
+  /* ── CHALLENGE SHOWCASE ── */
+  .challenges-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+  }
+  .challenge-card {
+    background: var(--bg-card);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: var(--radius);
+    padding: 24px;
+    transition: border-color 0.3s, transform 0.2s;
+  }
+  .challenge-card:hover {
+    border-color: rgba(255,255,255,0.1);
+    transform: translateY(-2px);
+  }
+  .challenge-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 14px;
+  }
+  .challenge-avatar {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .challenge-meta .name { font-weight: 600; font-size: 14px; }
+  .challenge-meta .by { font-size: 12px; color: var(--fg-dim); }
+  .challenge-desc {
+    font-size: 13px; color: var(--fg-dim); line-height: 1.55;
+    margin-bottom: 16px;
+  }
+  .challenge-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 12px;
+  }
+  .challenge-footer .runners { color: var(--accent); font-weight: 600; }
+  .challenge-footer .diff {
+    background: rgba(255,255,255,0.06);
+    padding: 3px 10px;
+    border-radius: 50px;
+    color: var(--fg-dim);
+    font-weight: 500;
+  }
+
+  /* ── VERIFICATION SECTION ── */
+  .verify-section {
+    padding: 80px 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .verify-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: center;
+  }
+  .verify-visual {
+    background: var(--bg-card);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: var(--radius);
+    padding: 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .verify-visual::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 30% 40%, var(--accent-glow), transparent 60%);
+    pointer-events: none;
+  }
+  .shield-icon {
+    font-size: 80px;
+    margin-bottom: 16px;
+    display: block;
+    filter: drop-shadow(0 0 30px var(--accent-glow));
+  }
+  .verify-checks {
+    display: flex; flex-direction: column; gap: 6px;
+    font-size: 14px;
+    position: relative;
+  }
+  .verify-check {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 16px;
+    background: rgba(0,232,123,0.04);
+    border-radius: 8px;
+    border-left: 2px solid var(--accent);
+  }
+  .verify-check .tick { color: var(--accent); font-weight: 700; font-size: 16px; }
+
+  .verify-text h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(36px, 4vw, 56px);
+    letter-spacing: 2px;
+    line-height: 1;
+    margin-bottom: 16px;
+  }
+  .verify-text p {
+    font-size: 16px; color: var(--fg-dim);
+    line-height: 1.65; margin-bottom: 20px;
+    max-width: 440px;
+  }
+  .verify-text .tech-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: rgba(61,139,255,0.1);
+    border: 1px solid rgba(61,139,255,0.2);
+    padding: 6px 14px;
+    border-radius: 6px;
+    color: var(--blue);
+    margin-right: 8px;
+    margin-bottom: 8px;
+  }
+
+  /* ── COMPETITORS SECTION ── */
+  .comp-section {
+    padding: 80px 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .comp-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 40px;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .comp-table thead th {
+    background: rgba(255,255,255,0.03);
+    padding: 16px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: left;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .comp-table thead th:first-child { width: 200px; }
+  .comp-table thead th.highlight {
+    background: rgba(0,232,123,0.06);
+    color: var(--accent);
+  }
+  .comp-table tbody td {
+    padding: 14px 20px;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    color: var(--fg-dim);
+  }
+  .comp-table tbody tr:last-child td { border-bottom: none; }
+  .comp-table tbody td:first-child {
+    font-weight: 500; color: var(--fg);
+  }
+  .comp-table td.highlight {
+    background: rgba(0,232,123,0.03);
+  }
+  .comp-table .check { color: var(--accent); font-weight: 700; font-size: 16px; }
+  .comp-table .partial { color: var(--yellow); }
+  .comp-table .none { color: rgba(255,255,255,0.15); }
+
+  /* ── CTA ── */
+  .cta-section {
+    text-align: center;
+    padding: 100px 24px 120px;
+    position: relative;
+  }
+  .cta-section::before {
+    content: '';
+    position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 800px; height: 500px;
+    background: radial-gradient(circle, var(--accent-glow) 0%, transparent 60%);
+    pointer-events: none;
+    opacity: 0.5;
+  }
+  .cta-section h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(48px, 7vw, 96px);
+    letter-spacing: 3px;
+    line-height: 0.95;
+    margin-bottom: 20px;
+    position: relative;
+  }
+  .cta-section p {
+    font-size: 17px; color: var(--fg-dim);
+    margin-bottom: 36px;
+    position: relative;
+  }
+  .cta-buttons {
+    display: flex; gap: 16px;
+    justify-content: center; flex-wrap: wrap;
+    position: relative;
+  }
+  .btn-big {
+    padding: 16px 40px;
+    font-size: 16px;
+    border-radius: 50px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    transition: transform 0.15s, box-shadow 0.2s;
+    text-decoration: none;
+    display: inline-flex; align-items: center; gap: 10px;
+  }
+  .btn-big.primary {
+    background: var(--accent); color: #0a0b0f; border: none;
+  }
+  .btn-big.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 40px var(--accent-glow), 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .btn-big.secondary {
+    background: transparent; border: 1.5px solid rgba(255,255,255,0.15);
+    color: var(--fg);
+  }
+  .btn-big.secondary:hover {
+    border-color: var(--accent);
+    background: rgba(0,232,123,0.06);
+  }
+  .store-icons {
+    display: flex; gap: 12px; justify-content: center;
+    margin-top: 20px;
+    position: relative;
+  }
+  .store-badge {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 10px 20px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .store-badge:hover { background: rgba(255,255,255,0.1); }
+  .store-badge .store-icon { font-size: 22px; }
+  .store-badge .store-text { text-align: left; line-height: 1.2; }
+  .store-badge .store-text small { font-size: 9px; color: var(--fg-dim); display: block; }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid rgba(255,255,255,0.04);
+    padding: 48px;
+    display: flex; align-items: center; justify-content: space-between;
+    max-width: 1200px; margin: 0 auto;
+    flex-wrap: wrap; gap: 20px;
+  }
+  footer .footer-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px; letter-spacing: 2px;
+    color: var(--accent);
+  }
+  footer .footer-links {
+    display: flex; gap: 24px;
+  }
+  footer .footer-links a {
+    color: var(--fg-dim); text-decoration: none;
+    font-size: 13px; transition: color 0.2s;
+  }
+  footer .footer-links a:hover { color: var(--fg); }
+  footer .copy {
+    font-size: 12px; color: rgba(255,255,255,0.2);
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    nav { padding: 14px 20px; }
+    .nav-links a:not(.btn-primary) { display: none; }
+    .verify-grid { grid-template-columns: 1fr; }
+    .comp-table { font-size: 12px; }
+    .comp-table thead th, .comp-table tbody td { padding: 10px 12px; }
+    footer { padding: 32px 20px; flex-direction: column; text-align: center; }
+  }
+
+  /* ── SCROLL ANIMATIONS ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo">
+    <svg viewBox="0 0 32 32" fill="none">
+      <path d="M6 26L14 6L18 16L22 10L26 26" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="14" cy="6" r="2.5" fill="currentColor"/>
+    </svg>
+    STRIDEFORGE
+  </a>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#how">How It Works</a>
+    <a href="#challenges">Challenges</a>
+    <a href="#" class="btn-primary">Download Beta</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">
+    <span class="dot"></span>
+    Beta launching Spring 2026
+  </div>
+  <h1>
+    FORGE YOUR <span class="accent">RUN</span>.<br>
+    OWN YOUR <span class="hot">CHALLENGE</span>.
+  </h1>
+  <p class="hero-sub">
+    Create custom running challenges. Race verified routes. Spell words with your path. Support causes you believe in. Every stride counts — and we prove it.
+  </p>
+  <div class="hero-cta">
+    <a href="#" class="btn-primary">Join the Waitlist</a>
+    <a href="#features" class="btn-outline">See Features ↓</a>
+  </div>
+</section>
+
+<!-- PHONE MOCKUP -->
+<div class="phone-section">
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+      <div class="phone-map">
+        <div class="map-grid"></div>
+        <div class="map-route">
+          <svg viewBox="0 0 200 180" fill="none">
+            <!-- Stylized route spelling "RUN" -->
+            <path d="M25 140 L25 60 L50 60 C65 60 65 90 50 90 L40 90 L65 140
+                     M85 140 L85 60 L85 140 C85 155 125 155 125 140 L125 60
+                     M145 140 L145 60 L175 140 L175 60"
+                  stroke="#00e87b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
+                  stroke-dasharray="500" stroke-dashoffset="500">
+              <animate attributeName="stroke-dashoffset" from="500" to="0" dur="3s" fill="freeze" begin="0.5s"/>
+            </path>
+            <!-- Animated runner dot -->
+            <circle r="4" fill="#ff3d6e">
+              <animateMotion dur="3s" begin="0.5s" fill="freeze"
+                path="M25 140 L25 60 L50 60 C65 60 65 90 50 90 L40 90 L65 140
+                       M85 140 L85 60 L85 140 C85 155 125 155 125 140 L125 60
+                       M145 140 L145 60 L175 140 L175 60"/>
+            </circle>
+          </svg>
+        </div>
+      </div>
+      <div class="phone-stats">
+        <div class="phone-stat">
+          <div class="val">4.2<small style="font-size:10px">mi</small></div>
+          <div class="label">Distance</div>
+        </div>
+        <div class="phone-stat">
+          <div class="val">7:24</div>
+          <div class="label">Pace</div>
+        </div>
+        <div class="phone-stat">
+          <div class="val">✓</div>
+          <div class="label">Verified</div>
+        </div>
+      </div>
+      <div class="phone-challenge-bar">
+        <div class="icon">🏆</div>
+        <div class="text">
+          <span>#3 of 247</span> on "Spell RUN in Midtown" challenge
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SOCIAL PROOF -->
+<div class="proof-bar">
+  <div class="proof-stat">
+    <div class="num"><span class="a">12</span>K+</div>
+    <div class="desc">Beta signups</div>
+  </div>
+  <div class="proof-stat">
+    <div class="num"><span class="a">3</span>,400</div>
+    <div class="desc">Challenges created</div>
+  </div>
+  <div class="proof-stat">
+    <div class="num"><span class="a">89</span>%</div>
+    <div class="desc">Weekly retention</div>
+  </div>
+  <div class="proof-stat">
+    <div class="num"><span class="a">46</span></div>
+    <div class="desc">Cities active</div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section class="section reveal" id="features">
+  <div class="section-label">Features</div>
+  <h2 class="section-title">NOT ANOTHER<br>RUNNING APP.</h2>
+  <p class="section-sub">
+    StrideForge isn't about tracking your jog. It's about turning your city into a game board where every block is a move.
+  </p>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon green">🛠️</div>
+      <h3>Custom Challenge Builder</h3>
+      <p>Design routes with checkpoints, time gates, and bonus zones. Set difficulty, distance, and terrain requirements. Share with the world or keep it to your crew.</p>
+      <span class="feature-tag">Drag-and-drop editor</span>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon pink">✍️</div>
+      <h3>Route Art & Spell Mode</h3>
+      <p>Trace words, draw shapes, or spell messages across your city. Our path-snapping algorithm turns your sketches into runnable routes that actually look right on the map.</p>
+      <span class="feature-tag">GPS Art Engine</span>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon blue">🛡️</div>
+      <h3>Cheat-Proof Verification</h3>
+      <p>Dual-layer GPS + 5G cell tower triangulation ensures every leaderboard time is legitimate. Motion sensors detect driving vs. running. No faking it.</p>
+      <span class="feature-tag">5G + GPS fusion</span>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon yellow">🎮</div>
+      <h3>Gamification Engine</h3>
+      <p>XP, streaks, titles, seasonal badges, and city-wide leaderboards. Level up from "Pavement Rookie" to "Urban Legend." Unlock challenge creation perks as you progress.</p>
+      <span class="feature-tag">RPG progression</span>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon pink">💪</div>
+      <h3>Cause Runs</h3>
+      <p>Run for what matters. Create or join cause-linked challenges where miles convert to donations. Show support with route art — spell a message, trace a ribbon, make it visible.</p>
+      <span class="feature-tag">Impact tracking</span>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon green">👥</div>
+      <h3>Crews & Rivalries</h3>
+      <p>Form running crews, challenge rival groups, and compete in city takeover events. Claim neighborhoods by having the fastest collective times on local challenges.</p>
+      <span class="feature-tag">Social competition</span>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section reveal" id="how">
+  <div class="section-label">How It Works</div>
+  <h2 class="section-title">THREE STEPS.<br>ZERO EXCUSES.</h2>
+  <p class="section-sub">
+    From idea to leaderboard in minutes. Build it, run it, prove it.
+  </p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <h3>Forge a Challenge</h3>
+      <p>Draw a route on the map, set checkpoints, define rules. Want runners to spell "HOPE" through downtown? Set it. Loop the park three times under 25 minutes? Done. Name it, tag it, publish it.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <h3>Run It</h3>
+      <p>Open the challenge, hit Start, and follow the route with real-time navigation. StrideForge tracks every meter with GPS and 5G verification running silently in the background.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <h3>Claim Your Spot</h3>
+      <p>Your verified time hits the leaderboard instantly. Earn XP, unlock badges, and watch your name climb. Challenge friends directly or let the whole city try to beat you.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <h3>Go Viral</h3>
+      <p>Share your route art, challenge completions, and leaderboard positions with auto-generated story cards. The best challenges get featured on the Explore page for your city.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CHALLENGE SHOWCASE -->
+<section class="section reveal" id="challenges">
+  <div class="section-label">Trending Challenges</div>
+  <h2 class="section-title">WHAT PEOPLE ARE<br>FORGING RIGHT NOW.</h2>
+  <p class="section-sub">
+    Every day, runners create challenges that push limits, support causes, and turn their neighborhoods into arenas.
+  </p>
+  <div class="challenges-row">
+    <div class="challenge-card">
+      <div class="challenge-header">
+        <div class="challenge-avatar" style="background:rgba(0,232,123,0.12)">🏙️</div>
+        <div class="challenge-meta">
+          <div class="name">Spell "ATX" Downtown</div>
+          <div class="by">by @marcus_runs · Austin, TX</div>
+        </div>
+      </div>
+      <div class="challenge-desc">Navigate a 5.8mi route through downtown Austin that traces the letters A-T-X when viewed from above. Bonus XP for sub-45 min.</div>
+      <div class="challenge-footer">
+        <span class="runners">🔥 1,247 completions</span>
+        <span class="diff">⚡ Hard</span>
+      </div>
+    </div>
+    <div class="challenge-card">
+      <div class="challenge-header">
+        <div class="challenge-avatar" style="background:rgba(255,61,110,0.12)">🎗️</div>
+        <div class="challenge-meta">
+          <div class="name">Pink Ribbon Loop</div>
+          <div class="by">by @run4hope · National</div>
+        </div>
+      </div>
+      <div class="challenge-desc">Trace a breast cancer awareness ribbon through your city. Any distance, any pace. $1 donated per completion through our partner fund.</div>
+      <div class="challenge-footer">
+        <span class="runners">💕 8,932 completions</span>
+        <span class="diff">🌱 All Levels</span>
+      </div>
+    </div>
+    <div class="challenge-card">
+      <div class="challenge-header">
+        <div class="challenge-avatar" style="background:rgba(61,139,255,0.12)">🗻</div>
+        <div class="challenge-meta">
+          <div class="name">Heartbreak Hill x3</div>
+          <div class="by">by @bos_pacers · Boston, MA</div>
+        </div>
+      </div>
+      <div class="challenge-desc">Conquer the infamous Newton hills — three times in a row. 1,400ft total elevation gain. Only verified GPS times count. Current record: 1:12:03.</div>
+      <div class="challenge-footer">
+        <span class="runners">⚡ 342 completions</span>
+        <span class="diff">💀 Brutal</span>
+      </div>
+    </div>
+    <div class="challenge-card">
+      <div class="challenge-header">
+        <div class="challenge-avatar" style="background:rgba(255,210,61,0.12)">🌳</div>
+        <div class="challenge-meta">
+          <div class="name">Park Hopper</div>
+          <div class="by">by @trailmix_co · Portland, OR</div>
+        </div>
+      </div>
+      <div class="challenge-desc">Hit 7 city parks in a single run. Route optimization is up to you — shortest path wins. Think traveling salesman, but with sneakers.</div>
+      <div class="challenge-footer">
+        <span class="runners">🌲 689 completions</span>
+        <span class="diff">🧠 Strategic</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VERIFICATION -->
+<div class="verify-section reveal">
+  <div class="verify-grid">
+    <div class="verify-visual">
+      <span class="shield-icon">🛡️</span>
+      <div class="verify-checks">
+        <div class="verify-check"><span class="tick">✓</span> GPS path matches route within 15m tolerance</div>
+        <div class="verify-check"><span class="tick">✓</span> 5G cell tower triangulation confirmed</div>
+        <div class="verify-check"><span class="tick">✓</span> Motion pattern consistent with running gait</div>
+        <div class="verify-check"><span class="tick">✓</span> Speed within human performance range</div>
+        <div class="verify-check"><span class="tick">✓</span> No GPS spoofing signatures detected</div>
+      </div>
+    </div>
+    <div class="verify-text">
+      <h2>EVERY TIME.<br>VERIFIED.</h2>
+      <p>
+        Leaderboards are only meaningful when you can trust them. StrideForge's dual-verification system combines satellite GPS with 5G network positioning and on-device motion analysis to ensure every single completion is legitimate.
+      </p>
+      <p>
+        No driving. No GPS spoofing. No shortcuts. If it's on the board, it was earned with real strides on real pavement.
+      </p>
+      <div>
+        <span class="tech-tag">📡 GPS + GLONASS</span>
+        <span class="tech-tag">📱 5G NR Positioning</span>
+        <span class="tech-tag">⌚ IMU Gait Analysis</span>
+        <span class="tech-tag">🔐 Tamper Detection</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPARISON -->
+<section class="comp-section reveal">
+  <div class="section-label">Why StrideForge</div>
+  <h2 class="section-title">WE LOVE THESE APPS.<br>WE BUILT WHAT THEY DIDN'T.</h2>
+  <table class="comp-table">
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th class="highlight">StrideForge</th>
+        <th>Strava</th>
+        <th>Zombies, Run!</th>
+        <th>Challenge Hound</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Custom route challenges</td>
+        <td class="highlight"><span class="check">✓</span></td>
+        <td><span class="partial">~</span> Segments only</td>
+        <td><span class="none">✗</span></td>
+        <td><span class="check">✓</span> Virtual only</td>
+      </tr>
+      <tr>
+        <td>GPS art / spell mode</td>
+        <td class="highlight"><span class="check">✓</span> Built-in</td>
+        <td><span class="partial">~</span> Manual</td>
+        <td><span class="none">✗</span></td>
+        <td><span class="none">✗</span></td>
+      </tr>
+      <tr>
+        <td>Anti-cheat verification</td>
+        <td class="highlight"><span class="check">✓</span> GPS + 5G</td>
+        <td><span class="partial">~</span> GPS only</td>
+        <td><span class="none">✗</span></td>
+        <td><span class="none">✗</span></td>
+      </tr>
+      <tr>
+        <td>Gamification (XP, levels)</td>
+        <td class="highlight"><span class="check">✓</span> Full RPG</td>
+        <td><span class="partial">~</span> Badges</td>
+        <td><span class="check">✓</span> Narrative</td>
+        <td><span class="partial">~</span> Basic</td>
+      </tr>
+      <tr>
+        <td>Cause / charity runs</td>
+        <td class="highlight"><span class="check">✓</span> Integrated</td>
+        <td><span class="none">✗</span></td>
+        <td><span class="none">✗</span></td>
+        <td><span class="partial">~</span> Manual</td>
+      </tr>
+      <tr>
+        <td>Crew vs. crew competition</td>
+        <td class="highlight"><span class="check">✓</span></td>
+        <td><span class="partial">~</span> Clubs</td>
+        <td><span class="none">✗</span></td>
+        <td><span class="check">✓</span> Teams</td>
+      </tr>
+      <tr>
+        <td>Real-time route navigation</td>
+        <td class="highlight"><span class="check">✓</span></td>
+        <td><span class="check">✓</span></td>
+        <td><span class="none">✗</span></td>
+        <td><span class="none">✗</span></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <h2>STOP JOGGING.<br>START <span style="color:var(--accent)">FORGING</span>.</h2>
+  <p>Join 12,000+ runners who turned their city into a playground.</p>
+  <div class="cta-buttons">
+    <a href="#" class="btn-big primary">Join the Waitlist →</a>
+    <a href="#" class="btn-big secondary">Watch the Demo</a>
+  </div>
+  <div class="store-icons">
+    <div class="store-badge">
+      <span class="store-icon"></span>
+      <div class="store-text">
+        <small>Download on the</small>
+        App Store
+      </div>
+    </div>
+    <div class="store-badge">
+      <span class="store-icon">▶️</span>
+      <div class="store-text">
+        <small>Get it on</small>
+        Google Play
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <span class="footer-logo">STRIDEFORGE</span>
+  <div class="footer-links">
+    <a href="#">About</a>
+    <a href="#">Blog</a>
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="#">Contact</a>
+    <a href="#">Careers</a>
+  </div>
+  <span class="copy">© 2026 StrideForge Inc. All rights reserved.</span>
+</footer>
+
+<!-- Scroll reveal animation -->
+<script>
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1 });
+  reveals.forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
