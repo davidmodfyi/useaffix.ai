@@ -1,8 +1,24 @@
 const Database = require('better-sqlite3');
 const path = require('path');
+const fs = require('fs');
 const bcrypt = require('bcrypt');
 
-const dbPath = path.join(__dirname, 'affix.db');
+// Use persistent disk in production, local db folder in development
+const isProduction = process.env.NODE_ENV === 'production';
+const PERSISTENT_DISK_PATH = process.env.PERSISTENT_DISK_PATH || '/var/data';
+
+let dbPath;
+if (isProduction) {
+  // Ensure the persistent disk directory exists
+  if (!fs.existsSync(PERSISTENT_DISK_PATH)) {
+    fs.mkdirSync(PERSISTENT_DISK_PATH, { recursive: true });
+  }
+  dbPath = path.join(PERSISTENT_DISK_PATH, 'affix.db');
+} else {
+  dbPath = path.join(__dirname, 'affix.db');
+}
+
+console.log(`Database path: ${dbPath}`);
 const db = new Database(dbPath);
 
 // Enable WAL mode for better performance

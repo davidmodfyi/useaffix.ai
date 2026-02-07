@@ -7,6 +7,7 @@ const crypto = require('crypto');
 
 // Initialize database (creates tables if needed)
 const db = require('./db/init');
+const { seedDefaultUser } = require('./db/seed');
 const { verifyCredentials, requireAuth } = require('./middleware/auth');
 const SQLiteStore = require('./middleware/session-store');
 
@@ -182,9 +183,17 @@ setInterval(() => {
   }
 }, 60 * 60 * 1000); // Every hour
 
-app.listen(PORT, () => {
-  console.log(`Affix running on port ${PORT}`);
-  console.log(`  Main site: http://localhost:${PORT}`);
-  console.log(`  App: http://localhost:${PORT}/app`);
-  console.log(`  Login: http://localhost:${PORT}/login`);
-});
+// Start server after seeding database
+async function start() {
+  // Seed default user if database is empty
+  await seedDefaultUser();
+
+  app.listen(PORT, () => {
+    console.log(`Affix running on port ${PORT}`);
+    console.log(`  Main site: http://localhost:${PORT}`);
+    console.log(`  App: http://localhost:${PORT}/app`);
+    console.log(`  Login: http://localhost:${PORT}/login`);
+  });
+}
+
+start();
