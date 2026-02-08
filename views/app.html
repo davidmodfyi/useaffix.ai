@@ -1687,16 +1687,6 @@
       return highlighted;
     }
 
-    // Copy SQL to clipboard
-    function copySQL() {
-      const sql = document.getElementById('sqlCode').textContent;
-      navigator.clipboard.writeText(sql).then(() => {
-        showToast('SQL copied to clipboard', 'success');
-      }).catch(() => {
-        showToast('Failed to copy', 'error');
-      });
-    }
-
     // File upload handling
     function handleFile(file) {
       if (!dataSourceId) {
@@ -1864,8 +1854,6 @@
     queryInput.addEventListener('input', () => {
       autoResizeTextarea(queryInput);
     });
-
-    document.getElementById('copySqlBtn').addEventListener('click', copySQL);
 
     // ============================================
     // CHART VISUALIZATION SYSTEM
