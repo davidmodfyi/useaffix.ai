@@ -195,12 +195,18 @@ class DataSource {
 
 ---
 
+## Development Workflow
+
+**No local development required.** Push changes directly to GitHub and test on the live Render-hosted site at useaffix.ai. Render auto-deploys on push to main.
+
 ## Deployment (Render)
 
+- Auto-deploys from GitHub on push to main
 - Uses persistent disk at `/var/data`
 - Database at `/var/data/affix.db`
 - Tenant data at `/var/data/tenants/`
 - Trust proxy enabled for secure cookies behind reverse proxy
+- npm install runs automatically on deploy (installs all dependencies including native modules like DuckDB)
 
 ---
 
