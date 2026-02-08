@@ -32,7 +32,7 @@ affix/
 ├── package.json
 ├── db/
 │   ├── init.js                # Database initialization (creates all tables)
-│   ├── seed.js                # Default user seeding
+│   ├── seed.js                # Default user seeding (creates tenant + data source)
 │   └── affix.db               # SQLite database (dev) - DO NOT COMMIT
 ├── lib/
 │   ├── datasources/           # Data source abstraction layer
@@ -41,6 +41,7 @@ affix/
 │   │   ├── CloudDBDataSource.js   # Direct cloud DB connection (placeholder)
 │   │   ├── GatewayDataSource.js   # Tunneled connection (placeholder)
 │   │   └── index.js           # Exports all data sources
+│   ├── nlquery.js             # Natural language query module (Claude AI)
 │   └── tenant/
 │       ├── TenantManager.js   # Tenant CRUD and data source management
 │       └── index.js
@@ -49,7 +50,7 @@ affix/
 │   └── session-store.js       # Custom SQLite session store
 ├── views/
 │   ├── login.html             # Login page
-│   └── app.html               # Dashboard
+│   └── app.html               # Dashboard with query UI
 ├── scripts/
 │   └── create-user.js         # CLI to create users
 └── index.html                 # Landing page
@@ -126,8 +127,9 @@ class DataSource {
 1. **FileDataSource** (IMPLEMENTED)
    - Uses SQLite (better-sqlite3) for each tenant
    - Stored at `/var/data/tenants/{tenantId}/data.db` in production
-   - Supports CSV and JSON file imports
-   - Can be extended to DuckDB for analytics
+   - Supports CSV, Excel (.xlsx/.xls), and JSON file imports
+   - Auto-detects column types (INTEGER, REAL, TEXT)
+   - `gatherSchemaContext()` for AI-powered querying (samples, cardinality, ranges)
 
 2. **CloudDBDataSource** (PLACEHOLDER)
    - Direct connections to PostgreSQL, MySQL, SQL Server
@@ -176,6 +178,12 @@ class DataSource {
 - `GET /api/datasources/:id/schema` - Get schema (tables/views)
 - `GET /api/datasources/:id/tables` - List tables
 - `GET /api/datasources/:id/tables/:table/columns` - Get column info
+- `GET /api/datasources/:id/tables/:table/data` - Get paginated table data
+- `POST /api/datasources/:id/upload` - Upload CSV/Excel/JSON file
+- `DELETE /api/datasources/:id/tables/:table` - Delete a table
+
+### Natural Language Query
+- `POST /api/query` - Ask a question in natural language, returns AI-generated SQL + results
 
 ### Team
 - `GET /api/team` - List users in tenant
@@ -192,6 +200,7 @@ class DataSource {
 - `DEFAULT_USER_EMAIL` - Email for default seeded user
 - `DEFAULT_USER_PASSWORD` - Password for default seeded user
 - `DEFAULT_USER_NAME` - Name for default seeded user
+- `ANTHROPIC_API_KEY` - API key for Claude AI (required for natural language queries)
 
 ---
 
@@ -210,12 +219,41 @@ class DataSource {
 
 ---
 
+---
+
+## Natural Language Query Feature
+
+The app includes AI-powered data querying using Claude:
+
+### How It Works
+1. User types a question in plain English
+2. Backend gathers rich schema context (tables, columns, samples, ranges, relationships)
+3. Calls Claude Sonnet (`claude-sonnet-4-20250514`) with schema + question
+4. Claude returns: SQL query + explanation + visualization recommendation
+5. Backend validates SQL (blocks dangerous keywords) and executes against tenant's database
+6. Frontend displays explanation, syntax-highlighted SQL, viz recommendation, and results table
+
+### Key Files
+- `lib/nlquery.js` - Claude API integration, response parsing, SQL validation
+- `lib/datasources/FileDataSource.js` - `gatherSchemaContext()` method
+- `views/app.html` - Query input UI and response display
+
+### Safety
+- Only SELECT queries allowed (blocks DELETE, UPDATE, INSERT, DROP, ALTER, etc.)
+- 30-second query timeout
+- Results limited to 1000 rows
+- Tenant isolation enforced
+
+---
+
 ## TODO / Future Work
 
 1. **Google OAuth** - Add as alternative login method
 2. **DuckDB support** - For analytics workloads on FileDataSource
 3. **CloudDBDataSource** - Implement Postgres, MySQL, SQL Server
 4. **GatewayDataSource** - Build gateway agent infrastructure
-5. **File uploads** - Allow CSV/JSON upload through API
-6. **Onboarding flow** - UI for creating tenant after signup
-7. **Billing integration** - Stripe for subscription management
+5. **Onboarding flow** - UI for creating tenant after signup
+6. **Billing integration** - Stripe for subscription management
+7. **Chart rendering** - Implement actual visualizations (currently shows recommendations only)
+8. **Query history** - Save and recall previous questions
+9. **Rate limiting** - Control AI API costs
