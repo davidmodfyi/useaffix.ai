@@ -4,6 +4,24 @@ const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const crypto = require('crypto');
+const multer = require('multer');
+
+// Configure multer for file uploads (memory storage for processing)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['.csv', '.xlsx', '.xls', '.json'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowedTypes.includes(ext)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`File type ${ext} not supported. Allowed: ${allowedTypes.join(', ')}`));
+    }
+  }
+});
 
 // Initialize database (creates tables if needed)
 const db = require('./db/init');
@@ -283,6 +301,106 @@ app.get('/api/datasources/:id/tables/:table/columns', requireAuth, requireTenant
     const ds = await tenantManager.getDataSourceInstance(req.tenantId, req.params.id);
     const columns = await ds.getColumns(req.params.table);
     res.json(columns);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Get paginated data from a table
+app.get('/api/datasources/:id/tables/:table/data', requireAuth, requireTenant, async (req, res) => {
+  try {
+    const ds = await tenantManager.getDataSourceInstance(req.tenantId, req.params.id);
+    const table = req.params.table;
+
+    // Validate table exists
+    const tables = await ds.getTables();
+    if (!tables.includes(table)) {
+      return res.status(404).json({ error: `Table '${table}' not found` });
+    }
+
+    // Pagination params
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 25));
+    const offset = (page - 1) * limit;
+
+    // Get total count
+    const countResult = await ds.execute(`SELECT COUNT(*) as total FROM "${table}"`);
+    const total = countResult.rows[0]?.total || 0;
+
+    // Get paginated data
+    const dataResult = await ds.execute(`SELECT * FROM "${table}" LIMIT ? OFFSET ?`, [limit, offset]);
+
+    res.json({
+      rows: dataResult.rows,
+      columns: dataResult.columns,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Upload file to a data source
+app.post('/api/datasources/:id/upload', requireAuth, requireTenant, requireRole('owner', 'admin'), upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const ds = await tenantManager.getDataSourceInstance(req.tenantId, req.params.id);
+
+    // Determine table name from request or filename
+    let tableName = req.body.tableName;
+    if (!tableName) {
+      // Generate from filename (remove extension, sanitize)
+      tableName = path.basename(req.file.originalname, path.extname(req.file.originalname))
+        .replace(/[^a-zA-Z0-9_]/g, '_')
+        .replace(/^(\d)/, '_$1')
+        .replace(/_+/g, '_')
+        .substring(0, 64);
+    }
+
+    // Import the file
+    const result = await ds.importFromBuffer(
+      req.file.buffer,
+      req.file.originalname,
+      tableName,
+      { sheet: req.body.sheet }
+    );
+
+    res.json({
+      success: true,
+      message: `Imported ${result.imported} rows into table "${result.table}"`,
+      table: result.table,
+      imported: result.imported,
+      columns: result.columns,
+      sheets: result.sheets
+    });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Delete a table from a data source
+app.delete('/api/datasources/:id/tables/:table', requireAuth, requireTenant, requireRole('owner', 'admin'), async (req, res) => {
+  try {
+    const ds = await tenantManager.getDataSourceInstance(req.tenantId, req.params.id);
+    const table = req.params.table;
+
+    // Validate table exists
+    const tables = await ds.getTables();
+    if (!tables.includes(table)) {
+      return res.status(404).json({ error: `Table '${table}' not found` });
+    }
+
+    await ds.execute(`DROP TABLE "${table}"`);
+
+    res.json({ success: true, message: `Table "${table}" deleted` });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

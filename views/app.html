@@ -13,7 +13,9 @@
       --bg-primary: #0a0a0f;
       --bg-secondary: #111118;
       --bg-card: #16161f;
+      --bg-hover: #1c1c28;
       --border: #232330;
+      --border-light: #2a2a3a;
       --text-primary: #e8e8f0;
       --text-secondary: #8888a0;
       --text-muted: #555568;
@@ -23,6 +25,9 @@
       --gradient-start: #5b7cfa;
       --gradient-end: #c084fc;
       --success: #34d399;
+      --success-glow: rgba(52, 211, 153, 0.15);
+      --error: #f87171;
+      --error-glow: rgba(248, 113, 113, 0.15);
       --font-display: 'Instrument Serif', Georgia, serif;
       --font-body: 'DM Sans', -apple-system, sans-serif;
     }
@@ -101,7 +106,7 @@
       color: var(--text-secondary);
     }
 
-    .btn-logout {
+    .btn {
       background: transparent;
       border: 1px solid var(--border);
       color: var(--text-secondary);
@@ -113,26 +118,53 @@
       transition: all 0.2s;
     }
 
-    .btn-logout:hover {
+    .btn:hover {
       border-color: var(--text-muted);
       color: var(--text-primary);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      border: none;
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+    }
+
+    .btn-danger {
+      border-color: var(--error);
+      color: var(--error);
+    }
+
+    .btn-danger:hover {
+      background: var(--error-glow);
     }
 
     /* Main Content */
     .app-main {
       padding-top: 64px;
       min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+
+    /* Upload Section */
+    .upload-section {
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-    }
-
-    .welcome-container {
+      min-height: calc(100vh - 64px - 64px);
       text-align: center;
-      padding: 40px;
     }
 
-    .welcome-icon {
+    .upload-icon {
       width: 80px;
       height: 80px;
       background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
@@ -141,18 +173,19 @@
       align-items: center;
       justify-content: center;
       margin: 0 auto 32px;
-      font-size: 2.5rem;
+      font-size: 2rem;
+      color: #fff;
     }
 
-    .welcome-container h1 {
+    .upload-section h1 {
       font-family: var(--font-display);
-      font-size: 3rem;
+      font-size: 2.5rem;
       font-weight: 400;
       margin-bottom: 16px;
       letter-spacing: -0.02em;
     }
 
-    .welcome-container h1 em {
+    .upload-section h1 em {
       font-style: italic;
       background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
       -webkit-background-clip: text;
@@ -160,14 +193,370 @@
       background-clip: text;
     }
 
-    .welcome-container p {
+    .upload-section p {
       color: var(--text-secondary);
       font-size: 1.1rem;
       max-width: 500px;
-      margin: 0 auto;
+      margin: 0 auto 32px;
       line-height: 1.7;
     }
 
+    .drop-zone {
+      width: 100%;
+      max-width: 500px;
+      padding: 48px 32px;
+      border: 2px dashed var(--border);
+      border-radius: 16px;
+      background: var(--bg-card);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    .drop-zone-icon {
+      font-size: 2.5rem;
+      margin-bottom: 16px;
+    }
+
+    .drop-zone h3 {
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .drop-zone span {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .drop-zone input {
+      display: none;
+    }
+
+    .supported-formats {
+      margin-top: 24px;
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .format-badge {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 4px 12px;
+      border-radius: 100px;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    /* Data View Section */
+    .data-section {
+      display: none;
+    }
+
+    .data-section.active {
+      display: block;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .section-header h2 {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      font-weight: 400;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    /* Tables List */
+    .tables-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .table-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .table-card:hover {
+      border-color: var(--accent);
+      background: var(--bg-hover);
+    }
+
+    .table-card.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+
+    .table-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .table-card h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      word-break: break-all;
+    }
+
+    .table-card-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--accent-glow);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+      margin-left: 12px;
+    }
+
+    .table-card-meta {
+      display: flex;
+      gap: 16px;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+    }
+
+    .table-card-actions {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+    }
+
+    .table-card-actions .btn {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+    }
+
+    /* Data Table */
+    .data-preview {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .data-preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .data-preview-title {
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .data-preview-title span {
+      color: var(--text-secondary);
+      font-weight: 400;
+      font-size: 0.9rem;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    thead {
+      background: var(--bg-secondary);
+    }
+
+    th {
+      text-align: left;
+      padding: 12px 16px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      max-width: 300px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    tr:hover td {
+      background: var(--bg-hover);
+    }
+
+    .empty-state {
+      padding: 48px 20px;
+      text-align: center;
+      color: var(--text-secondary);
+    }
+
+    /* Pagination */
+    .pagination {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .pagination-info {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+    }
+
+    .pagination-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .pagination-controls .btn {
+      padding: 6px 12px;
+    }
+
+    .pagination-controls .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Loading State */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px;
+      color: var(--text-secondary);
+    }
+
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 12px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Toast Notifications */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: slideIn 0.3s ease;
+      max-width: 400px;
+    }
+
+    .toast.success {
+      border-color: var(--success);
+      background: var(--success-glow);
+    }
+
+    .toast.error {
+      border-color: var(--error);
+      background: var(--error-glow);
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    /* Upload Progress */
+    .upload-progress {
+      display: none;
+      width: 100%;
+      max-width: 500px;
+      margin-top: 24px;
+    }
+
+    .upload-progress.active {
+      display: block;
+    }
+
+    .progress-bar {
+      height: 4px;
+      background: var(--bg-card);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    .progress-text {
+      margin-top: 8px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+
+    /* Status Badge */
     .status-badge {
       display: inline-flex;
       align-items: center;
@@ -175,23 +564,16 @@
       background: var(--accent-glow);
       border: 1px solid rgba(91, 124, 250, 0.2);
       border-radius: 100px;
-      padding: 8px 20px;
-      font-size: 0.85rem;
+      padding: 6px 14px;
+      font-size: 0.8rem;
       color: var(--accent-bright);
-      margin-top: 32px;
     }
 
     .status-badge .dot {
-      width: 8px;
-      height: 8px;
+      width: 6px;
+      height: 6px;
       background: var(--success);
       border-radius: 50%;
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
     }
   </style>
 </head>
@@ -207,43 +589,356 @@
         <div class="user-name" id="userName">Loading...</div>
         <div class="user-email" id="userEmail">...</div>
       </div>
-      <button class="btn-logout" id="logoutBtn">Log Out</button>
+      <button class="btn" id="logoutBtn">Log Out</button>
     </div>
   </header>
 
   <main class="app-main">
-    <div class="welcome-container">
-      <div class="welcome-icon">A</div>
-      <h1>Hello, <em id="welcomeName">World</em></h1>
-      <p>
-        Welcome to Affix. Your natural language BI dashboard is coming soon.
-        For now, you're successfully authenticated and ready to go.
-      </p>
-      <div class="status-badge">
-        <span class="dot"></span>
-        Connected & Authenticated
-      </div>
+    <div class="container">
+      <!-- Upload Section (shown when no data) -->
+      <section class="upload-section" id="uploadSection">
+        <div class="upload-icon">+</div>
+        <h1>Upload your <em>data</em></h1>
+        <p>
+          Drop your CSV or Excel files here to get started.
+          We'll automatically detect the schema and import your data.
+        </p>
+
+        <div class="drop-zone" id="dropZone">
+          <div class="drop-zone-icon">+</div>
+          <h3>Drop files here or click to browse</h3>
+          <span>Maximum file size: 50MB</span>
+          <input type="file" id="fileInput" accept=".csv,.xlsx,.xls,.json">
+        </div>
+
+        <div class="upload-progress" id="uploadProgress">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="progress-text" id="progressText">Uploading...</div>
+        </div>
+
+        <div class="supported-formats">
+          <span class="format-badge">.csv</span>
+          <span class="format-badge">.xlsx</span>
+          <span class="format-badge">.xls</span>
+          <span class="format-badge">.json</span>
+        </div>
+      </section>
+
+      <!-- Data Section (shown after upload) -->
+      <section class="data-section" id="dataSection">
+        <div class="section-header">
+          <h2>Your Data</h2>
+          <div class="header-actions">
+            <div class="status-badge">
+              <span class="dot"></span>
+              <span id="tenantName">Connected</span>
+            </div>
+            <button class="btn btn-primary" id="uploadMoreBtn">+ Upload More</button>
+          </div>
+        </div>
+
+        <div class="tables-grid" id="tablesGrid">
+          <!-- Table cards will be inserted here -->
+        </div>
+
+        <div class="data-preview" id="dataPreview" style="display: none;">
+          <div class="data-preview-header">
+            <div class="data-preview-title">
+              <span id="previewTableName">Table</span>
+              <span id="previewRowCount"></span>
+            </div>
+            <button class="btn btn-danger" id="deleteTableBtn">Delete Table</button>
+          </div>
+          <div class="table-wrapper">
+            <table id="dataTable">
+              <thead id="tableHead"></thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+          <div class="pagination">
+            <div class="pagination-info" id="paginationInfo">
+              Showing 1-25 of 100 rows
+            </div>
+            <div class="pagination-controls">
+              <button class="btn" id="prevPageBtn" disabled>&lt; Previous</button>
+              <button class="btn" id="nextPageBtn">Next &gt;</button>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   </main>
 
+  <div class="toast-container" id="toastContainer"></div>
+
   <script>
-    // Fetch user info on load
+    // State
+    let user = null;
+    let dataSourceId = null;
+    let tables = [];
+    let currentTable = null;
+    let currentPage = 1;
+    let pageSize = 25;
+    let totalRows = 0;
+
+    // DOM Elements
+    const uploadSection = document.getElementById('uploadSection');
+    const dataSection = document.getElementById('dataSection');
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const uploadProgress = document.getElementById('uploadProgress');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const tablesGrid = document.getElementById('tablesGrid');
+    const dataPreview = document.getElementById('dataPreview');
+    const toastContainer = document.getElementById('toastContainer');
+
+    // Initialize
+    async function init() {
+      await loadUserInfo();
+      await loadDataSources();
+      await loadTables();
+    }
+
+    // Toast notifications
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      toastContainer.appendChild(toast);
+      setTimeout(() => toast.remove(), 5000);
+    }
+
+    // Load user info
     async function loadUserInfo() {
       try {
         const response = await fetch('/auth/me');
         if (response.ok) {
-          const user = await response.json();
+          user = await response.json();
           document.getElementById('userName').textContent = user.name;
           document.getElementById('userEmail').textContent = user.email;
-          document.getElementById('welcomeName').textContent = user.name;
+          if (user.tenantName) {
+            document.getElementById('tenantName').textContent = user.tenantName;
+          }
         } else {
           window.location.href = '/login';
         }
       } catch (err) {
         console.error('Failed to load user info:', err);
+        window.location.href = '/login';
       }
     }
 
+    // Load data sources
+    async function loadDataSources() {
+      try {
+        const response = await fetch('/api/datasources');
+        if (response.ok) {
+          const sources = await response.json();
+          if (sources.length > 0) {
+            // Use the default data source
+            const defaultDs = sources.find(ds => ds.isDefault) || sources[0];
+            dataSourceId = defaultDs.id;
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load data sources:', err);
+      }
+    }
+
+    // Load tables
+    async function loadTables() {
+      if (!dataSourceId) return;
+
+      try {
+        const response = await fetch(`/api/datasources/${dataSourceId}/tables`);
+        if (response.ok) {
+          tables = await response.json();
+          renderTables();
+          updateView();
+        }
+      } catch (err) {
+        console.error('Failed to load tables:', err);
+      }
+    }
+
+    // Render tables grid
+    function renderTables() {
+      tablesGrid.innerHTML = '';
+
+      for (const table of tables) {
+        const card = document.createElement('div');
+        card.className = `table-card${currentTable === table ? ' active' : ''}`;
+        card.innerHTML = `
+          <div class="table-card-header">
+            <h3>${escapeHtml(table)}</h3>
+            <div class="table-card-icon">T</div>
+          </div>
+          <div class="table-card-meta">
+            <span>Click to preview</span>
+          </div>
+        `;
+        card.addEventListener('click', () => selectTable(table));
+        tablesGrid.appendChild(card);
+      }
+    }
+
+    // Update view based on state
+    function updateView() {
+      if (tables.length === 0) {
+        uploadSection.style.display = 'flex';
+        dataSection.classList.remove('active');
+      } else {
+        uploadSection.style.display = 'none';
+        dataSection.classList.add('active');
+      }
+    }
+
+    // Select a table
+    async function selectTable(tableName) {
+      currentTable = tableName;
+      currentPage = 1;
+      renderTables();
+      await loadTableData();
+    }
+
+    // Load table data
+    async function loadTableData() {
+      if (!currentTable) return;
+
+      dataPreview.style.display = 'block';
+      document.getElementById('previewTableName').textContent = currentTable;
+
+      try {
+        const response = await fetch(
+          `/api/datasources/${dataSourceId}/tables/${currentTable}/data?page=${currentPage}&limit=${pageSize}`
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          renderTableData(data);
+        }
+      } catch (err) {
+        console.error('Failed to load table data:', err);
+        showToast('Failed to load table data', 'error');
+      }
+    }
+
+    // Render table data
+    function renderTableData(data) {
+      const { rows, columns, pagination } = data;
+      totalRows = pagination.total;
+
+      // Update row count
+      document.getElementById('previewRowCount').textContent = `(${totalRows.toLocaleString()} rows)`;
+
+      // Render header
+      const tableHead = document.getElementById('tableHead');
+      tableHead.innerHTML = `<tr>${columns.map(col => `<th>${escapeHtml(col)}</th>`).join('')}</tr>`;
+
+      // Render body
+      const tableBody = document.getElementById('tableBody');
+      if (rows.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="${columns.length}" class="empty-state">No data</td></tr>`;
+      } else {
+        tableBody.innerHTML = rows.map(row =>
+          `<tr>${columns.map(col => `<td title="${escapeHtml(String(row[col] ?? ''))}">${escapeHtml(String(row[col] ?? ''))}</td>`).join('')}</tr>`
+        ).join('');
+      }
+
+      // Update pagination
+      const start = (pagination.page - 1) * pagination.limit + 1;
+      const end = Math.min(pagination.page * pagination.limit, pagination.total);
+      document.getElementById('paginationInfo').textContent =
+        `Showing ${start.toLocaleString()}-${end.toLocaleString()} of ${pagination.total.toLocaleString()} rows`;
+
+      document.getElementById('prevPageBtn').disabled = pagination.page <= 1;
+      document.getElementById('nextPageBtn').disabled = pagination.page >= pagination.totalPages;
+    }
+
+    // File upload handling
+    function handleFile(file) {
+      if (!dataSourceId) {
+        showToast('No data source available', 'error');
+        return;
+      }
+
+      uploadProgress.classList.add('active');
+      progressFill.style.width = '0%';
+      progressText.textContent = 'Uploading...';
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const xhr = new XMLHttpRequest();
+
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          const percent = (e.loaded / e.total) * 100;
+          progressFill.style.width = `${percent}%`;
+          progressText.textContent = percent < 100 ? 'Uploading...' : 'Processing...';
+        }
+      });
+
+      xhr.addEventListener('load', async () => {
+        uploadProgress.classList.remove('active');
+
+        if (xhr.status === 200) {
+          const result = JSON.parse(xhr.responseText);
+          showToast(`Imported ${result.imported} rows into "${result.table}"`, 'success');
+          await loadTables();
+          selectTable(result.table);
+        } else {
+          try {
+            const error = JSON.parse(xhr.responseText);
+            showToast(error.error || 'Upload failed', 'error');
+          } catch {
+            showToast('Upload failed', 'error');
+          }
+        }
+      });
+
+      xhr.addEventListener('error', () => {
+        uploadProgress.classList.remove('active');
+        showToast('Upload failed. Please try again.', 'error');
+      });
+
+      xhr.open('POST', `/api/datasources/${dataSourceId}/upload`);
+      xhr.send(formData);
+    }
+
+    // Delete table
+    async function deleteTable() {
+      if (!currentTable) return;
+
+      if (!confirm(`Are you sure you want to delete the table "${currentTable}"? This cannot be undone.`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `/api/datasources/${dataSourceId}/tables/${currentTable}`,
+          { method: 'DELETE' }
+        );
+
+        if (response.ok) {
+          showToast(`Table "${currentTable}" deleted`, 'success');
+          currentTable = null;
+          dataPreview.style.display = 'none';
+          await loadTables();
+        } else {
+          const error = await response.json();
+          showToast(error.error || 'Failed to delete table', 'error');
+        }
+      } catch (err) {
+        console.error('Failed to delete table:', err);
+        showToast('Failed to delete table', 'error');
+      }
+    }
+
+    // Logout
     async function logout() {
       try {
         await fetch('/auth/logout', { method: 'POST' });
@@ -254,9 +949,65 @@
       }
     }
 
-    loadUserInfo();
+    // Escape HTML
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // Event listeners
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (e.dataTransfer.files.length > 0) {
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        handleFile(e.target.files[0]);
+        e.target.value = ''; // Reset for re-upload
+      }
+    });
+
+    document.getElementById('uploadMoreBtn').addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    document.getElementById('deleteTableBtn').addEventListener('click', deleteTable);
+
+    document.getElementById('prevPageBtn').addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        loadTableData();
+      }
+    });
+
+    document.getElementById('nextPageBtn').addEventListener('click', () => {
+      const totalPages = Math.ceil(totalRows / pageSize);
+      if (currentPage < totalPages) {
+        currentPage++;
+        loadTableData();
+      }
+    });
 
     document.getElementById('logoutBtn').addEventListener('click', logout);
+
+    // Initialize app
+    init();
   </script>
 </body>
 </html>
