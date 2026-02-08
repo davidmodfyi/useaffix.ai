@@ -1917,8 +1917,9 @@
       '#c084fc', // Lavender
     ];
 
-    // Register custom ECharts theme
-    echarts.registerTheme('feather-dark', {
+    // Register custom ECharts theme (with guard for load failures)
+    if (typeof echarts !== 'undefined') {
+      echarts.registerTheme('feather-dark', {
       backgroundColor: 'transparent',
       color: CHART_COLORS,
       textStyle: {
@@ -1958,7 +1959,10 @@
       legend: {
         textStyle: { color: 'rgba(255, 255, 255, 0.6)', fontSize: 12 },
       },
-    });
+      });
+    } else {
+      console.warn('ECharts not loaded - charts will fall back to tables');
+    }
 
     // Number formatting utility
     function formatChartNumber(value, context = 'axis', columnName = '') {
@@ -2605,8 +2609,8 @@
       setTimeout(() => {
         chartWrapper.innerHTML = '';
 
-        if (!config) {
-          // Render enhanced table
+        if (!config || typeof echarts === 'undefined') {
+          // Render enhanced table (fallback if no chart config or echarts not loaded)
           chartContainer.style.display = 'none';
           resultsCard.style.display = 'block';
           renderEnhancedTable(columns, columnTypes, rows);
@@ -2620,8 +2624,16 @@
         } else {
           // Render ECharts
           chartWrapper.classList.remove('single-number');
-          chartInstance = echarts.init(chartWrapper, 'feather-dark');
-          chartInstance.setOption(config);
+          try {
+            chartInstance = echarts.init(chartWrapper, 'feather-dark');
+            chartInstance.setOption(config);
+          } catch (chartErr) {
+            console.error('Chart render error:', chartErr);
+            chartContainer.style.display = 'none';
+            resultsCard.style.display = 'block';
+            renderEnhancedTable(columns, columnTypes, rows);
+            return;
+          }
 
           // Handle resize
           const resizeHandler = debounce(() => {
