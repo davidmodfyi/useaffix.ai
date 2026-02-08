@@ -1593,6 +1593,11 @@
 
     // Display query response
     function displayQueryResponse(data) {
+      console.log('displayQueryResponse received:', data);
+      console.log('data.columns:', data.columns);
+      console.log('data.rows:', data.rows);
+      console.log('data.columnTypes:', data.columnTypes);
+
       queryResponse.classList.add('active');
 
       // Hide all cards initially
@@ -1615,6 +1620,8 @@
       if (data.rows && data.columns) {
         const vizType = data.visualizationType || 'table';
         const queryTime = data.queryTime || null;
+
+        console.log('Calling renderVisualization with:', { vizType, columns: data.columns, columnTypes: data.columnTypes, rowCount: data.rows.length });
 
         // Use the chart visualization system
         renderVisualization(
