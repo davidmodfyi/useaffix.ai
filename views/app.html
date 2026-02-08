@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
   <style>
     :root {
       --bg-primary: #0a0a0f;
@@ -454,6 +455,425 @@
       color: var(--text-secondary);
     }
 
+    /* ============================================
+       CHART VISUALIZATION SYSTEM
+       Premium dark luxury data visualization
+       ============================================ */
+
+    /* Chart Container */
+    .chart-container {
+      background: linear-gradient(135deg, rgba(15, 15, 25, 0.85), rgba(20, 20, 35, 0.7));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+      position: relative;
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      overflow: hidden;
+    }
+
+    .chart-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    }
+
+    .chart-wrapper {
+      width: 100%;
+      height: 420px;
+      position: relative;
+    }
+
+    .chart-wrapper.single-number {
+      height: 200px;
+    }
+
+    /* Result Summary Bar */
+    .result-summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .result-summary-left,
+    .result-summary-right {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.35);
+      font-weight: 400;
+    }
+
+    .result-summary .truncated-badge {
+      display: inline-block;
+      background: rgba(251, 191, 36, 0.15);
+      border: 1px solid rgba(251, 191, 36, 0.25);
+      color: #fbbf24;
+      padding: 2px 8px;
+      border-radius: 100px;
+      font-size: 11px;
+      margin-left: 8px;
+    }
+
+    /* Chart Download Button */
+    .chart-download-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 32px;
+      height: 32px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      opacity: 0;
+      transition: all 0.2s ease;
+      z-index: 10;
+    }
+
+    .chart-container:hover .chart-download-btn {
+      opacity: 1;
+    }
+
+    .chart-download-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .chart-download-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: rgba(255, 255, 255, 0.6);
+    }
+
+    /* Chart Loading Skeleton */
+    .chart-skeleton {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 8px;
+      padding: 40px 60px;
+    }
+
+    .chart-skeleton-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 16px;
+      height: 80%;
+      width: 100%;
+    }
+
+    .chart-skeleton-bar {
+      flex: 1;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+      border-radius: 6px 6px 0 0;
+      animation: skeletonPulse 1.5s ease-in-out infinite;
+    }
+
+    .chart-skeleton-bar:nth-child(1) { height: 60%; animation-delay: 0s; }
+    .chart-skeleton-bar:nth-child(2) { height: 80%; animation-delay: 0.1s; }
+    .chart-skeleton-bar:nth-child(3) { height: 45%; animation-delay: 0.2s; }
+    .chart-skeleton-bar:nth-child(4) { height: 90%; animation-delay: 0.3s; }
+    .chart-skeleton-bar:nth-child(5) { height: 70%; animation-delay: 0.4s; }
+    .chart-skeleton-bar:nth-child(6) { height: 55%; animation-delay: 0.5s; }
+
+    @keyframes skeletonPulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.8; }
+    }
+
+    .chart-skeleton-axis {
+      width: 100%;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 1px;
+    }
+
+    /* Single Number Visualization */
+    .single-number-display {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      position: relative;
+    }
+
+    .single-number-display::before {
+      content: '';
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(0, 212, 255, 0.08), transparent 70%);
+      pointer-events: none;
+    }
+
+    .single-number-value {
+      font-family: var(--font-body);
+      font-size: 56px;
+      font-weight: 300;
+      color: #fff;
+      letter-spacing: -2px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .single-number-label {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.45);
+      margin-top: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 400;
+    }
+
+    .single-number-delta {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 12px;
+      padding: 4px 10px;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .single-number-delta.positive {
+      background: rgba(52, 211, 153, 0.15);
+      color: #34d399;
+    }
+
+    .single-number-delta.negative {
+      background: rgba(248, 113, 113, 0.15);
+      color: #f87171;
+    }
+
+    /* Enhanced Results Table */
+    .enhanced-table-container {
+      border-radius: 12px;
+      overflow: hidden;
+      background: rgba(15, 15, 25, 0.5);
+    }
+
+    .enhanced-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .enhanced-table thead {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .enhanced-table th {
+      text-align: left;
+      padding: 14px 16px;
+      font-size: 11px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.5);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+      transition: color 0.15s;
+    }
+
+    .enhanced-table th:hover {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .enhanced-table th.numeric {
+      text-align: right;
+    }
+
+    .enhanced-table th .sort-icon {
+      display: inline-block;
+      margin-left: 6px;
+      opacity: 0.4;
+      font-size: 10px;
+    }
+
+    .enhanced-table th.sorted .sort-icon {
+      opacity: 1;
+      color: #00d4ff;
+    }
+
+    .enhanced-table tbody tr {
+      transition: background 0.15s;
+    }
+
+    .enhanced-table tbody tr:nth-child(even) {
+      background: rgba(255, 255, 255, 0.015);
+    }
+
+    .enhanced-table tbody tr:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .enhanced-table td {
+      padding: 12px 16px;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.8);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      max-width: 300px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .enhanced-table td.numeric {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+
+    .enhanced-table-fade-in tbody tr {
+      opacity: 0;
+      animation: tableFadeIn 0.3s ease forwards;
+    }
+
+    @keyframes tableFadeIn {
+      to { opacity: 1; }
+    }
+
+    /* Chart Empty State */
+    .chart-empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .chart-empty-icon {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 16px;
+      opacity: 0.15;
+    }
+
+    .chart-empty-title {
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .chart-empty-subtitle {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Chart Error State */
+    .chart-error-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .chart-error-message {
+      color: #f87171;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    .chart-error-sql {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.5);
+      max-width: 100%;
+      overflow-x: auto;
+    }
+
+    /* Chart Transitions */
+    .chart-transition-out {
+      animation: chartFadeOut 0.2s ease-in forwards;
+    }
+
+    .chart-transition-in {
+      animation: chartFadeIn 0.4s ease-out forwards;
+    }
+
+    @keyframes chartFadeOut {
+      to {
+        opacity: 0;
+        transform: scale(0.98);
+      }
+    }
+
+    @keyframes chartFadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    /* Responsive Chart Styles */
+    @media (max-width: 768px) {
+      .chart-container {
+        padding: 16px;
+        border-radius: 12px;
+      }
+
+      .chart-wrapper {
+        height: 320px;
+      }
+
+      .chart-wrapper.single-number {
+        height: 160px;
+      }
+
+      .single-number-value {
+        font-size: 42px;
+      }
+
+      .result-summary {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+      }
+
+      .enhanced-table-container {
+        overflow-x: auto;
+        position: relative;
+      }
+
+      .enhanced-table-container::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 40px;
+        background: linear-gradient(90deg, transparent, rgba(15, 15, 25, 0.9));
+        pointer-events: none;
+      }
+    }
+
     /* Error State */
     .error-card {
       border-color: var(--error);
@@ -866,24 +1286,33 @@
               </div>
             </div>
 
-            <!-- Visualization Recommendation -->
-            <div class="response-card" id="vizCard">
-              <div class="response-card-header">Visualization</div>
-              <div class="response-card-body">
-                <div class="viz-badge" id="vizBadge"></div>
-                <div class="viz-description" id="vizDescription"></div>
+            <!-- Chart Visualization -->
+            <div class="chart-container" id="chartContainer" style="display: none;">
+              <button class="chart-download-btn" id="chartDownloadBtn" title="Download chart">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+              </button>
+              <div class="result-summary" id="resultSummary">
+                <span class="result-summary-left" id="summaryLeft"></span>
+                <span class="result-summary-right" id="summaryRight"></span>
+              </div>
+              <div class="chart-wrapper" id="chartWrapper">
+                <!-- Chart will be rendered here -->
               </div>
             </div>
 
-            <!-- Results Table -->
-            <div class="response-card" id="resultsCard">
+            <!-- Results Table (fallback / table view) -->
+            <div class="response-card" id="resultsCard" style="display: none;">
               <div class="response-card-header">
                 Results
                 <span class="results-info" id="resultsInfo"></span>
               </div>
               <div class="response-card-body">
-                <div class="results-table-container">
-                  <table id="resultsTable">
+                <div class="enhanced-table-container">
+                  <table class="enhanced-table enhanced-table-fade-in" id="resultsTable">
                     <thead id="resultsHead"></thead>
                     <tbody id="resultsBody"></tbody>
                   </table>
@@ -1170,7 +1599,7 @@
       // Hide all cards initially
       document.getElementById('explanationCard').style.display = 'none';
       document.getElementById('sqlCard').style.display = 'none';
-      document.getElementById('vizCard').style.display = 'none';
+      document.getElementById('chartContainer').style.display = 'none';
       document.getElementById('resultsCard').style.display = 'none';
       document.getElementById('errorCard').style.display = 'none';
 
@@ -1212,39 +1641,24 @@
         document.getElementById('sqlCode').innerHTML = highlightSQL(data.sql);
       }
 
-      // Show visualization
-      if (data.visualizationType) {
-        document.getElementById('vizCard').style.display = 'block';
-        document.getElementById('vizBadge').textContent = formatVizType(data.visualizationType);
-        document.getElementById('vizDescription').textContent = data.visualizationDescription || '';
-      }
-
-      // Show results
+      // Render visualization (chart or table)
       if (data.rows && data.columns) {
-        document.getElementById('resultsCard').style.display = 'block';
+        const vizType = data.visualizationType || 'table';
+        const queryTime = data.queryTime || null;
 
+        // Use the chart visualization system
+        renderVisualization(
+          vizType,
+          data.columns,
+          data.columnTypes || [],
+          data.rows,
+          queryTime
+        );
+
+        // Update results info for table view
         const truncatedNote = data.truncated ? ' (showing first 1,000)' : '';
         document.getElementById('resultsInfo').textContent =
           `${data.rowCount.toLocaleString()} rows${truncatedNote}`;
-
-        const resultsHead = document.getElementById('resultsHead');
-        const resultsBody = document.getElementById('resultsBody');
-
-        resultsHead.innerHTML = `<tr>${data.columns.map(col => `<th>${escapeHtml(col)}</th>`).join('')}</tr>`;
-
-        if (data.rows.length === 0) {
-          resultsBody.innerHTML = `<tr><td colspan="${data.columns.length}" class="empty-state">No results found. Try rephrasing your question.</td></tr>`;
-        } else {
-          // Show max 100 rows in UI
-          const displayRows = data.rows.slice(0, 100);
-          resultsBody.innerHTML = displayRows.map(row =>
-            `<tr>${data.columns.map(col => `<td title="${escapeHtml(formatValue(row[col]))}">${escapeHtml(formatValue(row[col]))}</td>`).join('')}</tr>`
-          ).join('');
-
-          if (data.rows.length > 100) {
-            document.getElementById('resultsInfo').textContent += ' (displaying first 100)';
-          }
-        }
       }
     }
 
@@ -1482,6 +1896,867 @@
     });
 
     document.getElementById('copySqlBtn').addEventListener('click', copySQL);
+
+    // ============================================
+    // CHART VISUALIZATION SYSTEM
+    // Premium dark luxury data visualization
+    // ============================================
+
+    // Chart instance
+    let chartInstance = null;
+
+    // Feather Dark Theme - Premium color palette
+    const CHART_COLORS = [
+      '#00d4ff', // Electric cyan - primary
+      '#a78bfa', // Soft violet
+      '#34d399', // Mint green
+      '#f59e0b', // Warm amber
+      '#f472b6', // Soft pink
+      '#60a5fa', // Sky blue
+      '#fbbf24', // Gold
+      '#c084fc', // Lavender
+    ];
+
+    // Register custom ECharts theme
+    echarts.registerTheme('feather-dark', {
+      backgroundColor: 'transparent',
+      color: CHART_COLORS,
+      textStyle: {
+        fontFamily: '"DM Sans", sans-serif',
+        color: 'rgba(255, 255, 255, 0.7)',
+      },
+      title: {
+        textStyle: {
+          color: 'rgba(255, 255, 255, 0.9)',
+          fontWeight: 500,
+          fontSize: 16,
+        },
+        subtextStyle: {
+          color: 'rgba(255, 255, 255, 0.45)',
+          fontSize: 12,
+        },
+      },
+      categoryAxis: {
+        axisLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.1)' } },
+        axisTick: { show: false },
+        axisLabel: { color: 'rgba(255, 255, 255, 0.5)', fontSize: 11 },
+        splitLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.06)' } },
+      },
+      valueAxis: {
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: { color: 'rgba(255, 255, 255, 0.5)', fontSize: 11 },
+        splitLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.06)' } },
+      },
+      tooltip: {
+        backgroundColor: 'rgba(15, 15, 25, 0.95)',
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderWidth: 1,
+        textStyle: { color: '#fff', fontSize: 13 },
+        extraCssText: 'backdrop-filter: blur(10px); box-shadow: 0 8px 32px rgba(0,0,0,0.4);',
+      },
+      legend: {
+        textStyle: { color: 'rgba(255, 255, 255, 0.6)', fontSize: 12 },
+      },
+    });
+
+    // Number formatting utility
+    function formatChartNumber(value, context = 'axis', columnName = '') {
+      if (value === null || value === undefined) return '';
+      if (typeof value !== 'number') return String(value);
+
+      const isCurrency = /price|amount|revenue|cost|total|sales|value|sum|profit/i.test(columnName);
+      const isPercent = /percent|rate|pct|%|ratio/i.test(columnName);
+
+      if (context === 'axis') {
+        // Abbreviate for axis labels
+        const absVal = Math.abs(value);
+        let formatted;
+        if (absVal >= 1e9) {
+          formatted = (value / 1e9).toFixed(1) + 'B';
+        } else if (absVal >= 1e6) {
+          formatted = (value / 1e6).toFixed(1) + 'M';
+        } else if (absVal >= 1e3) {
+          formatted = (value / 1e3).toFixed(1) + 'K';
+        } else {
+          formatted = value.toLocaleString(undefined, { maximumFractionDigits: 1 });
+        }
+        return isCurrency ? '$' + formatted : (isPercent ? formatted + '%' : formatted);
+      }
+
+      // Full precision for tooltips
+      const formatted = value.toLocaleString(undefined, {
+        minimumFractionDigits: Number.isInteger(value) ? 0 : 2,
+        maximumFractionDigits: 2
+      });
+      return isCurrency ? '$' + formatted : (isPercent ? formatted + '%' : formatted);
+    }
+
+    // Detect column types and roles
+    function analyzeColumns(columns, columnTypes, rows) {
+      const analysis = {
+        categories: [],
+        values: [],
+        series: null,
+        date: null,
+      };
+
+      columns.forEach((col, idx) => {
+        const type = columnTypes[idx]?.toUpperCase() || 'TEXT';
+        const isNumeric = ['INTEGER', 'REAL', 'FLOAT', 'DOUBLE', 'DECIMAL', 'NUMBER'].includes(type);
+        const isDate = /date|time|created|updated/i.test(col) || type.includes('DATE') || type.includes('TIME');
+
+        if (isDate) {
+          analysis.date = col;
+        } else if (isNumeric) {
+          analysis.values.push(col);
+        } else {
+          analysis.categories.push(col);
+        }
+      });
+
+      // If we have 2+ categories and 1 numeric, second category becomes series
+      if (analysis.categories.length >= 2 && analysis.values.length >= 1) {
+        analysis.series = analysis.categories[1];
+        analysis.categories = [analysis.categories[0]];
+      }
+
+      return analysis;
+    }
+
+    // Build chart configuration
+    function buildChartConfig(vizType, columns, columnTypes, rows) {
+      const analysis = analyzeColumns(columns, columnTypes, rows);
+
+      // Override viz type based on data shape
+      if (rows.length === 1 && columns.length === 1) {
+        vizType = 'single_number';
+      } else if (rows.length === 1 && analysis.values.length === 1) {
+        vizType = 'single_number';
+      }
+
+      const categoryCol = analysis.date || analysis.categories[0] || columns[0];
+      const valueCol = analysis.values[0] || columns[columns.length - 1];
+      const seriesCol = analysis.series;
+
+      switch (vizType) {
+        case 'single_number':
+          return buildSingleNumber(columns, rows);
+        case 'bar_chart':
+          return buildBarChart(categoryCol, valueCol, rows, columns);
+        case 'grouped_bar_chart':
+          return buildGroupedBarChart(categoryCol, valueCol, seriesCol, rows, columns);
+        case 'line_chart':
+          return buildLineChart(categoryCol, valueCol, rows, columns, false);
+        case 'area_chart':
+          return buildLineChart(categoryCol, valueCol, rows, columns, true);
+        case 'pie_chart':
+          return buildPieChart(categoryCol, valueCol, rows);
+        case 'scatter_plot':
+          return buildScatterPlot(analysis.values, rows, columns);
+        case 'heatmap':
+          return buildHeatmap(columns, rows);
+        case 'table':
+        default:
+          return null; // Will render enhanced table instead
+      }
+    }
+
+    // Single Number visualization
+    function buildSingleNumber(columns, rows) {
+      const value = rows[0][columns[0]];
+      const label = columns[0];
+      return { type: 'single_number', value, label };
+    }
+
+    // Bar Chart
+    function buildBarChart(categoryCol, valueCol, rows, columns) {
+      const categories = rows.map(r => String(r[categoryCol] ?? ''));
+      const values = rows.map(r => Number(r[valueCol]) || 0);
+
+      // Use horizontal bars if labels are long
+      const maxLabelLen = Math.max(...categories.map(c => c.length));
+      const isHorizontal = maxLabelLen > 15 || rows.length > 12;
+
+      const option = {
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: { type: 'shadow' },
+          formatter: (params) => {
+            const p = params[0];
+            return `<div style="font-weight:500">${escapeHtml(p.name)}</div>
+                    <div style="margin-top:4px">${formatChartNumber(p.value, 'tooltip', valueCol)}</div>`;
+          }
+        },
+        grid: {
+          left: isHorizontal ? '15%' : '10%',
+          right: '5%',
+          top: '10%',
+          bottom: rows.length > 15 ? '20%' : '12%',
+          containLabel: true
+        },
+        xAxis: isHorizontal ? {
+          type: 'value',
+          axisLabel: { formatter: (v) => formatChartNumber(v, 'axis', valueCol) },
+          splitLine: { lineStyle: { color: 'rgba(255,255,255,0.06)' } },
+          axisLine: { show: false },
+          axisTick: { show: false },
+        } : {
+          type: 'category',
+          data: categories,
+          axisLabel: {
+            color: 'rgba(255,255,255,0.5)',
+            fontSize: 11,
+            rotate: categories.length > 8 ? 45 : 0,
+            interval: 0,
+          },
+          axisLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } },
+          axisTick: { show: false },
+        },
+        yAxis: isHorizontal ? {
+          type: 'category',
+          data: categories,
+          axisLabel: { color: 'rgba(255,255,255,0.5)', fontSize: 11 },
+          axisLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } },
+          axisTick: { show: false },
+        } : {
+          type: 'value',
+          axisLabel: { formatter: (v) => formatChartNumber(v, 'axis', valueCol) },
+          splitLine: { lineStyle: { color: 'rgba(255,255,255,0.06)' } },
+          axisLine: { show: false },
+          axisTick: { show: false },
+        },
+        series: [{
+          type: 'bar',
+          data: values.map((v, i) => ({
+            value: v,
+            itemStyle: {
+              color: new echarts.graphic.LinearGradient(isHorizontal ? 0 : 0, isHorizontal ? 0 : 1, isHorizontal ? 1 : 0, isHorizontal ? 0 : 0, [
+                { offset: 0, color: CHART_COLORS[0] },
+                { offset: 1, color: adjustColor(CHART_COLORS[0], 0.7) }
+              ]),
+              borderRadius: isHorizontal ? [0, 6, 6, 0] : [6, 6, 0, 0],
+            }
+          })),
+          barWidth: '60%',
+          label: {
+            show: rows.length <= 12,
+            position: isHorizontal ? 'right' : 'top',
+            color: 'rgba(255,255,255,0.6)',
+            fontSize: 11,
+            fontWeight: 300,
+            formatter: (p) => formatChartNumber(p.value, 'axis', valueCol)
+          },
+          emphasis: {
+            itemStyle: {
+              color: new echarts.graphic.LinearGradient(isHorizontal ? 0 : 0, isHorizontal ? 0 : 1, isHorizontal ? 1 : 0, isHorizontal ? 0 : 0, [
+                { offset: 0, color: adjustColor(CHART_COLORS[0], 1.2) },
+                { offset: 1, color: CHART_COLORS[0] }
+              ]),
+            }
+          },
+          animationDelay: (idx) => idx * 50,
+        }],
+        animationDuration: 800,
+        animationEasing: 'cubicOut',
+      };
+
+      // Add dataZoom for many bars
+      if (rows.length > 15) {
+        option.dataZoom = [{
+          type: 'slider',
+          show: true,
+          start: 0,
+          end: Math.min(100, (15 / rows.length) * 100),
+          bottom: 10,
+          height: 20,
+          backgroundColor: 'rgba(255,255,255,0.03)',
+          borderColor: 'rgba(255,255,255,0.1)',
+          fillerColor: 'rgba(0,212,255,0.2)',
+          handleStyle: { color: '#00d4ff' },
+          textStyle: { color: 'rgba(255,255,255,0.5)' },
+        }];
+      }
+
+      return option;
+    }
+
+    // Grouped Bar Chart
+    function buildGroupedBarChart(categoryCol, valueCol, seriesCol, rows, columns) {
+      // Group data by category and series
+      const categorySet = [...new Set(rows.map(r => String(r[categoryCol] ?? '')))];
+      const seriesSet = [...new Set(rows.map(r => String(r[seriesCol] ?? '')))];
+
+      const seriesData = seriesSet.map((seriesName, sIdx) => ({
+        name: seriesName,
+        type: 'bar',
+        data: categorySet.map(cat => {
+          const row = rows.find(r => String(r[categoryCol]) === cat && String(r[seriesCol]) === seriesName);
+          return row ? Number(row[valueCol]) || 0 : 0;
+        }),
+        itemStyle: {
+          color: new echarts.graphic.LinearGradient(0, 1, 0, 0, [
+            { offset: 0, color: CHART_COLORS[sIdx % CHART_COLORS.length] },
+            { offset: 1, color: adjustColor(CHART_COLORS[sIdx % CHART_COLORS.length], 0.7) }
+          ]),
+          borderRadius: [4, 4, 0, 0],
+        },
+        barGap: '20%',
+        barCategoryGap: '40%',
+        animationDelay: (idx) => idx * 30 + sIdx * 100,
+      }));
+
+      return {
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: { type: 'shadow' },
+        },
+        legend: {
+          data: seriesSet,
+          top: 0,
+          textStyle: { color: 'rgba(255,255,255,0.6)', fontSize: 11 },
+        },
+        grid: {
+          left: '10%',
+          right: '5%',
+          top: '15%',
+          bottom: '12%',
+          containLabel: true
+        },
+        xAxis: {
+          type: 'category',
+          data: categorySet,
+          axisLabel: { color: 'rgba(255,255,255,0.5)', fontSize: 11 },
+          axisLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } },
+          axisTick: { show: false },
+        },
+        yAxis: {
+          type: 'value',
+          axisLabel: { formatter: (v) => formatChartNumber(v, 'axis', valueCol) },
+          splitLine: { lineStyle: { color: 'rgba(255,255,255,0.06)' } },
+          axisLine: { show: false },
+          axisTick: { show: false },
+        },
+        series: seriesData,
+        animationDuration: 800,
+        animationEasing: 'cubicOut',
+      };
+    }
+
+    // Line / Area Chart
+    function buildLineChart(categoryCol, valueCol, rows, columns, isArea) {
+      const categories = rows.map(r => String(r[categoryCol] ?? ''));
+      const values = rows.map(r => Number(r[valueCol]) || 0);
+
+      return {
+        tooltip: {
+          trigger: 'axis',
+          formatter: (params) => {
+            const p = params[0];
+            return `<div style="font-weight:500">${escapeHtml(p.name)}</div>
+                    <div style="margin-top:4px">${formatChartNumber(p.value, 'tooltip', valueCol)}</div>`;
+          }
+        },
+        grid: {
+          left: '10%',
+          right: '5%',
+          top: '10%',
+          bottom: '12%',
+          containLabel: true
+        },
+        xAxis: {
+          type: 'category',
+          data: categories,
+          axisLabel: {
+            color: 'rgba(255,255,255,0.5)',
+            fontSize: 11,
+            rotate: categories.length > 12 ? 45 : 0,
+          },
+          axisLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } },
+          axisTick: { show: false },
+          boundaryGap: false,
+        },
+        yAxis: {
+          type: 'value',
+          axisLabel: { formatter: (v) => formatChartNumber(v, 'axis', valueCol) },
+          splitLine: { lineStyle: { color: 'rgba(255,255,255,0.06)' } },
+          axisLine: { show: false },
+          axisTick: { show: false },
+        },
+        series: [{
+          type: 'line',
+          data: values,
+          smooth: true,
+          lineStyle: {
+            width: 2.5,
+            color: CHART_COLORS[0],
+          },
+          itemStyle: {
+            color: CHART_COLORS[0],
+          },
+          symbol: 'circle',
+          symbolSize: 6,
+          showSymbol: rows.length <= 30,
+          areaStyle: isArea ? {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: 'rgba(0, 212, 255, 0.4)' },
+              { offset: 1, color: 'rgba(0, 212, 255, 0)' }
+            ])
+          } : null,
+          emphasis: {
+            scale: true,
+            itemStyle: {
+              shadowBlur: 20,
+              shadowColor: 'rgba(0, 212, 255, 0.5)',
+            }
+          },
+        }],
+        animationDuration: 1500,
+        animationEasing: 'cubicInOut',
+      };
+    }
+
+    // Pie Chart (Donut)
+    function buildPieChart(categoryCol, valueCol, rows) {
+      // Group small slices into "Other" if > 7 categories
+      let data = rows.map(r => ({
+        name: String(r[categoryCol] ?? ''),
+        value: Number(r[valueCol]) || 0
+      })).sort((a, b) => b.value - a.value);
+
+      if (data.length > 7) {
+        const topItems = data.slice(0, 6);
+        const otherValue = data.slice(6).reduce((sum, item) => sum + item.value, 0);
+        data = [...topItems, { name: 'Other', value: otherValue }];
+      }
+
+      const total = data.reduce((sum, item) => sum + item.value, 0);
+
+      return {
+        tooltip: {
+          trigger: 'item',
+          formatter: (params) => {
+            return `<div style="font-weight:500">${escapeHtml(params.name)}</div>
+                    <div style="margin-top:4px">${formatChartNumber(params.value, 'tooltip', valueCol)} (${params.percent.toFixed(1)}%)</div>`;
+          }
+        },
+        series: [{
+          type: 'pie',
+          radius: ['45%', '72%'],
+          center: ['50%', '55%'],
+          padAngle: 3,
+          itemStyle: {
+            borderRadius: 8,
+            borderColor: 'rgba(15, 15, 25, 0.85)',
+            borderWidth: 2,
+          },
+          label: {
+            show: true,
+            color: 'rgba(255,255,255,0.7)',
+            fontSize: 12,
+            formatter: '{b}',
+          },
+          labelLine: {
+            lineStyle: {
+              color: 'rgba(255,255,255,0.2)',
+            }
+          },
+          emphasis: {
+            scaleSize: 12,
+            itemStyle: {
+              shadowBlur: 20,
+              shadowColor: 'rgba(0,0,0,0.5)',
+            }
+          },
+          data: data.map((item, idx) => ({
+            ...item,
+            itemStyle: { color: CHART_COLORS[idx % CHART_COLORS.length] }
+          })),
+        },
+        // Center label showing total
+        {
+          type: 'pie',
+          radius: ['0%', '0%'],
+          center: ['50%', '55%'],
+          label: {
+            show: true,
+            position: 'center',
+            formatter: () => formatChartNumber(total, 'axis', valueCol),
+            fontSize: 28,
+            fontWeight: 300,
+            color: '#fff',
+          },
+          data: [{ value: 0 }],
+          silent: true,
+        }],
+        graphic: {
+          elements: [{
+            type: 'text',
+            left: 'center',
+            top: '60%',
+            style: {
+              text: 'Total',
+              fill: 'rgba(255,255,255,0.35)',
+              fontSize: 12,
+              textAlign: 'center',
+            }
+          }]
+        },
+        animationType: 'scale',
+        animationEasing: 'elasticOut',
+        animationDuration: 1000,
+      };
+    }
+
+    // Scatter Plot
+    function buildScatterPlot(valueCols, rows, columns) {
+      const xCol = valueCols[0] || columns[0];
+      const yCol = valueCols[1] || columns[1];
+      const sizeCol = valueCols[2];
+
+      const data = rows.map(r => {
+        const point = [Number(r[xCol]) || 0, Number(r[yCol]) || 0];
+        if (sizeCol) point.push(Number(r[sizeCol]) || 10);
+        return point;
+      });
+
+      return {
+        tooltip: {
+          trigger: 'item',
+          formatter: (params) => {
+            const [x, y] = params.value;
+            return `<div>${escapeHtml(xCol)}: ${formatChartNumber(x, 'tooltip', xCol)}</div>
+                    <div>${escapeHtml(yCol)}: ${formatChartNumber(y, 'tooltip', yCol)}</div>`;
+          }
+        },
+        grid: {
+          left: '12%',
+          right: '8%',
+          top: '10%',
+          bottom: '12%',
+        },
+        xAxis: {
+          type: 'value',
+          name: xCol,
+          nameLocation: 'middle',
+          nameGap: 30,
+          nameTextStyle: { color: 'rgba(255,255,255,0.5)', fontSize: 11 },
+          axisLabel: { formatter: (v) => formatChartNumber(v, 'axis', xCol) },
+          splitLine: { lineStyle: { color: 'rgba(255,255,255,0.06)' } },
+          axisLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } },
+        },
+        yAxis: {
+          type: 'value',
+          name: yCol,
+          nameLocation: 'middle',
+          nameGap: 50,
+          nameTextStyle: { color: 'rgba(255,255,255,0.5)', fontSize: 11 },
+          axisLabel: { formatter: (v) => formatChartNumber(v, 'axis', yCol) },
+          splitLine: { lineStyle: { color: 'rgba(255,255,255,0.06)' } },
+          axisLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } },
+        },
+        series: [{
+          type: 'scatter',
+          data: data,
+          symbolSize: sizeCol ? (val) => Math.max(8, Math.min(40, val[2] / 10)) : 10,
+          itemStyle: {
+            color: CHART_COLORS[0],
+            opacity: 0.7,
+            shadowBlur: 10,
+            shadowColor: 'rgba(0, 212, 255, 0.5)',
+          },
+          emphasis: {
+            itemStyle: {
+              opacity: 1,
+              shadowBlur: 20,
+            }
+          },
+          large: rows.length > 1000,
+        }],
+        animationDuration: 1000,
+      };
+    }
+
+    // Heatmap
+    function buildHeatmap(columns, rows) {
+      // Simple heatmap - use first two columns as axes, third as value
+      const xCol = columns[0];
+      const yCol = columns[1];
+      const valCol = columns[2] || columns[1];
+
+      const xCategories = [...new Set(rows.map(r => String(r[xCol] ?? '')))];
+      const yCategories = [...new Set(rows.map(r => String(r[yCol] ?? '')))];
+
+      const data = rows.map(r => [
+        xCategories.indexOf(String(r[xCol] ?? '')),
+        yCategories.indexOf(String(r[yCol] ?? '')),
+        Number(r[valCol]) || 0
+      ]);
+
+      const values = data.map(d => d[2]);
+      const minVal = Math.min(...values);
+      const maxVal = Math.max(...values);
+
+      return {
+        tooltip: {
+          position: 'top',
+          formatter: (params) => {
+            return `<div>${escapeHtml(xCategories[params.value[0]])}</div>
+                    <div>${escapeHtml(yCategories[params.value[1]])}</div>
+                    <div style="margin-top:4px;font-weight:500">${formatChartNumber(params.value[2], 'tooltip', valCol)}</div>`;
+          }
+        },
+        grid: {
+          left: '15%',
+          right: '15%',
+          top: '5%',
+          bottom: '15%',
+        },
+        xAxis: {
+          type: 'category',
+          data: xCategories,
+          splitArea: { show: true },
+          axisLabel: {
+            color: 'rgba(255,255,255,0.5)',
+            fontSize: 10,
+            rotate: xCategories.length > 6 ? 45 : 0,
+          },
+        },
+        yAxis: {
+          type: 'category',
+          data: yCategories,
+          splitArea: { show: true },
+          axisLabel: { color: 'rgba(255,255,255,0.5)', fontSize: 10 },
+        },
+        visualMap: {
+          min: minVal,
+          max: maxVal,
+          calculable: true,
+          orient: 'vertical',
+          right: '2%',
+          top: 'center',
+          inRange: {
+            color: ['#0a1628', '#00486e', '#00849e', '#00c4b4', '#f59e0b']
+          },
+          textStyle: { color: 'rgba(255,255,255,0.5)', fontSize: 10 },
+        },
+        series: [{
+          type: 'heatmap',
+          data: data,
+          itemStyle: {
+            borderColor: 'rgba(0,0,0,0.3)',
+            borderWidth: 1,
+          },
+          emphasis: {
+            itemStyle: {
+              borderColor: '#fff',
+              borderWidth: 2,
+            }
+          },
+        }],
+        animationDuration: 800,
+      };
+    }
+
+    // Adjust color brightness
+    function adjustColor(hex, factor) {
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      const adjust = (c) => Math.min(255, Math.max(0, Math.round(c * factor)));
+      return `rgb(${adjust(r)}, ${adjust(g)}, ${adjust(b)})`;
+    }
+
+    // Render chart or table
+    function renderVisualization(vizType, columns, columnTypes, rows, queryTime) {
+      const chartContainer = document.getElementById('chartContainer');
+      const chartWrapper = document.getElementById('chartWrapper');
+      const resultsCard = document.getElementById('resultsCard');
+
+      // Destroy existing chart
+      if (chartInstance) {
+        chartInstance.dispose();
+        chartInstance = null;
+      }
+
+      // Show loading skeleton briefly
+      chartWrapper.innerHTML = `
+        <div class="chart-skeleton">
+          <div class="chart-skeleton-bars">
+            <div class="chart-skeleton-bar"></div>
+            <div class="chart-skeleton-bar"></div>
+            <div class="chart-skeleton-bar"></div>
+            <div class="chart-skeleton-bar"></div>
+            <div class="chart-skeleton-bar"></div>
+            <div class="chart-skeleton-bar"></div>
+          </div>
+          <div class="chart-skeleton-axis"></div>
+        </div>
+      `;
+      chartContainer.style.display = 'block';
+      resultsCard.style.display = 'none';
+
+      // Build chart config
+      const config = buildChartConfig(vizType, columns, columnTypes, rows);
+
+      // Update summary bar
+      updateResultSummary(rows.length, queryTime, rows.length >= 1000);
+
+      setTimeout(() => {
+        chartWrapper.innerHTML = '';
+
+        if (!config) {
+          // Render enhanced table
+          chartContainer.style.display = 'none';
+          resultsCard.style.display = 'block';
+          renderEnhancedTable(columns, columnTypes, rows);
+          return;
+        }
+
+        if (config.type === 'single_number') {
+          // Render single number visualization
+          chartWrapper.classList.add('single-number');
+          renderSingleNumber(chartWrapper, config.value, config.label);
+        } else {
+          // Render ECharts
+          chartWrapper.classList.remove('single-number');
+          chartInstance = echarts.init(chartWrapper, 'feather-dark');
+          chartInstance.setOption(config);
+
+          // Handle resize
+          const resizeHandler = debounce(() => {
+            if (chartInstance) chartInstance.resize();
+          }, 100);
+          window.addEventListener('resize', resizeHandler);
+        }
+
+        // Add transition effect
+        chartWrapper.classList.add('chart-transition-in');
+        setTimeout(() => chartWrapper.classList.remove('chart-transition-in'), 400);
+      }, 300);
+    }
+
+    // Render single number with count-up animation
+    function renderSingleNumber(container, value, label) {
+      const isNumeric = typeof value === 'number';
+      const formattedLabel = label.replace(/_/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2');
+
+      container.innerHTML = `
+        <div class="single-number-display">
+          <div class="single-number-value" id="singleNumberValue">0</div>
+          <div class="single-number-label">${escapeHtml(formattedLabel)}</div>
+        </div>
+      `;
+
+      const valueEl = document.getElementById('singleNumberValue');
+
+      if (isNumeric) {
+        // Count-up animation
+        const duration = 1500;
+        const steps = 60;
+        const stepTime = duration / steps;
+        let current = 0;
+        const increment = value / steps;
+
+        const timer = setInterval(() => {
+          current += increment;
+          if (current >= value) {
+            current = value;
+            clearInterval(timer);
+          }
+          valueEl.textContent = formatChartNumber(current, 'tooltip', label);
+        }, stepTime);
+      } else {
+        valueEl.textContent = String(value);
+      }
+    }
+
+    // Update result summary bar
+    function updateResultSummary(rowCount, queryTime, truncated) {
+      const summaryLeft = document.getElementById('summaryLeft');
+      const summaryRight = document.getElementById('summaryRight');
+
+      let leftText = `${rowCount.toLocaleString()} row${rowCount !== 1 ? 's' : ''} returned`;
+      if (truncated) {
+        leftText += `<span class="truncated-badge">Showing first 1,000</span>`;
+      }
+      summaryLeft.innerHTML = leftText;
+      summaryRight.textContent = queryTime ? `Query took ${queryTime}ms` : '';
+    }
+
+    // Render enhanced table
+    function renderEnhancedTable(columns, columnTypes, rows) {
+      const resultsHead = document.getElementById('resultsHead');
+      const resultsBody = document.getElementById('resultsBody');
+
+      // Determine which columns are numeric
+      const numericCols = new Set();
+      columns.forEach((col, idx) => {
+        const type = columnTypes[idx]?.toUpperCase() || 'TEXT';
+        if (['INTEGER', 'REAL', 'FLOAT', 'DOUBLE', 'DECIMAL', 'NUMBER'].includes(type)) {
+          numericCols.add(col);
+        }
+      });
+
+      // Render header
+      resultsHead.innerHTML = `<tr>${columns.map(col =>
+        `<th class="${numericCols.has(col) ? 'numeric' : ''}">${escapeHtml(col)}<span class="sort-icon">↕</span></th>`
+      ).join('')}</tr>`;
+
+      // Render body with staggered animation
+      if (rows.length === 0) {
+        resultsBody.innerHTML = `<tr><td colspan="${columns.length}" class="empty-state">No results found. Try rephrasing your question.</td></tr>`;
+      } else {
+        const displayRows = rows.slice(0, 100);
+        resultsBody.innerHTML = displayRows.map((row, idx) =>
+          `<tr style="animation-delay: ${idx * 20}ms">${columns.map(col => {
+            const val = row[col];
+            const isNum = numericCols.has(col);
+            const formatted = formatChartNumber(val, 'tooltip', col);
+            return `<td class="${isNum ? 'numeric' : ''}" title="${escapeHtml(String(val ?? ''))}">${escapeHtml(formatted)}</td>`;
+          }).join('')}</tr>`
+        ).join('');
+
+        if (rows.length > 100) {
+          document.getElementById('resultsInfo').textContent = `${rows.length.toLocaleString()} rows (displaying first 100)`;
+        } else {
+          document.getElementById('resultsInfo').textContent = `${rows.length.toLocaleString()} rows`;
+        }
+      }
+    }
+
+    // Download chart as PNG
+    function downloadChart() {
+      if (!chartInstance) {
+        showToast('No chart to download', 'error');
+        return;
+      }
+
+      const url = chartInstance.getDataURL({
+        type: 'png',
+        pixelRatio: 2,
+        backgroundColor: '#0a0a0f',
+      });
+
+      const link = document.createElement('a');
+      link.download = `affix-chart-${Date.now()}.png`;
+      link.href = url;
+      link.click();
+
+      showToast('Chart downloaded', 'success');
+    }
+
+    // Debounce utility
+    function debounce(fn, delay) {
+      let timeoutId;
+      return (...args) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => fn(...args), delay);
+      };
+    }
+
+    // Chart download button listener
+    document.getElementById('chartDownloadBtn').addEventListener('click', downloadChart);
 
     // Initialize app
     init();
