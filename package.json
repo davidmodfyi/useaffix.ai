@@ -6,6 +6,7 @@
     "create-user": "node scripts/create-user.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
     "bcrypt": "^5.1.1",
     "better-sqlite3": "^9.4.3",
     "connect-session-knex": "^4.0.0",

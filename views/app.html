@@ -7,7 +7,7 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg-primary: #0a0a0f;
@@ -28,8 +28,11 @@
       --success-glow: rgba(52, 211, 153, 0.15);
       --error: #f87171;
       --error-glow: rgba(248, 113, 113, 0.15);
+      --warning: #fbbf24;
+      --warning-glow: rgba(251, 191, 36, 0.15);
       --font-display: 'Instrument Serif', Georgia, serif;
       --font-body: 'DM Sans', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
     }
 
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -123,6 +126,11 @@
       color: var(--text-primary);
     }
 
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
     .btn-primary {
       background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
       border: none;
@@ -140,6 +148,11 @@
 
     .btn-danger:hover {
       background: var(--error-glow);
+    }
+
+    .btn-small {
+      padding: 4px 8px;
+      font-size: 0.75rem;
     }
 
     /* Main Content */
@@ -281,6 +294,180 @@
       gap: 12px;
     }
 
+    /* Query Section */
+    .query-section {
+      margin-bottom: 32px;
+    }
+
+    .query-input-container {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .query-input {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      resize: none;
+      min-height: 56px;
+      max-height: 150px;
+      transition: border-color 0.2s;
+    }
+
+    .query-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .query-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .query-btn {
+      padding: 16px 24px;
+      height: 56px;
+      white-space: nowrap;
+    }
+
+    /* Query Response */
+    .query-response {
+      display: none;
+      margin-top: 24px;
+    }
+
+    .query-response.active {
+      display: block;
+    }
+
+    .query-loading {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 48px;
+      color: var(--text-secondary);
+    }
+
+    .query-loading.active {
+      display: flex;
+    }
+
+    .response-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .response-card-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 500;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .response-card-body {
+      padding: 16px;
+    }
+
+    .explanation-text {
+      line-height: 1.7;
+    }
+
+    .assumptions-text {
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    /* SQL Code Block */
+    .sql-code {
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .sql-code pre {
+      padding: 16px;
+      margin: 0;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: var(--text-primary);
+    }
+
+    .sql-code .keyword {
+      color: var(--accent-bright);
+    }
+
+    .sql-code .string {
+      color: var(--success);
+    }
+
+    .sql-code .number {
+      color: var(--warning);
+    }
+
+    .sql-code .comment {
+      color: var(--text-muted);
+    }
+
+    /* Visualization Badge */
+    .viz-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent-glow);
+      border: 1px solid rgba(91, 124, 250, 0.2);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      color: var(--accent-bright);
+    }
+
+    .viz-description {
+      margin-top: 8px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    /* Results Table */
+    .results-table-container {
+      overflow-x: auto;
+    }
+
+    .results-info {
+      padding: 8px 0;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    /* Error State */
+    .error-card {
+      border-color: var(--error);
+    }
+
+    .error-card .response-card-header {
+      background: var(--error-glow);
+      color: var(--error);
+    }
+
+    .error-message {
+      color: var(--error);
+    }
+
     /* Tables List */
     .tables-grid {
       display: grid;
@@ -339,19 +526,6 @@
       gap: 16px;
       color: var(--text-secondary);
       font-size: 0.85rem;
-    }
-
-    .table-card-actions {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      gap: 8px;
-    }
-
-    .table-card-actions .btn {
-      padding: 6px 12px;
-      font-size: 0.8rem;
     }
 
     /* Data Table */
@@ -451,20 +625,7 @@
       padding: 6px 12px;
     }
 
-    .pagination-controls .btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
     /* Loading State */
-    .loading {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 48px;
-      color: var(--text-secondary);
-    }
-
     .spinner {
       width: 24px;
       height: 24px;
@@ -575,6 +736,30 @@
       background: var(--success);
       border-radius: 50%;
     }
+
+    /* Debug Section */
+    .debug-section {
+      margin-top: 16px;
+    }
+
+    .debug-section summary {
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      padding: 8px 0;
+    }
+
+    .debug-section pre {
+      background: var(--bg-secondary);
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      max-height: 300px;
+      overflow-y: auto;
+    }
   </style>
 </head>
 <body>
@@ -629,7 +814,7 @@
       <!-- Data Section (shown after upload) -->
       <section class="data-section" id="dataSection">
         <div class="section-header">
-          <h2>Your Data</h2>
+          <h2>Ask Your Data</h2>
           <div class="header-actions">
             <div class="status-badge">
               <span class="dot"></span>
@@ -637,6 +822,94 @@
             </div>
             <button class="btn btn-primary" id="uploadMoreBtn">+ Upload More</button>
           </div>
+        </div>
+
+        <!-- Query Section -->
+        <div class="query-section">
+          <div class="query-input-container">
+            <textarea
+              class="query-input"
+              id="queryInput"
+              placeholder="Ask a question about your data..."
+              rows="1"
+            ></textarea>
+            <button class="btn btn-primary query-btn" id="askBtn">Ask</button>
+          </div>
+
+          <!-- Loading State -->
+          <div class="query-loading" id="queryLoading">
+            <div class="spinner"></div>
+            Analyzing your data...
+          </div>
+
+          <!-- Query Response -->
+          <div class="query-response" id="queryResponse">
+            <!-- Explanation -->
+            <div class="response-card" id="explanationCard">
+              <div class="response-card-header">Explanation</div>
+              <div class="response-card-body">
+                <div class="explanation-text" id="explanationText"></div>
+                <div class="assumptions-text" id="assumptionsText"></div>
+              </div>
+            </div>
+
+            <!-- SQL Query -->
+            <div class="response-card" id="sqlCard">
+              <div class="response-card-header">
+                Generated SQL
+                <button class="btn btn-small" id="copySqlBtn">Copy</button>
+              </div>
+              <div class="response-card-body">
+                <div class="sql-code">
+                  <pre id="sqlCode"></pre>
+                </div>
+              </div>
+            </div>
+
+            <!-- Visualization Recommendation -->
+            <div class="response-card" id="vizCard">
+              <div class="response-card-header">Visualization</div>
+              <div class="response-card-body">
+                <div class="viz-badge" id="vizBadge"></div>
+                <div class="viz-description" id="vizDescription"></div>
+              </div>
+            </div>
+
+            <!-- Results Table -->
+            <div class="response-card" id="resultsCard">
+              <div class="response-card-header">
+                Results
+                <span class="results-info" id="resultsInfo"></span>
+              </div>
+              <div class="response-card-body">
+                <div class="results-table-container">
+                  <table id="resultsTable">
+                    <thead id="resultsHead"></thead>
+                    <tbody id="resultsBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Error Card (hidden by default) -->
+            <div class="response-card error-card" id="errorCard" style="display: none;">
+              <div class="response-card-header">Error</div>
+              <div class="response-card-body">
+                <div class="error-message" id="errorMessage"></div>
+              </div>
+            </div>
+
+            <!-- Debug Section -->
+            <details class="debug-section">
+              <summary>Debug: Full Claude Response</summary>
+              <pre id="debugResponse"></pre>
+            </details>
+          </div>
+        </div>
+
+        <!-- Tables Grid -->
+        <div class="section-header" style="margin-top: 48px;">
+          <h2>Your Tables</h2>
         </div>
 
         <div class="tables-grid" id="tablesGrid">
@@ -682,6 +955,7 @@
     let currentPage = 1;
     let pageSize = 25;
     let totalRows = 0;
+    let isQuerying = false;
 
     // DOM Elements
     const uploadSection = document.getElementById('uploadSection');
@@ -694,6 +968,10 @@
     const tablesGrid = document.getElementById('tablesGrid');
     const dataPreview = document.getElementById('dataPreview');
     const toastContainer = document.getElementById('toastContainer');
+    const queryInput = document.getElementById('queryInput');
+    const askBtn = document.getElementById('askBtn');
+    const queryLoading = document.getElementById('queryLoading');
+    const queryResponse = document.getElementById('queryResponse');
 
     // Initialize
     async function init() {
@@ -738,7 +1016,6 @@
         if (response.ok) {
           const sources = await response.json();
           if (sources.length > 0) {
-            // Use the default data source
             const defaultDs = sources.find(ds => ds.isDefault) || sources[0];
             dataSourceId = defaultDs.id;
           }
@@ -831,14 +1108,11 @@
       const { rows, columns, pagination } = data;
       totalRows = pagination.total;
 
-      // Update row count
       document.getElementById('previewRowCount').textContent = `(${totalRows.toLocaleString()} rows)`;
 
-      // Render header
       const tableHead = document.getElementById('tableHead');
       tableHead.innerHTML = `<tr>${columns.map(col => `<th>${escapeHtml(col)}</th>`).join('')}</tr>`;
 
-      // Render body
       const tableBody = document.getElementById('tableBody');
       if (rows.length === 0) {
         tableBody.innerHTML = `<tr><td colspan="${columns.length}" class="empty-state">No data</td></tr>`;
@@ -848,7 +1122,6 @@
         ).join('');
       }
 
-      // Update pagination
       const start = (pagination.page - 1) * pagination.limit + 1;
       const end = Math.min(pagination.page * pagination.limit, pagination.total);
       document.getElementById('paginationInfo').textContent =
@@ -856,6 +1129,188 @@
 
       document.getElementById('prevPageBtn').disabled = pagination.page <= 1;
       document.getElementById('nextPageBtn').disabled = pagination.page >= pagination.totalPages;
+    }
+
+    // Ask a question
+    async function askQuestion() {
+      const question = queryInput.value.trim();
+      if (!question || isQuerying) return;
+
+      isQuerying = true;
+      askBtn.disabled = true;
+      queryLoading.classList.add('active');
+      queryResponse.classList.remove('active');
+
+      try {
+        const response = await fetch('/api/query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question })
+        });
+
+        const data = await response.json();
+        displayQueryResponse(data);
+      } catch (err) {
+        console.error('Query error:', err);
+        displayQueryResponse({
+          error: true,
+          message: 'Something went wrong. Please try again.'
+        });
+      } finally {
+        isQuerying = false;
+        askBtn.disabled = false;
+        queryLoading.classList.remove('active');
+      }
+    }
+
+    // Display query response
+    function displayQueryResponse(data) {
+      queryResponse.classList.add('active');
+
+      // Hide all cards initially
+      document.getElementById('explanationCard').style.display = 'none';
+      document.getElementById('sqlCard').style.display = 'none';
+      document.getElementById('vizCard').style.display = 'none';
+      document.getElementById('resultsCard').style.display = 'none';
+      document.getElementById('errorCard').style.display = 'none';
+
+      // Debug response
+      document.getElementById('debugResponse').textContent = data.rawResponse || JSON.stringify(data, null, 2);
+
+      if (data.error) {
+        // Show error
+        document.getElementById('errorCard').style.display = 'block';
+        document.getElementById('errorMessage').textContent = data.message;
+
+        // Still show explanation and SQL if available
+        if (data.explanation) {
+          document.getElementById('explanationCard').style.display = 'block';
+          document.getElementById('explanationText').textContent = data.explanation;
+          document.getElementById('assumptionsText').textContent = data.assumptions ? `Assumptions: ${data.assumptions}` : '';
+        }
+
+        if (data.sql) {
+          document.getElementById('sqlCard').style.display = 'block';
+          document.getElementById('sqlCode').innerHTML = highlightSQL(data.sql);
+        }
+        return;
+      }
+
+      // Show explanation
+      if (data.explanation) {
+        document.getElementById('explanationCard').style.display = 'block';
+        document.getElementById('explanationText').textContent = data.explanation;
+        document.getElementById('assumptionsText').textContent =
+          data.assumptions && data.assumptions.toLowerCase() !== 'none'
+            ? `Assumptions: ${data.assumptions}`
+            : '';
+      }
+
+      // Show SQL
+      if (data.sql) {
+        document.getElementById('sqlCard').style.display = 'block';
+        document.getElementById('sqlCode').innerHTML = highlightSQL(data.sql);
+      }
+
+      // Show visualization
+      if (data.visualizationType) {
+        document.getElementById('vizCard').style.display = 'block';
+        document.getElementById('vizBadge').textContent = formatVizType(data.visualizationType);
+        document.getElementById('vizDescription').textContent = data.visualizationDescription || '';
+      }
+
+      // Show results
+      if (data.rows && data.columns) {
+        document.getElementById('resultsCard').style.display = 'block';
+
+        const truncatedNote = data.truncated ? ' (showing first 1,000)' : '';
+        document.getElementById('resultsInfo').textContent =
+          `${data.rowCount.toLocaleString()} rows${truncatedNote}`;
+
+        const resultsHead = document.getElementById('resultsHead');
+        const resultsBody = document.getElementById('resultsBody');
+
+        resultsHead.innerHTML = `<tr>${data.columns.map(col => `<th>${escapeHtml(col)}</th>`).join('')}</tr>`;
+
+        if (data.rows.length === 0) {
+          resultsBody.innerHTML = `<tr><td colspan="${data.columns.length}" class="empty-state">No results found. Try rephrasing your question.</td></tr>`;
+        } else {
+          // Show max 100 rows in UI
+          const displayRows = data.rows.slice(0, 100);
+          resultsBody.innerHTML = displayRows.map(row =>
+            `<tr>${data.columns.map(col => `<td title="${escapeHtml(formatValue(row[col]))}">${escapeHtml(formatValue(row[col]))}</td>`).join('')}</tr>`
+          ).join('');
+
+          if (data.rows.length > 100) {
+            document.getElementById('resultsInfo').textContent += ' (displaying first 100)';
+          }
+        }
+      }
+    }
+
+    // Format value for display
+    function formatValue(val) {
+      if (val === null || val === undefined) return '';
+      if (typeof val === 'number') {
+        // Format numbers with commas
+        if (Number.isInteger(val)) {
+          return val.toLocaleString();
+        }
+        // Format decimals to 2 places
+        return val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+      return String(val);
+    }
+
+    // Format visualization type
+    function formatVizType(type) {
+      const typeMap = {
+        'table': 'Table',
+        'bar_chart': 'Bar Chart',
+        'line_chart': 'Line Chart',
+        'pie_chart': 'Pie Chart',
+        'scatter_plot': 'Scatter Plot',
+        'area_chart': 'Area Chart',
+        'heatmap': 'Heatmap',
+        'single_number': 'Single Number',
+        'grouped_bar_chart': 'Grouped Bar Chart'
+      };
+      return typeMap[type] || type;
+    }
+
+    // Simple SQL syntax highlighting
+    function highlightSQL(sql) {
+      const keywords = ['SELECT', 'FROM', 'WHERE', 'AND', 'OR', 'NOT', 'IN', 'LIKE',
+        'ORDER BY', 'GROUP BY', 'HAVING', 'LIMIT', 'OFFSET', 'JOIN', 'LEFT', 'RIGHT',
+        'INNER', 'OUTER', 'ON', 'AS', 'DISTINCT', 'COUNT', 'SUM', 'AVG', 'MIN', 'MAX',
+        'CASE', 'WHEN', 'THEN', 'ELSE', 'END', 'NULL', 'IS', 'BETWEEN', 'UNION', 'ALL',
+        'DESC', 'ASC', 'WITH', 'CAST', 'COALESCE', 'NULLIF', 'ROUND', 'ABS', 'UPPER', 'LOWER'];
+
+      let highlighted = escapeHtml(sql);
+
+      // Highlight keywords (case insensitive)
+      keywords.forEach(kw => {
+        const regex = new RegExp(`\\b(${kw})\\b`, 'gi');
+        highlighted = highlighted.replace(regex, '<span class="keyword">$1</span>');
+      });
+
+      // Highlight strings
+      highlighted = highlighted.replace(/'([^']*)'/g, '<span class="string">\'$1\'</span>');
+
+      // Highlight numbers
+      highlighted = highlighted.replace(/\b(\d+\.?\d*)\b/g, '<span class="number">$1</span>');
+
+      return highlighted;
+    }
+
+    // Copy SQL to clipboard
+    function copySQL() {
+      const sql = document.getElementById('sqlCode').textContent;
+      navigator.clipboard.writeText(sql).then(() => {
+        showToast('SQL copied to clipboard', 'success');
+      }).catch(() => {
+        showToast('Failed to copy', 'error');
+      });
     }
 
     // File upload handling
@@ -956,6 +1411,12 @@
       return div.innerHTML;
     }
 
+    // Auto-resize textarea
+    function autoResizeTextarea(textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
+    }
+
     // Event listeners
     dropZone.addEventListener('click', () => fileInput.click());
 
@@ -979,7 +1440,7 @@
     fileInput.addEventListener('change', (e) => {
       if (e.target.files.length > 0) {
         handleFile(e.target.files[0]);
-        e.target.value = ''; // Reset for re-upload
+        e.target.value = '';
       }
     });
 
@@ -1005,6 +1466,22 @@
     });
 
     document.getElementById('logoutBtn').addEventListener('click', logout);
+
+    // Query event listeners
+    askBtn.addEventListener('click', askQuestion);
+
+    queryInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        askQuestion();
+      }
+    });
+
+    queryInput.addEventListener('input', () => {
+      autoResizeTextarea(queryInput);
+    });
+
+    document.getElementById('copySqlBtn').addEventListener('click', copySQL);
 
     // Initialize app
     init();

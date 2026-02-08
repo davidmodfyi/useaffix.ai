@@ -29,6 +29,7 @@ const { seedDefaultUser } = require('./db/seed');
 const { verifyCredentials, requireAuth, requireTenant, requireRole } = require('./middleware/auth');
 const SQLiteStore = require('./middleware/session-store');
 const { TenantManager } = require('./lib/tenant');
+const { askQuestion } = require('./lib/nlquery');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -403,6 +404,56 @@ app.delete('/api/datasources/:id/tables/:table', requireAuth, requireTenant, req
     res.json({ success: true, message: `Table "${table}" deleted` });
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// ============================================
+// Natural Language Query API
+// ============================================
+
+// Ask a question about the data
+app.post('/api/query', requireAuth, requireTenant, async (req, res) => {
+  try {
+    const { question } = req.body;
+
+    if (!question || typeof question !== 'string' || question.trim().length === 0) {
+      return res.status(400).json({ error: 'Question is required' });
+    }
+
+    // Get the default data source for the tenant
+    const defaultDs = tenantManager.getDefaultDataSource(req.tenantId);
+    if (!defaultDs) {
+      return res.status(400).json({
+        error: true,
+        errorType: 'no_datasource',
+        message: 'No data source found. Please upload some data first.'
+      });
+    }
+
+    // Get connected data source instance
+    const ds = await tenantManager.getDataSourceInstance(req.tenantId, defaultDs.id);
+
+    // Ask the question
+    const result = await askQuestion(ds, question.trim(), {
+      timeout: 30000
+    });
+
+    // Return appropriate status code based on error type
+    if (result.error) {
+      const statusCode = result.errorType === 'no_data' ? 400 :
+                         result.errorType === 'configuration_error' ? 500 :
+                         result.errorType === 'api_error' ? 502 : 400;
+      return res.status(statusCode).json(result);
+    }
+
+    res.json(result);
+  } catch (err) {
+    console.error('Query error:', err);
+    res.status(500).json({
+      error: true,
+      errorType: 'server_error',
+      message: 'An unexpected error occurred. Please try again.'
+    });
   }
 });
 
