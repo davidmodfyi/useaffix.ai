@@ -8,12 +8,16 @@ const crypto = require('crypto');
 // Initialize database (creates tables if needed)
 const db = require('./db/init');
 const { seedDefaultUser } = require('./db/seed');
-const { verifyCredentials, requireAuth } = require('./middleware/auth');
+const { verifyCredentials, requireAuth, requireTenant, requireRole } = require('./middleware/auth');
 const SQLiteStore = require('./middleware/session-store');
+const { TenantManager } = require('./lib/tenant');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
+
+// Initialize tenant manager
+const tenantManager = new TenantManager(db);
 
 // Trust proxy in production (required for secure cookies behind Render/etc)
 if (isProduction) {
@@ -125,16 +129,193 @@ app.get('/auth/me', requireAuth, (req, res) => {
   res.json({
     id: req.user.id,
     email: req.user.email,
-    name: req.user.name
+    name: req.user.name,
+    tenantId: req.user.tenant_id,
+    tenantName: req.user.tenant_name,
+    tenantSlug: req.user.tenant_slug,
+    role: req.user.role
   });
 });
 
 // Logout
 app.post('/auth/logout', (req, res) => {
   req.session.destroy((err) => {
-    res.clearCookie('affix.sid');
+    // Clear cookie with same options used when setting it
+    res.clearCookie('affix.sid', {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      path: '/'
+    });
     res.json({ success: true });
   });
+});
+
+// ============================================
+// Tenant API Routes
+// ============================================
+
+// Create a new tenant (signup flow)
+app.post('/api/tenants', requireAuth, async (req, res) => {
+  try {
+    const { name, slug } = req.body;
+
+    if (!name || !slug) {
+      return res.status(400).json({ error: 'Name and slug are required' });
+    }
+
+    // Create tenant
+    const tenant = tenantManager.createTenant({ name, slug });
+
+    // Associate current user with tenant as owner
+    tenantManager.associateUserWithTenant(req.user.id, tenant.id);
+
+    // Update user role to owner
+    db.prepare('UPDATE users SET role = ? WHERE id = ?').run('owner', req.user.id);
+
+    res.json({ success: true, tenant });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Get current user's tenant
+app.get('/api/tenant', requireAuth, (req, res) => {
+  if (!req.tenantId) {
+    return res.status(404).json({ error: 'No tenant found' });
+  }
+
+  const tenant = tenantManager.getTenant(req.tenantId);
+  if (!tenant) {
+    return res.status(404).json({ error: 'Tenant not found' });
+  }
+
+  res.json(tenant);
+});
+
+// Update tenant settings
+app.patch('/api/tenant', requireAuth, requireTenant, requireRole('owner', 'admin'), (req, res) => {
+  try {
+    const updated = tenantManager.updateTenant(req.tenantId, req.body);
+    res.json(updated);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// ============================================
+// Data Source API Routes
+// ============================================
+
+// List data sources for tenant
+app.get('/api/datasources', requireAuth, requireTenant, (req, res) => {
+  const dataSources = tenantManager.getDataSourcesForTenant(req.tenantId);
+  // Don't expose sensitive config
+  const sanitized = dataSources.map(ds => ({
+    id: ds.id,
+    name: ds.name,
+    type: ds.type,
+    isDefault: ds.is_default === 1,
+    createdAt: ds.created_at
+  }));
+  res.json(sanitized);
+});
+
+// Create a new data source
+app.post('/api/datasources', requireAuth, requireTenant, requireRole('owner', 'admin'), (req, res) => {
+  try {
+    const ds = tenantManager.createDataSourceForTenant(req.tenantId, req.body);
+    res.json({
+      id: ds.id,
+      name: ds.name,
+      type: ds.type,
+      isDefault: ds.is_default === 1,
+      createdAt: ds.created_at
+    });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Execute a query against a data source
+app.post('/api/datasources/:id/query', requireAuth, requireTenant, async (req, res) => {
+  try {
+    const { sql } = req.body;
+
+    if (!sql) {
+      return res.status(400).json({ error: 'SQL query is required' });
+    }
+
+    const ds = await tenantManager.getDataSourceInstance(req.tenantId, req.params.id);
+    const result = await ds.execute(sql);
+
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Get schema for a data source
+app.get('/api/datasources/:id/schema', requireAuth, requireTenant, async (req, res) => {
+  try {
+    const ds = await tenantManager.getDataSourceInstance(req.tenantId, req.params.id);
+    const schema = await ds.getSchema();
+    res.json(schema);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Get tables for a data source
+app.get('/api/datasources/:id/tables', requireAuth, requireTenant, async (req, res) => {
+  try {
+    const ds = await tenantManager.getDataSourceInstance(req.tenantId, req.params.id);
+    const tables = await ds.getTables();
+    res.json(tables);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Get columns for a table
+app.get('/api/datasources/:id/tables/:table/columns', requireAuth, requireTenant, async (req, res) => {
+  try {
+    const ds = await tenantManager.getDataSourceInstance(req.tenantId, req.params.id);
+    const columns = await ds.getColumns(req.params.table);
+    res.json(columns);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// ============================================
+// Team Management API Routes
+// ============================================
+
+// List users in tenant
+app.get('/api/team', requireAuth, requireTenant, (req, res) => {
+  const users = tenantManager.getUsersForTenant(req.tenantId);
+  res.json(users);
+});
+
+// Invite user to tenant
+app.post('/api/team/invite', requireAuth, requireTenant, requireRole('owner', 'admin'), async (req, res) => {
+  try {
+    const { email, name, password, role = 'member' } = req.body;
+
+    if (!email || !name || !password) {
+      return res.status(400).json({ error: 'Email, name, and password are required' });
+    }
+
+    const user = await tenantManager.createUser(req.tenantId, { email, name, password });
+
+    // Set role
+    db.prepare('UPDATE users SET role = ? WHERE id = ?').run(role, user.id);
+
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 // ============================================

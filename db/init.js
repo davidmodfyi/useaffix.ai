@@ -24,6 +24,23 @@ const db = new Database(dbPath);
 // Enable WAL mode for better performance
 db.pragma('journal_mode = WAL');
 
+// ============================================
+// Core Tables
+// ============================================
+
+// Tenants table (multi-tenancy)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS tenants (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    slug TEXT UNIQUE NOT NULL,
+    plan TEXT DEFAULT 'free',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    settings TEXT DEFAULT '{}'
+  )
+`);
+
 // Create users table
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
@@ -31,9 +48,41 @@ db.exec(`
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     name TEXT NOT NULL,
+    tenant_id TEXT REFERENCES tenants(id),
+    role TEXT DEFAULT 'member',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     last_login DATETIME
+  )
+`);
+
+// Add tenant_id column if missing (for existing databases)
+try {
+  const columns = db.prepare(`PRAGMA table_info(users)`).all();
+  const hasTenantId = columns.some(col => col.name === 'tenant_id');
+  if (!hasTenantId) {
+    db.exec(`ALTER TABLE users ADD COLUMN tenant_id TEXT REFERENCES tenants(id)`);
+  }
+  const hasRole = columns.some(col => col.name === 'role');
+  if (!hasRole) {
+    db.exec(`ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'member'`);
+  }
+} catch (err) {
+  // Table might not exist yet, that's fine
+}
+
+// Tenant data sources table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS tenant_data_sources (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL,
+    config TEXT NOT NULL,
+    is_default INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(tenant_id, name)
   )
 `);
 
@@ -46,9 +95,14 @@ db.exec(`
   )
 `);
 
-// Create index on sessions expiry for cleanup
-db.exec(`
-  CREATE INDEX IF NOT EXISTS idx_sessions_expired ON sessions(expired)
-`);
+// ============================================
+// Indexes
+// ============================================
+
+db.exec(`CREATE INDEX IF NOT EXISTS idx_sessions_expired ON sessions(expired)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_users_tenant ON users(tenant_id)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_data_sources_tenant ON tenant_data_sources(tenant_id)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_tenants_slug ON tenants(slug)`);
 
 module.exports = db;
