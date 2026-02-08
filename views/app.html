@@ -207,7 +207,7 @@
         <div class="user-name" id="userName">Loading...</div>
         <div class="user-email" id="userEmail">...</div>
       </div>
-      <button class="btn-logout" onclick="logout()">Log Out</button>
+      <button class="btn-logout" id="logoutBtn">Log Out</button>
     </div>
   </header>
 
@@ -255,6 +255,8 @@
     }
 
     loadUserInfo();
+
+    document.getElementById('logoutBtn').addEventListener('click', logout);
   </script>
 </body>
 </html>
