@@ -520,38 +520,47 @@
       margin-left: 8px;
     }
 
-    /* Chart Download Button */
-    .chart-download-btn {
+    /* Chart Action Buttons */
+    .chart-actions {
       position: absolute;
       top: 16px;
       right: 16px;
-      width: 32px;
-      height: 32px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
       display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
+      gap: 8px;
       opacity: 0;
-      transition: all 0.2s ease;
+      transition: opacity 0.2s ease;
       z-index: 10;
     }
 
-    .chart-container:hover .chart-download-btn {
+    .chart-container:hover .chart-actions {
       opacity: 1;
     }
 
-    .chart-download-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.2);
+    .chart-action-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: var(--font-body);
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.6);
     }
 
-    .chart-download-btn svg {
-      width: 16px;
-      height: 16px;
-      stroke: rgba(255, 255, 255, 0.6);
+    .chart-action-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .chart-action-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
     }
 
     /* Chart Loading Skeleton */
@@ -1264,37 +1273,27 @@
 
           <!-- Query Response -->
           <div class="query-response" id="queryResponse">
-            <!-- Explanation -->
-            <div class="response-card" id="explanationCard">
-              <div class="response-card-header">Explanation</div>
-              <div class="response-card-body">
-                <div class="explanation-text" id="explanationText"></div>
-                <div class="assumptions-text" id="assumptionsText"></div>
-              </div>
-            </div>
-
-            <!-- SQL Query -->
-            <div class="response-card" id="sqlCard">
-              <div class="response-card-header">
-                Generated SQL
-                <button class="btn btn-small" id="copySqlBtn">Copy</button>
-              </div>
-              <div class="response-card-body">
-                <div class="sql-code">
-                  <pre id="sqlCode"></pre>
-                </div>
-              </div>
-            </div>
-
-            <!-- Chart Visualization -->
+            <!-- Chart Visualization (first!) -->
             <div class="chart-container" id="chartContainer" style="display: none;">
-              <button class="chart-download-btn" id="chartDownloadBtn" title="Download chart">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="7 10 12 15 17 10"></polyline>
-                  <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-              </button>
+              <div class="chart-actions">
+                <button class="chart-action-btn" id="chartDownloadBtn" title="Download chart as PNG">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  <span>PNG</span>
+                </button>
+                <button class="chart-action-btn" id="sqlDownloadBtn" title="Download SQL query">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                  </svg>
+                  <span>SQL</span>
+                </button>
+              </div>
               <div class="result-summary" id="resultSummary">
                 <span class="result-summary-left" id="summaryLeft"></span>
                 <span class="result-summary-right" id="summaryRight"></span>
@@ -1327,13 +1326,10 @@
                 <div class="error-message" id="errorMessage"></div>
               </div>
             </div>
-
-            <!-- Debug Section -->
-            <details class="debug-section">
-              <summary>Debug: Full Claude Response</summary>
-              <pre id="debugResponse"></pre>
-            </details>
           </div>
+
+          <!-- Hidden SQL storage for download -->
+          <pre id="sqlCode" style="display:none;"></pre>
         </div>
 
         <!-- Tables Grid -->
@@ -1592,53 +1588,27 @@
       }
     }
 
+    // Store current SQL for download
+    let currentSQL = '';
+
     // Display query response
     function displayQueryResponse(data) {
       queryResponse.classList.add('active');
 
       // Hide all cards initially
-      document.getElementById('explanationCard').style.display = 'none';
-      document.getElementById('sqlCard').style.display = 'none';
       document.getElementById('chartContainer').style.display = 'none';
       document.getElementById('resultsCard').style.display = 'none';
       document.getElementById('errorCard').style.display = 'none';
 
-      // Debug response
-      document.getElementById('debugResponse').textContent = data.rawResponse || JSON.stringify(data, null, 2);
+      // Store SQL for download
+      currentSQL = data.sql || '';
+      document.getElementById('sqlCode').textContent = currentSQL;
 
       if (data.error) {
         // Show error
         document.getElementById('errorCard').style.display = 'block';
         document.getElementById('errorMessage').textContent = data.message;
-
-        // Still show explanation and SQL if available
-        if (data.explanation) {
-          document.getElementById('explanationCard').style.display = 'block';
-          document.getElementById('explanationText').textContent = data.explanation;
-          document.getElementById('assumptionsText').textContent = data.assumptions ? `Assumptions: ${data.assumptions}` : '';
-        }
-
-        if (data.sql) {
-          document.getElementById('sqlCard').style.display = 'block';
-          document.getElementById('sqlCode').innerHTML = highlightSQL(data.sql);
-        }
         return;
-      }
-
-      // Show explanation
-      if (data.explanation) {
-        document.getElementById('explanationCard').style.display = 'block';
-        document.getElementById('explanationText').textContent = data.explanation;
-        document.getElementById('assumptionsText').textContent =
-          data.assumptions && data.assumptions.toLowerCase() !== 'none'
-            ? `Assumptions: ${data.assumptions}`
-            : '';
-      }
-
-      // Show SQL
-      if (data.sql) {
-        document.getElementById('sqlCard').style.display = 'block';
-        document.getElementById('sqlCode').innerHTML = highlightSQL(data.sql);
       }
 
       // Render visualization (chart or table)
@@ -2008,7 +1978,7 @@
       columns.forEach((col, idx) => {
         const type = columnTypes[idx]?.toUpperCase() || 'TEXT';
         const isNumeric = ['INTEGER', 'REAL', 'FLOAT', 'DOUBLE', 'DECIMAL', 'NUMBER'].includes(type);
-        const isDate = /date|time|created|updated/i.test(col) || type.includes('DATE') || type.includes('TIME');
+        const isDate = /date|time|created|updated|month|year|week|day|quarter|period/i.test(col) || type.includes('DATE') || type.includes('TIME');
 
         if (isDate) {
           analysis.date = col;
@@ -2030,7 +2000,9 @@
 
     // Build chart configuration
     function buildChartConfig(vizType, columns, columnTypes, rows) {
+      console.log('buildChartConfig:', { vizType, columns, columnTypes, rowCount: rows.length });
       const analysis = analyzeColumns(columns, columnTypes, rows);
+      console.log('Column analysis:', analysis);
 
       // Override viz type based on data shape
       if (rows.length === 1 && columns.length === 1) {
@@ -2249,8 +2221,10 @@
 
     // Line / Area Chart
     function buildLineChart(categoryCol, valueCol, rows, columns, isArea) {
+      console.log('buildLineChart:', { categoryCol, valueCol, rowCount: rows.length });
       const categories = rows.map(r => String(r[categoryCol] ?? ''));
       const values = rows.map(r => Number(r[valueCol]) || 0);
+      console.log('Line chart data:', { categories: categories.slice(0, 5), values: values.slice(0, 5) });
 
       return {
         tooltip: {
@@ -2758,6 +2732,24 @@
       showToast('Chart downloaded', 'success');
     }
 
+    // Download SQL as text file
+    function downloadSQL() {
+      if (!currentSQL) {
+        showToast('No SQL to download', 'error');
+        return;
+      }
+
+      const blob = new Blob([currentSQL], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = `affix-query-${Date.now()}.sql`;
+      link.href = url;
+      link.click();
+      URL.revokeObjectURL(url);
+
+      showToast('SQL downloaded', 'success');
+    }
+
     // Debounce utility
     function debounce(fn, delay) {
       let timeoutId;
@@ -2767,8 +2759,9 @@
       };
     }
 
-    // Chart download button listener
+    // Chart action button listeners
     document.getElementById('chartDownloadBtn').addEventListener('click', downloadChart);
+    document.getElementById('sqlDownloadBtn').addEventListener('click', downloadSQL);
 
     // Initialize app
     init();
