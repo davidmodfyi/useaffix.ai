@@ -377,6 +377,10 @@ try {
   if (!hasTemplateId) {
     db.exec(`ALTER TABLE projects ADD COLUMN template_id TEXT`);
   }
+  const hasSuggestedQuestions = projectColumns.some(col => col.name === 'suggested_questions');
+  if (!hasSuggestedQuestions) {
+    db.exec(`ALTER TABLE projects ADD COLUMN suggested_questions TEXT`);
+  }
 } catch (err) {
   // Table might not exist yet, that's fine
 }

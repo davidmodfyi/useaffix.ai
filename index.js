@@ -1430,7 +1430,8 @@ app.put('/api/insights/:id/restore', requireAuth, requireTenant, (req, res) => {
 // ============================================
 
 // Generate AI-powered suggested questions for a project
-app.post('/api/projects/:id/suggestions', requireAuth, requireTenant, async (req, res) => {
+// GET cached suggestions (fast, no AI call)
+app.get('/api/projects/:id/suggestions', requireAuth, requireTenant, (req, res) => {
   try {
     const projectId = req.params.id;
 
@@ -1438,6 +1439,46 @@ app.post('/api/projects/:id/suggestions', requireAuth, requireTenant, async (req
     const project = db.prepare('SELECT * FROM projects WHERE id = ? AND tenant_id = ?').get(projectId, req.tenantId);
     if (!project) {
       return res.status(404).json({ error: 'Project not found' });
+    }
+
+    // Return cached suggestions if available
+    if (project.suggested_questions) {
+      try {
+        const suggestions = JSON.parse(project.suggested_questions);
+        return res.json({ suggestions, cached: true });
+      } catch (e) {
+        // Invalid JSON, treat as no cache
+      }
+    }
+
+    // No cached suggestions
+    res.json({ suggestions: [], cached: false });
+  } catch (err) {
+    console.error('Get suggestions error:', err);
+    res.json({ suggestions: [] });
+  }
+});
+
+// POST to regenerate suggestions (calls AI)
+app.post('/api/projects/:id/suggestions', requireAuth, requireTenant, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const { force } = req.body; // Allow forcing regeneration
+
+    // Verify project belongs to tenant
+    const project = db.prepare('SELECT * FROM projects WHERE id = ? AND tenant_id = ?').get(projectId, req.tenantId);
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    // Return cached suggestions if available and not forcing regeneration
+    if (!force && project.suggested_questions) {
+      try {
+        const suggestions = JSON.parse(project.suggested_questions);
+        return res.json({ suggestions, cached: true });
+      } catch (e) {
+        // Invalid JSON, regenerate
+      }
     }
 
     // Get the default data source for the tenant
@@ -1518,7 +1559,13 @@ RULES:
       console.error('Failed to parse suggestions:', err);
     }
 
-    res.json({ suggestions });
+    // Cache the suggestions in the project
+    if (suggestions.length > 0) {
+      db.prepare('UPDATE projects SET suggested_questions = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+        .run(JSON.stringify(suggestions), projectId);
+    }
+
+    res.json({ suggestions, cached: false });
   } catch (err) {
     console.error('Suggestions error:', err);
     res.json({ suggestions: [] });

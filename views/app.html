@@ -5898,8 +5898,8 @@
         // Load insight summary
         await loadInsightSummary(projectId);
 
-        // Generate suggested questions
-        await generateSuggestedQuestions();
+        // Load cached suggested questions (fast, no AI call)
+        await loadSuggestedQuestions();
 
         // Reset query response area
         document.getElementById('projectQueryResponse').classList.remove('active');
@@ -6045,7 +6045,41 @@
     }
 
     // Generate AI-powered suggested questions
-    async function generateSuggestedQuestions() {
+    // Load cached suggested questions (fast, no AI call)
+    async function loadSuggestedQuestions() {
+      const container = document.getElementById('suggestedQuestions');
+
+      if (!currentProject) {
+        container.innerHTML = '';
+        return;
+      }
+
+      try {
+        // Use GET to fetch cached suggestions (no AI call)
+        const response = await fetch(`/api/projects/${currentProject.id}/suggestions`);
+
+        if (!response.ok) {
+          container.innerHTML = '';
+          return;
+        }
+
+        const data = await response.json();
+        const suggestions = data.suggestions || [];
+
+        if (suggestions.length === 0) {
+          container.innerHTML = '';
+          return;
+        }
+
+        renderSuggestedQuestions(suggestions);
+      } catch (err) {
+        console.error('Failed to load suggested questions:', err);
+        container.innerHTML = '';
+      }
+    }
+
+    // Generate new suggested questions (calls AI - use sparingly)
+    async function generateSuggestedQuestions(force = false) {
       const container = document.getElementById('suggestedQuestions');
 
       if (!currentProject) {
@@ -6058,7 +6092,9 @@
         container.innerHTML = '<div class="loading-pills"><div class="spinner" style="width: 16px; height: 16px;"></div> Generating smart questions...</div>';
 
         const response = await fetch(`/api/projects/${currentProject.id}/suggestions`, {
-          method: 'POST'
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ force })
         });
 
         if (!response.ok) {
@@ -6074,27 +6110,38 @@
           return;
         }
 
-        // Render suggestion pills with category styling
-        container.innerHTML = suggestions.map(s => {
-          const complexity = s.complexity || 'simple';
-          const complexityIcon = complexity === 'complex' ? '✨ ' : '';
-          const categoryClass = s.category ? `category-${s.category}` : '';
+        renderSuggestedQuestions(suggestions);
+      } catch (err) {
+        console.error('Failed to generate suggested questions:', err);
+        container.innerHTML = '';
+      }
+    }
 
-          return `<button class="suggested-pill ${categoryClass}"
-                    data-question="${escapeHtml(s.question)}"
-                    title="${escapeHtml(s.business_value || '')}">
-                    ${complexityIcon}${escapeHtml(s.question)}
-                  </button>`;
-        }).join('');
+    // Render suggested questions pills
+    function renderSuggestedQuestions(suggestions) {
+      const container = document.getElementById('suggestedQuestions');
 
-        // Add click handlers
-        document.querySelectorAll('.suggested-pill').forEach(pill => {
-          pill.addEventListener('click', () => {
-            const question = pill.dataset.question;
-            document.getElementById('projectQueryInput').value = question;
-            askProjectQuestion();
-          });
+      // Render suggestion pills with category styling
+      container.innerHTML = suggestions.map(s => {
+        const complexity = s.complexity || 'simple';
+        const complexityIcon = complexity === 'complex' ? '✨ ' : '';
+        const categoryClass = s.category ? `category-${s.category}` : '';
+
+        return `<button class="suggested-pill ${categoryClass}"
+                  data-question="${escapeHtml(s.question)}"
+                  title="${escapeHtml(s.business_value || '')}">
+                  ${complexityIcon}${escapeHtml(s.question)}
+                </button>`;
+      }).join('');
+
+      // Add click handlers
+      document.querySelectorAll('.suggested-pill').forEach(pill => {
+        pill.addEventListener('click', () => {
+          const question = pill.dataset.question;
+          document.getElementById('projectQueryInput').value = question;
+          askProjectQuestion();
         });
+      });
 
       } catch (err) {
         console.error('Failed to generate suggested questions:', err);
@@ -7799,7 +7846,8 @@
           if (currentProject) {
             await loadProjectDataSources(currentProject.id);
             await loadProjectStats(currentProject.id);
-            await generateSuggestedQuestions();
+            // Generate new suggested questions after data upload (force refresh)
+            await generateSuggestedQuestions(true);
           } else {
             await loadTables();
             if (result.table) {
