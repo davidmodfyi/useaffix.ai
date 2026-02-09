@@ -9838,12 +9838,15 @@
             </div>
 
             <!-- Dashboard Actions -->
-            <div class="dashboard-card-actions" onclick="event.stopPropagation()">
-              <button class="dashboard-mini-action" onclick="duplicateDashboard('${d.id}')" title="Duplicate">
+            <div class="dashboard-card-actions">
+              <button class="dashboard-mini-action dashboard-action-duplicate" data-id="${d.id}" title="Duplicate">
                 📋
               </button>
-              <button class="dashboard-mini-action" onclick="togglePinDashboard('${d.id}', ${d.is_pinned ? 'true' : 'false'})" title="${d.is_pinned ? 'Unpin' : 'Pin'}">
+              <button class="dashboard-mini-action dashboard-action-pin" data-id="${d.id}" data-pinned="${d.is_pinned ? 'true' : 'false'}" title="${d.is_pinned ? 'Unpin' : 'Pin'}">
                 ${d.is_pinned ? '📌' : '📍'}
+              </button>
+              <button class="dashboard-mini-action dashboard-action-delete" data-id="${d.id}" title="Delete">
+                🗑️
               </button>
             </div>
           </div>
@@ -9857,6 +9860,28 @@
           if (!e.target.closest('.dashboard-card-actions')) {
             openDashboard(card.dataset.dashboardId);
           }
+        });
+      });
+
+      // Add handlers for dashboard actions
+      grid.querySelectorAll('.dashboard-action-duplicate').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          duplicateDashboard(btn.dataset.id);
+        });
+      });
+
+      grid.querySelectorAll('.dashboard-action-pin').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          togglePinDashboard(btn.dataset.id, btn.dataset.pinned === 'true');
+        });
+      });
+
+      grid.querySelectorAll('.dashboard-action-delete').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          deleteDashboard(btn.dataset.id);
         });
       });
     }
@@ -9943,6 +9968,31 @@
       } catch (err) {
         console.error('Error toggling pin:', err);
         showToast('Failed to update dashboard', 'error');
+      }
+    }
+
+    // Delete Dashboard
+    async function deleteDashboard(dashboardId) {
+      if (!confirm('Are you sure you want to delete this dashboard? This cannot be undone.')) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/dashboards/${dashboardId}`, {
+          method: 'DELETE'
+        });
+
+        if (res.ok) {
+          showToast('Dashboard deleted', 'success');
+          if (currentProject) {
+            loadProjectDashboards(currentProject.id);
+          }
+        } else {
+          throw new Error('Failed to delete dashboard');
+        }
+      } catch (err) {
+        console.error('Error deleting dashboard:', err);
+        showToast('Failed to delete dashboard', 'error');
       }
     }
 
@@ -10314,7 +10364,7 @@
 
           html += `
             <div class="analysis-question-section" data-query-id="${query.id}">
-              <div class="analysis-question-header" onclick="toggleAnalysisQuestion(this)">
+              <div class="analysis-question-header" data-query-id="${query.id}">
                 <div class="analysis-question-number">${index + 1}</div>
                 <div class="analysis-question-text">${query.question}</div>
                 <span style="font-size: 0.8rem; color: var(--text-muted); margin-right: 8px;">
@@ -10328,10 +10378,10 @@
                 </div>
                 <div class="chart-wrapper" id="analysisChart_${query.id}" style="height: 300px; margin-bottom: 16px;"></div>
                 <div class="result-actions" style="margin-bottom: 16px;">
-                  <button class="result-action-btn" onclick="pinAnalysisQuery('${query.id}')">
+                  <button class="result-action-btn analysis-pin-btn" data-query-id="${query.id}">
                     ${query.is_pinned ? '📌 Pinned' : '📌 Pin'}
                   </button>
-                  <button class="result-action-btn" onclick="showAnalysisSql('${query.id}')">
+                  <button class="result-action-btn analysis-sql-btn" data-query-id="${query.id}">
                     📝 Show SQL
                   </button>
                 </div>
@@ -10367,6 +10417,21 @@
         projectHome.style.display = 'block';
       });
 
+      // Add event listeners for analysis question headers (toggle expansion)
+      resultsContainer.querySelectorAll('.analysis-question-header').forEach(header => {
+        header.addEventListener('click', () => toggleAnalysisQuestion(header));
+      });
+
+      // Add event listeners for pin buttons
+      resultsContainer.querySelectorAll('.analysis-pin-btn').forEach(btn => {
+        btn.addEventListener('click', () => pinAnalysisQuery(btn.dataset.queryId));
+      });
+
+      // Add event listeners for SQL buttons
+      resultsContainer.querySelectorAll('.analysis-sql-btn').forEach(btn => {
+        btn.addEventListener('click', () => showAnalysisSql(btn.dataset.queryId));
+      });
+
       // Store queries for chart rendering
       window.analysisQueries = queries;
 
@@ -10393,7 +10458,7 @@
     }
 
     // Toggle analysis question expansion
-    window.toggleAnalysisQuestion = function(header) {
+    function toggleAnalysisQuestion(header) {
       const section = header.closest('.analysis-question-section');
       const content = section.querySelector('.analysis-question-content');
       const icon = header.querySelector('.analysis-question-expand');
@@ -10414,7 +10479,7 @@
           loadAnalysisQueryInsights(queryId, insightsContainer);
         }
       }
-    };
+    }
 
     async function loadAnalysisQueryInsights(queryId, container) {
       try {
@@ -10450,7 +10515,7 @@
       }
     }
 
-    window.pinAnalysisQuery = async function(queryId) {
+    async function pinAnalysisQuery(queryId) {
       try {
         const response = await fetch(`/api/queries/${queryId}/pin`, {
           method: 'PUT',
@@ -10466,14 +10531,14 @@
         console.error('Error pinning query:', err);
         showToast('Failed to pin query', 'error');
       }
-    };
+    }
 
-    window.showAnalysisSql = function(queryId) {
+    function showAnalysisSql(queryId) {
       const query = (window.analysisQueries || []).find(q => q.id === queryId);
       if (query && query.sql_generated) {
         alert(`SQL:\n\n${query.sql_generated}`);
       }
-    };
+    }
 
     // ============================================
     // Share Dashboard Modal

@@ -2190,6 +2190,8 @@ app.post('/api/dashboards/:id/execute-widget', requireAuth, requireTenant, requi
 
     // Add widget to dashboard
     const widgetId = uuidv4();
+    // Use the suggested visualization type, or fall back to what the NL query determined
+    const widgetType = suggestedViz || result.visualizationType || 'bar_chart';
 
     db.prepare(`
       INSERT INTO dashboard_widgets (id, dashboard_id, query_id, widget_type, position)
@@ -2198,7 +2200,7 @@ app.post('/api/dashboards/:id/execute-widget', requireAuth, requireTenant, requi
       widgetId,
       dashboardId,
       queryId,
-      result.visualizationType === 'single_number' ? 'single_number' : 'chart',
+      widgetType,
       JSON.stringify(position)
     );
 
@@ -2208,12 +2210,14 @@ app.post('/api/dashboards/:id/execute-widget', requireAuth, requireTenant, requi
         id: queryId,
         question,
         visualizationType: result.visualizationType,
-        data: result.data,
+        rows: result.rows,
         columns: result.columns,
+        columnTypes: result.columnTypes,
         chartConfig: result.chartConfig
       },
       widget: {
         id: widgetId,
+        widget_type: widgetType,
         position
       }
     });
