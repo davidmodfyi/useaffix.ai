@@ -9802,9 +9802,9 @@
         addNewQueryWidgetBtn.style.display = 'inline-block';
 
         // Update summary
-        const rowCount = data.result_summary?.rows?.length || 0;
+        const rowCount = data.rows?.length || data.rowCount || 0;
         widgetSummaryLeft.textContent = `${rowCount} row${rowCount !== 1 ? 's' : ''} returned`;
-        widgetSummaryRight.textContent = data.execution_time_ms ? `${data.execution_time_ms}ms` : '';
+        widgetSummaryRight.textContent = data.queryTime ? `${data.queryTime}ms` : '';
 
         // Render chart preview
         renderNewQueryChart(data);
@@ -9824,8 +9824,11 @@
         newQueryChartInstance = null;
       }
 
-      const { columns, columnTypes, rows } = data.result_summary;
-      const vizType = data.visualization_type || 'bar_chart';
+      // API returns columns, rows directly on data, not nested in result_summary
+      const columns = data.columns || [];
+      const columnTypes = data.columnTypes || [];
+      const rows = data.rows || [];
+      const vizType = data.visualizationType || 'bar_chart';
 
       const config = buildChartConfig(vizType, columns, columnTypes || [], rows);
 
