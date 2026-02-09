@@ -3856,6 +3856,165 @@
       box-shadow: 0 0 40px rgba(0, 0, 0, 0.3), 0 0 20px var(--dashboard-accent-glow, var(--accent-glow));
     }
 
+    /* Dashboard Query Side Panel */
+    .dashboard-query-panel {
+      position: fixed;
+      top: 64px;
+      right: 0;
+      width: 380px;
+      height: calc(100vh - 64px - 60px);
+      background: rgba(15, 15, 22, 0.98);
+      border-left: 1px solid var(--border);
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      box-shadow: -4px 0 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .dashboard-query-panel.open {
+      transform: translateX(0);
+    }
+
+    .query-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .query-panel-header h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .query-panel-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .query-panel-close:hover {
+      color: var(--text-primary);
+    }
+
+    .query-panel-body {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .query-panel-input-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .query-panel-input {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      resize: none;
+    }
+
+    .query-panel-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .query-panel-submit {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-family: var(--font-body);
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .query-panel-submit:hover {
+      opacity: 0.9;
+    }
+
+    .query-panel-submit:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .query-panel-response {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .query-panel-loading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: var(--bg-card);
+      border-radius: 10px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .query-panel-result {
+      background: var(--bg-card);
+      border-radius: 10px;
+      padding: 16px;
+      overflow: hidden;
+    }
+
+    .query-panel-result .result-explanation {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .query-panel-result .result-chart {
+      width: 100%;
+      height: 200px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .query-panel-result .result-add-btn {
+      width: 100%;
+      margin-top: 12px;
+      padding: 10px;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .query-panel-result .result-add-btn:hover {
+      opacity: 0.9;
+    }
+
     /* Widget Header */
     .widget-header {
       display: flex;
@@ -4729,6 +4888,37 @@
             <button class="dashboard-action-btn" id="shareDashboardBtn" title="Share dashboard">
               🔗 Share
             </button>
+            <button class="dashboard-action-btn" id="toggleQueryPanelBtn" title="Ask your data">
+              💬 Ask
+            </button>
+          </div>
+        </div>
+
+        <!-- Query Side Panel -->
+        <div class="dashboard-query-panel" id="dashboardQueryPanel">
+          <div class="query-panel-header">
+            <h3>Ask Your Data</h3>
+            <button class="query-panel-close" id="closeQueryPanelBtn">×</button>
+          </div>
+          <div class="query-panel-body">
+            <div class="query-panel-input-wrapper">
+              <textarea
+                id="dashboardQueryInput"
+                class="query-panel-input"
+                placeholder="Ask anything about your data..."
+                rows="3"
+              ></textarea>
+              <button class="query-panel-submit" id="dashboardQuerySubmit">
+                Ask
+              </button>
+            </div>
+            <div class="query-panel-response" id="dashboardQueryResponse" style="display: none;">
+              <div class="query-panel-loading" id="dashboardQueryLoading" style="display: none;">
+                <div class="spinner"></div>
+                <span>Analyzing your data...</span>
+              </div>
+              <div class="query-panel-result" id="dashboardQueryResult"></div>
+            </div>
           </div>
         </div>
 
@@ -5716,8 +5906,8 @@
         // Load recent queries
         await loadRecentQueries(projectId);
 
-        // Load dashboards
-        await loadDashboards(projectId);
+        // Load dashboards and check if we should auto-open one
+        const dashboards = await loadDashboards(projectId);
 
         // Load insight summary
         await loadInsightSummary(projectId);
@@ -5740,6 +5930,12 @@
             dashboardDescription.value = prompt;
             openGenerateDashboardModal();
           }, 500);
+        } else if (dashboards && dashboards.length > 0) {
+          // Auto-open the first dashboard if one exists
+          // Slight delay to let the project home UI render first
+          setTimeout(() => {
+            openDashboard(dashboards[0].id);
+          }, 100);
         }
 
       } catch (err) {
@@ -5753,7 +5949,8 @@
       try {
         const response = await fetch(`/api/projects/${projectId}/summary`);
         if (response.ok) {
-          const stats = await response.json();
+          const data = await response.json();
+          const stats = data.summary || {};
           document.getElementById('statDataSources').textContent = stats.dataSourceCount || 0;
           document.getElementById('statQueriesAsked').textContent = stats.queryCount || 0;
           document.getElementById('statDashboards').textContent = stats.dashboardCount || 0;
@@ -5875,10 +6072,12 @@
         if (response.ok) {
           const dashboards = await response.json();
           renderDashboards(dashboards);
+          return dashboards;
         }
       } catch (err) {
         console.error('Failed to load dashboards:', err);
       }
+      return [];
     }
 
     // Render dashboards
@@ -6682,6 +6881,127 @@
 
       const queryInput = document.getElementById('projectQueryInput');
       queryInput.placeholder = 'Ask a question about your data...';
+    }
+
+    // Ask question from dashboard query panel
+    let dashboardQueryResult = null;
+    async function askQuestionFromDashboard() {
+      const input = document.getElementById('dashboardQueryInput');
+      const question = input.value.trim();
+      if (!question || isQuerying) return;
+
+      if (!currentProject || !currentDashboard) {
+        showToast('No dashboard open', 'error');
+        return;
+      }
+
+      isQuerying = true;
+      const submitBtn = document.getElementById('dashboardQuerySubmit');
+      submitBtn.disabled = true;
+
+      const responseArea = document.getElementById('dashboardQueryResponse');
+      const loadingEl = document.getElementById('dashboardQueryLoading');
+      const resultEl = document.getElementById('dashboardQueryResult');
+
+      responseArea.style.display = 'block';
+      loadingEl.style.display = 'flex';
+      resultEl.innerHTML = '';
+
+      try {
+        const response = await fetch(`/api/projects/${currentProject.id}/query`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question })
+        });
+
+        const data = await response.json();
+
+        loadingEl.style.display = 'none';
+
+        if (data.error) {
+          resultEl.innerHTML = `
+            <div class="result-error" style="color: var(--error);">
+              ${escapeHtml(data.message)}
+            </div>
+          `;
+          return;
+        }
+
+        // Store the result for adding to dashboard
+        dashboardQueryResult = data;
+
+        // Build mini chart preview
+        const chartConfig = buildChartConfig({
+          type: data.visualizationType || 'table',
+          columns: data.columns || [],
+          rows: data.rows || [],
+          question: question
+        });
+
+        resultEl.innerHTML = `
+          <div class="result-explanation">${escapeHtml(data.explanation || '')}</div>
+          <div class="result-chart" id="dashboardQueryChart"></div>
+          <button class="result-add-btn" id="addQueryToDashboardBtn">
+            + Add to Dashboard
+          </button>
+        `;
+
+        // Render mini chart
+        const chartContainer = document.getElementById('dashboardQueryChart');
+        if (chartContainer && chartConfig) {
+          const chartInstance = echarts.init(chartContainer, 'feather-dark');
+          chartInstance.setOption(chartConfig);
+        }
+
+        // Handle add to dashboard
+        document.getElementById('addQueryToDashboardBtn').addEventListener('click', async () => {
+          if (!dashboardQueryResult || !dashboardQueryResult.queryId) {
+            showToast('No query result to add', 'error');
+            return;
+          }
+
+          try {
+            // Add widget to dashboard
+            const addRes = await fetch(`/api/dashboards/${currentDashboard.id}/widgets`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                queryId: dashboardQueryResult.queryId,
+                widgetType: dashboardQueryResult.visualizationType || 'chart',
+                position: { x: 0, y: 0, w: 6, h: 4 }
+              })
+            });
+
+            if (!addRes.ok) throw new Error('Failed to add widget');
+
+            showToast('Widget added to dashboard!', 'success');
+
+            // Refresh dashboard
+            await openDashboard(currentDashboard.id);
+
+            // Clear the query panel
+            input.value = '';
+            responseArea.style.display = 'none';
+            document.getElementById('dashboardQueryPanel').classList.remove('open');
+
+          } catch (err) {
+            console.error('Add widget error:', err);
+            showToast('Failed to add widget', 'error');
+          }
+        });
+
+      } catch (err) {
+        console.error('Dashboard query error:', err);
+        loadingEl.style.display = 'none';
+        resultEl.innerHTML = `
+          <div class="result-error" style="color: var(--error);">
+            Something went wrong. Please try again.
+          </div>
+        `;
+      } finally {
+        isQuerying = false;
+        submitBtn.disabled = false;
+      }
     }
 
     // Store last question for follow-up context
@@ -7765,7 +8085,9 @@
       if (value === null || value === undefined) return '';
       if (typeof value !== 'number') return String(value);
 
-      const isCurrency = /price|amount|revenue|cost|total|sales|value|sum|profit/i.test(columnName);
+      // Count-related columns should NOT be formatted as currency
+      const isCount = /count|number|quantity|qty|num|total_\w*s$|how many|invoices|orders|customers|items|products|records/i.test(columnName);
+      const isCurrency = !isCount && /price|amount|revenue|cost|total|sales|value|sum|profit|spend|budget/i.test(columnName);
       const isPercent = /percent|rate|pct|%|ratio/i.test(columnName);
 
       if (context === 'axis') {
@@ -8644,6 +8966,33 @@
         openRegenerateDashboardModal();
       });
 
+      // Query panel toggle
+      const toggleQueryPanelBtn = document.getElementById('toggleQueryPanelBtn');
+      const dashboardQueryPanel = document.getElementById('dashboardQueryPanel');
+      const closeQueryPanelBtn = document.getElementById('closeQueryPanelBtn');
+      const dashboardQueryInput = document.getElementById('dashboardQueryInput');
+      const dashboardQuerySubmit = document.getElementById('dashboardQuerySubmit');
+
+      toggleQueryPanelBtn.addEventListener('click', () => {
+        dashboardQueryPanel.classList.toggle('open');
+        if (dashboardQueryPanel.classList.contains('open')) {
+          dashboardQueryInput.focus();
+        }
+      });
+
+      closeQueryPanelBtn.addEventListener('click', () => {
+        dashboardQueryPanel.classList.remove('open');
+      });
+
+      // Query panel submit
+      dashboardQuerySubmit.addEventListener('click', askQuestionFromDashboard);
+      dashboardQueryInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          askQuestionFromDashboard();
+        }
+      });
+
       // Dashboard title blur - save on change
       dashboardTitleInput.addEventListener('blur', saveDashboardTitle);
       dashboardTitleInput.addEventListener('keydown', (e) => {
@@ -8815,6 +9164,12 @@
       // Clear state
       currentDashboard = null;
       dashboardWidgets = [];
+
+      // Close query panel if open
+      const queryPanel = document.getElementById('dashboardQueryPanel');
+      if (queryPanel) {
+        queryPanel.classList.remove('open');
+      }
 
       // Hide dashboard view, show project home
       dashboardView.classList.remove('active');
