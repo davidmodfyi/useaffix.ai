@@ -477,4 +477,48 @@ db.exec(`CREATE INDEX IF NOT EXISTS idx_scheduled_exports_tenant ON scheduled_ex
 db.exec(`CREATE INDEX IF NOT EXISTS idx_scheduled_exports_dashboard ON scheduled_exports(dashboard_id)`);
 db.exec(`CREATE INDEX IF NOT EXISTS idx_scheduled_exports_active ON scheduled_exports(is_active)`);
 
+// ============================================
+// Query Cache Table (Phase 13)
+// ============================================
+// Cache NL query results to avoid redundant Claude API calls
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS query_cache (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
+    question_hash TEXT NOT NULL,
+    schema_hash TEXT NOT NULL,
+    question TEXT NOT NULL,
+    result TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME NOT NULL,
+    hit_count INTEGER DEFAULT 0,
+    UNIQUE(tenant_id, question_hash, schema_hash)
+  )
+`);
+
+db.exec(`CREATE INDEX IF NOT EXISTS idx_query_cache_tenant ON query_cache(tenant_id)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_query_cache_expires ON query_cache(expires_at)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_query_cache_lookup ON query_cache(tenant_id, question_hash, schema_hash)`);
+
+// ============================================
+// Rate Limiting Tables (Phase 13)
+// ============================================
+// Track API rate limiting per tenant
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS rate_limits (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    endpoint TEXT NOT NULL,
+    window_start DATETIME NOT NULL,
+    request_count INTEGER DEFAULT 0,
+    UNIQUE(tenant_id, endpoint, window_start)
+  )
+`);
+
+db.exec(`CREATE INDEX IF NOT EXISTS idx_rate_limits_tenant ON rate_limits(tenant_id)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_rate_limits_window ON rate_limits(window_start)`);
+
 module.exports = db;

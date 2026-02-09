@@ -7,13 +7,16 @@ const crypto = require('crypto');
 const multer = require('multer');
 
 // Configure multer for file uploads (memory storage for processing)
+// File size limit: 100MB (increased for larger datasets)
+const MAX_FILE_SIZE = 100 * 1024 * 1024;
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB limit
+    fileSize: MAX_FILE_SIZE,
   },
   fileFilter: (req, file, cb) => {
-    const allowedTypes = ['.csv', '.xlsx', '.xls', '.json'];
+    const allowedTypes = ['.csv', '.xlsx', '.xls', '.json', '.tsv'];
     const ext = path.extname(file.originalname).toLowerCase();
     if (allowedTypes.includes(ext)) {
       cb(null, true);
@@ -22,6 +25,94 @@ const upload = multer({
     }
   }
 });
+
+/**
+ * Validate file content by checking magic bytes/headers
+ * @param {Buffer} buffer - File buffer
+ * @param {string} extension - File extension
+ * @returns {object} { valid: boolean, error?: string }
+ */
+function validateFileContent(buffer, extension) {
+  if (!buffer || buffer.length === 0) {
+    return { valid: false, error: 'Empty file' };
+  }
+
+  // Magic bytes for common file types
+  const magicBytes = {
+    // ZIP-based formats (xlsx, xls can be in this format)
+    xlsx: [0x50, 0x4B, 0x03, 0x04], // PK\x03\x04
+    // Old Excel format
+    xls: [0xD0, 0xCF, 0x11, 0xE0],  // OLE compound document
+    // JSON should start with { or [
+    json: null, // Special handling below
+    // CSV/TSV are text files - check for valid characters
+    csv: null,
+    tsv: null
+  };
+
+  const ext = extension.toLowerCase().replace('.', '');
+
+  // Check ZIP-based formats (xlsx)
+  if (ext === 'xlsx') {
+    const zipMagic = magicBytes.xlsx;
+    const isZip = zipMagic.every((byte, i) => buffer[i] === byte);
+    if (!isZip) {
+      return { valid: false, error: 'Invalid Excel file: not a valid XLSX format' };
+    }
+    return { valid: true };
+  }
+
+  // Check old Excel format (xls)
+  if (ext === 'xls') {
+    const xlsMagic = magicBytes.xls;
+    const isXls = xlsMagic.every((byte, i) => buffer[i] === byte);
+    const isZip = magicBytes.xlsx.every((byte, i) => buffer[i] === byte);
+    if (!isXls && !isZip) {
+      return { valid: false, error: 'Invalid Excel file: not a valid XLS format' };
+    }
+    return { valid: true };
+  }
+
+  // Check JSON format
+  if (ext === 'json') {
+    try {
+      const content = buffer.toString('utf8').trim();
+      if (!content.startsWith('{') && !content.startsWith('[')) {
+        return { valid: false, error: 'Invalid JSON file: must start with { or [' };
+      }
+      // Try to parse a portion to validate
+      JSON.parse(content);
+      return { valid: true };
+    } catch (err) {
+      return { valid: false, error: `Invalid JSON file: ${err.message}` };
+    }
+  }
+
+  // Check CSV/TSV format - should be valid text with proper structure
+  if (ext === 'csv' || ext === 'tsv') {
+    try {
+      const sample = buffer.slice(0, 10000).toString('utf8');
+
+      // Check for null bytes (indicates binary file)
+      if (sample.includes('\x00')) {
+        return { valid: false, error: `Invalid ${ext.toUpperCase()} file: contains binary data` };
+      }
+
+      // Check for at least one delimiter
+      const delimiter = ext === 'csv' ? ',' : '\t';
+      if (!sample.includes(delimiter) && !sample.includes('\n')) {
+        return { valid: false, error: `Invalid ${ext.toUpperCase()} file: no delimiters found` };
+      }
+
+      return { valid: true };
+    } catch (err) {
+      return { valid: false, error: `Invalid ${ext.toUpperCase()} file: ${err.message}` };
+    }
+  }
+
+  // Unknown format, reject by default
+  return { valid: false, error: `Unsupported file type: ${ext}` };
+}
 
 // Initialize database (creates tables if needed)
 const db = require('./db/init');
@@ -35,6 +126,8 @@ const { trackApiUsage, getCurrentUsage, setMonthlyBudget } = require('./lib/api-
 const backgroundAnalysis = require('./lib/backgroundAnalysis');
 const { generateDashboardSpec, generateSuggestedPrompts, assignGridPositions } = require('./lib/dashboardGenerator');
 const { getAllTemplates, getTemplateById, suggestColumnMappings } = require('./lib/projectTemplates');
+const QueryCache = require('./lib/queryCache');
+const { RateLimiter, rateLimitMiddleware } = require('./lib/rateLimit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -42,6 +135,10 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 // Initialize tenant manager
 const tenantManager = new TenantManager(db);
+
+// Initialize query cache and rate limiter
+const queryCache = new QueryCache(db);
+const rateLimiter = new RateLimiter(db);
 
 // Trust proxy in production (required for secure cookies behind Render/etc)
 if (isProduction) {
@@ -630,6 +727,13 @@ app.post('/api/projects/:id/upload', requireAuth, requireTenant, requireRole('ow
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
+    // Validate file content (magic bytes check)
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    const contentValidation = validateFileContent(req.file.buffer, ext);
+    if (!contentValidation.valid) {
+      return res.status(400).json({ error: contentValidation.error });
+    }
+
     // Get or create the default data source for this tenant
     let defaultDs = tenantManager.getDefaultDataSource(req.tenantId);
     if (!defaultDs) {
@@ -713,6 +817,9 @@ app.post('/api/projects/:id/upload', requireAuth, requireTenant, requireRole('ow
         sheets: result.sheets
       }
     });
+
+    // Invalidate query cache for this tenant (data has changed)
+    queryCache.invalidateTenant(req.tenantId);
   } catch (err) {
     console.error('Upload error:', err);
     res.status(400).json({ error: err.message });
@@ -784,10 +891,11 @@ app.delete('/api/sources/:id', requireAuth, requireTenant, requireRole('owner', 
 // ============================================
 
 // Ask a question about data in a project (NL query)
-app.post('/api/projects/:id/query', requireAuth, requireTenant, async (req, res) => {
+// Rate limited: 30 queries per minute per tenant
+app.post('/api/projects/:id/query', requireAuth, requireTenant, rateLimitMiddleware(rateLimiter, 'query'), async (req, res) => {
   try {
     const projectId = req.params.id;
-    const { question, parentQueryId } = req.body;
+    const { question, parentQueryId, skipCache } = req.body;
 
     // Verify project belongs to tenant
     const project = db.prepare('SELECT * FROM projects WHERE id = ? AND tenant_id = ?').get(projectId, req.tenantId);
@@ -811,6 +919,60 @@ app.post('/api/projects/:id/query', requireAuth, requireTenant, async (req, res)
 
     // Get connected data source instance
     const ds = await tenantManager.getDataSourceInstance(req.tenantId, defaultDs.id);
+
+    // Gather schema context for caching
+    let schemaContext;
+    try {
+      schemaContext = await ds.gatherSchemaContext();
+    } catch (err) {
+      console.error('Failed to gather schema context:', err);
+    }
+
+    // Check query cache (skip for follow-up queries or if explicitly requested)
+    const questionHash = queryCache.getQuestionHash(question);
+    const schemaHash = schemaContext ? queryCache.getSchemaHash(schemaContext) : '';
+
+    if (!parentQueryId && !skipCache && schemaContext) {
+      const cachedResult = queryCache.get(req.tenantId, questionHash, schemaHash);
+      if (cachedResult) {
+        // Return cached result with a new query ID
+        const { v4: uuidv4 } = require('uuid');
+        const queryId = uuidv4();
+
+        // Save query to database (as cached)
+        const resultSummary = {
+          rowCount: cachedResult.rows?.length || 0,
+          columnNames: cachedResult.columns || [],
+          sampleRows: cachedResult.rows?.slice(0, 5) || []
+        };
+
+        db.prepare(`
+          INSERT INTO queries
+          (id, project_id, tenant_id, question, sql_generated, explanation, assumptions,
+           visualization_type, visualization_config, result_summary, execution_time_ms, status, source)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'success', 'cache')
+        `).run(
+          queryId,
+          projectId,
+          req.tenantId,
+          question.trim(),
+          cachedResult.sql || null,
+          cachedResult.explanation || null,
+          cachedResult.assumptions || null,
+          cachedResult.visualizationType || null,
+          cachedResult.chartConfig ? JSON.stringify(cachedResult.chartConfig) : null,
+          JSON.stringify(resultSummary),
+          0
+        );
+
+        return res.json({
+          ...cachedResult,
+          queryId,
+          cached: true,
+          insightsLoading: false
+        });
+      }
+    }
 
     // Build conversation context if this is a follow-up query
     let conversationContext = null;
@@ -839,6 +1001,11 @@ app.post('/api/projects/:id/query', requireAuth, requireTenant, async (req, res)
       conversationContext,
       relationshipsContext
     });
+
+    // Cache successful results (skip follow-up queries)
+    if (!result.error && !parentQueryId && schemaContext) {
+      queryCache.set(req.tenantId, projectId, question.trim(), questionHash, schemaHash, result);
+    }
 
     const executionTime = Date.now() - startTime;
 
@@ -2228,6 +2395,7 @@ app.put('/api/credits/budget', requireAuth, requireTenant, requireRole('owner', 
 // ============================================
 
 // Start a background analysis job for a project
+// Rate limited: max 3 concurrent jobs per tenant
 app.post('/api/projects/:id/background-analysis', requireAuth, requireTenant, async (req, res) => {
   try {
     const projectId = req.params.id;
@@ -2237,6 +2405,18 @@ app.post('/api/projects/:id/background-analysis', requireAuth, requireTenant, as
     const project = db.prepare('SELECT * FROM projects WHERE id = ? AND tenant_id = ?').get(projectId, req.tenantId);
     if (!project) {
       return res.status(404).json({ error: 'Project not found' });
+    }
+
+    // Check concurrent job limit for tenant
+    const concurrentCheck = rateLimiter.checkConcurrentJobs(req.tenantId);
+    if (!concurrentCheck.allowed) {
+      return res.status(429).json({
+        error: true,
+        errorType: 'concurrent_limit_exceeded',
+        message: `Maximum ${concurrentCheck.max} concurrent background analyses allowed. Please wait for a running job to complete.`,
+        current: concurrentCheck.current,
+        max: concurrentCheck.max
+      });
     }
 
     // Check if there's already a running job for this project
@@ -3050,6 +3230,9 @@ app.post('/api/sources/:id/refresh', requireAuth, requireTenant, requireRole('ow
 
     await dataSource.disconnect();
 
+    // Invalidate query cache for this tenant (data has changed)
+    queryCache.invalidateTenant(req.tenantId);
+
     res.json({
       success: true,
       message: 'Data source refreshed successfully',
@@ -3414,13 +3597,20 @@ function renderEmbedDashboard(dashboard, widgets) {
   `;
 }
 
-// Clean up expired sessions periodically
+// Clean up expired sessions, cache, and rate limits periodically
 setInterval(() => {
   try {
+    // Clean up expired sessions
     const stmt = db.prepare('DELETE FROM sessions WHERE expired < ?');
     stmt.run(Date.now());
+
+    // Clean up expired query cache entries
+    queryCache.cleanup();
+
+    // Clean up old rate limit records
+    rateLimiter.cleanup();
   } catch (err) {
-    console.error('Session cleanup error:', err);
+    console.error('Cleanup error:', err);
   }
 }, 60 * 60 * 1000); // Every hour
 

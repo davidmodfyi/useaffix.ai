@@ -1226,6 +1226,130 @@ Phase 12 adds practical features for daily work: relationship detection, exports
 
 ---
 
+## Phase 13: Polish, Performance, Security, and Final Cleanup
+
+Phase 13 adds performance optimizations, security hardening, and UI polish.
+
+### Query Caching
+
+**How it works:**
+- Query results are cached for 1 hour (TTL)
+- Cache key is based on question hash + schema hash
+- Cache is invalidated when data is uploaded or refreshed
+- Follow-up queries bypass cache (need context)
+
+**Cache lookup:**
+```javascript
+const questionHash = queryCache.getQuestionHash(question);
+const schemaHash = queryCache.getSchemaHash(schemaContext);
+const cached = queryCache.get(tenantId, questionHash, schemaHash);
+```
+
+**Cache invalidation triggers:**
+- File upload (`POST /api/projects/:id/upload`)
+- Data refresh (`POST /api/sources/:id/refresh`)
+
+### Rate Limiting
+
+**Configured limits:**
+| Endpoint | Limit |
+|----------|-------|
+| `/api/projects/:id/query` | 30 requests/minute per tenant |
+| Background analysis | 3 concurrent jobs per tenant |
+| Suggestions | 10 requests/minute per tenant |
+| Export | 20 requests/minute per tenant |
+
+**Rate limit headers:**
+- `X-RateLimit-Remaining`: Requests remaining in window
+- `X-RateLimit-Reset`: Window reset timestamp
+
+**Response on limit exceeded:**
+```json
+{
+  "error": true,
+  "errorType": "rate_limit_exceeded",
+  "message": "Too many requests. Please wait before trying again.",
+  "resetAt": "2026-02-08T12:00:00.000Z"
+}
+```
+
+### Enhanced SQL Validation
+
+The SQL validator now detects:
+- Statement stacking (`;DROP`, `;DELETE`)
+- UNION-based injection (`UNION SELECT NULL`)
+- Comment bypass attempts (`--`, `/**/`)
+- Time-based blind injection (`SLEEP`, `BENCHMARK`)
+- Boolean-based injection (`OR 1=1`)
+- SQLite-specific attacks (`ATTACH DATABASE`, `sqlite_master`)
+- File operations (`INTO OUTFILE`, `LOAD_FILE`)
+- Hex/char encoding bypass
+
+### File Upload Validation
+
+**Validation steps:**
+1. Extension check (`.csv`, `.xlsx`, `.xls`, `.json`, `.tsv`)
+2. File size limit (100MB)
+3. Magic byte validation:
+   - XLSX: ZIP signature `PK\x03\x04`
+   - XLS: OLE signature `\xD0\xCF\x11\xE0`
+   - JSON: Must start with `{` or `[`
+   - CSV/TSV: Valid text without binary data
+
+### UI Enhancements
+
+**New CSS utilities:**
+- `.shimmer-loading` - Animated loading gradient
+- `.shimmer-text` - Text placeholder loading
+- `.shimmer-box` - Box placeholder loading
+- `.error-card` - Styled error state card
+- `.inline-error` - Inline error message
+- `.toast` - Toast notifications (success, error, warning, info)
+
+**Toast notification system:**
+```javascript
+showToast('Query cached!', 'success');
+showToast('Rate limit exceeded', 'error');
+showToast('Slow query detected', 'warning');
+```
+
+### Files Added in Phase 13
+
+- `lib/queryCache.js` - Query result caching
+- `lib/rateLimit.js` - Rate limiting middleware
+- `README.md` - Project documentation
+
+### Database Schema Changes
+
+**New tables:**
+- `query_cache` - Cached query results with TTL
+- `rate_limits` - Rate limit tracking per tenant
+
+```sql
+CREATE TABLE query_cache (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  project_id TEXT,
+  question_hash TEXT NOT NULL,
+  schema_hash TEXT NOT NULL,
+  question TEXT NOT NULL,
+  result TEXT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  expires_at DATETIME NOT NULL,
+  hit_count INTEGER DEFAULT 0
+);
+
+CREATE TABLE rate_limits (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  endpoint TEXT NOT NULL,
+  window_start DATETIME NOT NULL,
+  request_count INTEGER DEFAULT 0
+);
+```
+
+---
+
 ## Agent Pipeline Context
 
 This project uses an automated multi-agent pipeline:
@@ -1245,7 +1369,5 @@ This project uses an automated multi-agent pipeline:
 4. **GatewayDataSource** - Build gateway agent infrastructure
 5. **Onboarding flow** - UI for creating tenant after signup
 6. **Billing integration** - Stripe for subscription management
-7. **Query history** - Save and recall previous questions
-8. **Rate limiting** - Control AI API costs
-9. **Projects** - Organize data sources into projects
-10. **Dashboards** - Save and share chart collections
+7. **Dashboard PDF export** - Implement with puppeteer/playwright
+8. **Scheduled export delivery** - Wire up with cron and email service
