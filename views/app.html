@@ -9411,7 +9411,7 @@
 
       // Get result data from the widget's result_summary
       const resultSummary = widget.result_summary;
-      if (!resultSummary || !resultSummary.rows || resultSummary.rows.length === 0) {
+      if (!resultSummary) {
         chartContainer.innerHTML = `
           <div class="chart-empty-state">
             <div class="chart-empty-title">No data available</div>
@@ -9421,7 +9421,21 @@
         return;
       }
 
-      const { columns, columnTypes, rows } = resultSummary;
+      // Handle both old format (columnNames/sampleRows) and new format (columns/rows)
+      const columns = resultSummary.columns || resultSummary.columnNames || [];
+      const columnTypes = resultSummary.columnTypes || [];
+      const rows = resultSummary.rows || resultSummary.sampleRows || [];
+
+      if (rows.length === 0) {
+        chartContainer.innerHTML = `
+          <div class="chart-empty-state">
+            <div class="chart-empty-title">No data available</div>
+            <div class="chart-empty-subtitle">Run the query again to load data</div>
+          </div>
+        `;
+        return;
+      }
+
       const vizType = widget.widget_type || widget.visualization_type || 'bar_chart';
 
       // Build chart config using existing function

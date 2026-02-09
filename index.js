@@ -943,8 +943,9 @@ app.post('/api/projects/:id/query', requireAuth, requireTenant, rateLimitMiddlew
         // Save query to database (as cached)
         const resultSummary = {
           rowCount: cachedResult.rows?.length || 0,
-          columnNames: cachedResult.columns || [],
-          sampleRows: cachedResult.rows?.slice(0, 5) || []
+          columns: cachedResult.columns || [],
+          columnTypes: cachedResult.columnTypes || [],
+          rows: cachedResult.rows?.slice(0, 100) || []
         };
 
         db.prepare(`
@@ -1015,11 +1016,12 @@ app.post('/api/projects/:id/query', requireAuth, requireTenant, rateLimitMiddlew
     const queryId = uuidv4();
 
     if (!result.error) {
-      // Create result summary (first 5 rows)
+      // Create result summary for widget rendering (up to 100 rows)
       const resultSummary = {
         rowCount: result.rows?.length || 0,
-        columnNames: result.columns || [],
-        sampleRows: result.rows?.slice(0, 5) || []
+        columns: result.columns || [],
+        columnTypes: result.columnTypes || [],
+        rows: result.rows?.slice(0, 100) || []
       };
 
       db.prepare(`
