@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - Affix</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- ECharts for credit usage chart -->
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+
+  <style>
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #111118;
+      --bg-card: #16161f;
+      --bg-hover: #1c1c28;
+      --border: #232330;
+      --text-primary: #e8e8f0;
+      --text-secondary: #8888a0;
+      --text-muted: #555568;
+      --accent: #5b7cfa;
+      --accent-bright: #7b9aff;
+      --accent-glow: rgba(91, 124, 250, 0.15);
+      --success: #34d399;
+      --error: #f87171;
+      --warning: #fbbf24;
+      --font-display: 'Instrument Serif', serif;
+      --font-body: 'DM Sans', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+
+    .logo span {
+      background: linear-gradient(135deg, var(--accent), #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-right {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .btn {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-family: var(--font-body);
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn:hover {
+      background: var(--accent-glow);
+      border-color: var(--accent);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-bright);
+    }
+
+    .btn-danger {
+      background: transparent;
+      border-color: var(--error);
+      color: var(--error);
+    }
+
+    .btn-danger:hover {
+      background: rgba(248, 113, 113, 0.1);
+    }
+
+    /* Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .page-title {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .page-subtitle {
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 1rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2rem;
+    }
+
+    .tab {
+      padding: 0.75rem 1.5rem;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .tab:hover {
+      color: var(--text-primary);
+    }
+
+    .tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* Tab content */
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Card */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .card-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    /* Form */
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-family: var(--font-body);
+      transition: all 0.2s;
+    }
+
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .form-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* Table */
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      text-align: left;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.875rem;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .role-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .role-badge.owner {
+      background: rgba(91, 124, 250, 0.2);
+      color: var(--accent-bright);
+    }
+
+    .role-badge.admin {
+      background: rgba(192, 132, 252, 0.2);
+      color: #c084fc;
+    }
+
+    .role-badge.editor {
+      background: rgba(52, 211, 153, 0.2);
+      color: var(--success);
+    }
+
+    .role-badge.viewer, .role-badge.member {
+      background: rgba(136, 136, 160, 0.2);
+      color: var(--text-secondary);
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+    }
+
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .empty-state-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .empty-state-text {
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 2rem;
+      max-width: 500px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0;
+      width: 2rem;
+      height: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.5rem;
+      transition: all 0.2s;
+    }
+
+    .modal-close:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    /* Credit usage chart */
+    #creditChart {
+      width: 100%;
+      height: 300px;
+      margin-top: 1rem;
+    }
+
+    /* Alert */
+    .alert {
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.875rem;
+    }
+
+    .alert-info {
+      background: rgba(91, 124, 250, 0.1);
+      border: 1px solid rgba(91, 124, 250, 0.3);
+      color: var(--accent-bright);
+    }
+
+    .alert-success {
+      background: rgba(52, 211, 153, 0.1);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      color: var(--success);
+    }
+
+    .alert-error {
+      background: rgba(248, 113, 113, 0.1);
+      border: 1px solid rgba(248, 113, 113, 0.3);
+      color: var(--error);
+    }
+
+    /* Loading spinner */
+    .spinner {
+      display: inline-block;
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <a href="/app" class="logo">
+      <span>Affix</span>
+    </a>
+    <div class="header-right">
+      <a href="/app" class="btn">← Back to App</a>
+      <button id="logoutBtn" class="btn">Logout</button>
+    </div>
+  </header>
+
+  <!-- Main container -->
+  <div class="container">
+    <h1 class="page-title">Settings</h1>
+    <p class="page-subtitle">Manage your account and workspace settings</p>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="team">Team</button>
+      <button class="tab" data-tab="billing">Billing & Credits</button>
+      <button class="tab" data-tab="profile">Profile</button>
+      <button class="tab" data-tab="api-keys">API Keys</button>
+    </div>
+
+    <!-- Team Tab -->
+    <div id="team-tab" class="tab-content active">
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h2 class="card-title" style="margin-bottom: 0;">Team Members</h2>
+          <button id="inviteBtn" class="btn btn-primary">+ Invite Member</button>
+        </div>
+
+        <div class="table-wrapper">
+          <table id="teamTable">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Last Active</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="teamTableBody">
+              <tr>
+                <td colspan="5" style="text-align: center; padding: 2rem;">
+                  <div class="spinner"></div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Billing & Credits Tab -->
+    <div id="billing-tab" class="tab-content">
+      <div class="card">
+        <h2 class="card-title">Current Plan</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+          You are currently on the <strong id="currentPlan">Free</strong> plan.
+        </p>
+        <button class="btn" disabled style="opacity: 0.5; cursor: not-allowed;">
+          Manage Subscription (Coming Soon)
+        </button>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">Credit Usage</h2>
+        <div id="creditUsageInfo">
+          <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+            <strong><span id="creditsUsed">0</span></strong> of <strong><span id="creditsAllocated">10.00</span></strong> credits used this month
+            (<span id="percentUsed">0</span>%)
+          </p>
+          <div id="creditChart"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile Tab -->
+    <div id="profile-tab" class="tab-content">
+      <div class="card">
+        <h2 class="card-title">Profile Information</h2>
+        <form id="profileForm">
+          <div class="form-group">
+            <label class="form-label">Name</label>
+            <input type="text" id="profileName" class="form-input" placeholder="Your name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" id="profileEmail" class="form-input" placeholder="your@email.com" disabled>
+          </div>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">Change Password</h2>
+        <form id="passwordForm">
+          <div class="form-group">
+            <label class="form-label">Current Password</label>
+            <input type="password" id="currentPassword" class="form-input" placeholder="••••••••">
+          </div>
+          <div class="form-group">
+            <label class="form-label">New Password</label>
+            <input type="password" id="newPassword" class="form-input" placeholder="••••••••">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirm New Password</label>
+            <input type="password" id="confirmPassword" class="form-input" placeholder="••••••••">
+          </div>
+          <button type="submit" class="btn btn-primary">Update Password</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- API Keys Tab -->
+    <div id="api-keys-tab" class="tab-content">
+      <div class="card">
+        <div class="empty-state">
+          <div class="empty-state-icon">🔑</div>
+          <h3 class="empty-state-title">API Keys</h3>
+          <p class="empty-state-text">
+            API keys and integration tokens will be available soon.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invite Modal -->
+  <div id="inviteModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Invite Team Member</h3>
+        <button class="modal-close" onclick="closeInviteModal()">×</button>
+      </div>
+
+      <div id="inviteAlert" style="display: none;"></div>
+
+      <form id="inviteForm">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" id="inviteEmail" class="form-input" placeholder="colleague@company.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Name</label>
+          <input type="text" id="inviteName" class="form-input" placeholder="John Doe" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Temporary Password</label>
+          <input type="password" id="invitePassword" class="form-input" placeholder="••••••••" required>
+          <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+            They can change this after logging in
+          </p>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Role</label>
+          <select id="inviteRole" class="form-select" required>
+            <option value="viewer">Viewer - Can view dashboards and ask queries</option>
+            <option value="editor">Editor - Can create and edit dashboards</option>
+            <option value="admin">Admin - Can manage team and settings</option>
+          </select>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+          <button type="submit" class="btn btn-primary" style="flex: 1;">
+            Send Invite
+          </button>
+          <button type="button" class="btn" onclick="closeInviteModal()">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let currentUser = null;
+    let currentTenant = null;
+    let teamMembers = [];
+
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabName = tab.dataset.tab;
+
+        // Update active tab
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        // Update active content
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById(`${tabName}-tab`).classList.add('active');
+      });
+    });
+
+    // Load user info
+    async function loadUserInfo() {
+      try {
+        const res = await fetch('/auth/me');
+        const data = await res.json();
+        currentUser = data.user;
+        currentTenant = data.tenant;
+
+        // Update profile form
+        document.getElementById('profileName').value = currentUser.name;
+        document.getElementById('profileEmail').value = currentUser.email;
+        document.getElementById('currentPlan').textContent = currentTenant.plan || 'Free';
+
+        // Load team members
+        await loadTeamMembers();
+
+        // Load credit usage
+        await loadCreditUsage();
+      } catch (err) {
+        console.error('Failed to load user info:', err);
+      }
+    }
+
+    // Load team members
+    async function loadTeamMembers() {
+      try {
+        const res = await fetch('/api/team');
+        teamMembers = await res.json();
+
+        const tbody = document.getElementById('teamTableBody');
+        tbody.innerHTML = '';
+
+        if (teamMembers.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-secondary);">No team members yet</td></tr>';
+          return;
+        }
+
+        teamMembers.forEach(member => {
+          const tr = document.createElement('tr');
+
+          const lastActive = member.last_active_at
+            ? new Date(member.last_active_at).toLocaleDateString()
+            : member.last_login
+            ? new Date(member.last_login).toLocaleDateString()
+            : 'Never';
+
+          const isCurrentUser = member.id === currentUser.id;
+          const canManage = ['owner', 'admin'].includes(currentUser.role) && !isCurrentUser;
+
+          tr.innerHTML = `
+            <td>${member.name}${isCurrentUser ? ' <span style="color: var(--text-muted); font-size: 0.75rem;">(You)</span>' : ''}</td>
+            <td>${member.email}</td>
+            <td><span class="role-badge ${member.role}">${member.role}</span></td>
+            <td>${lastActive}</td>
+            <td>
+              ${canManage ? `
+                <select class="form-select" style="width: auto; display: inline-block; margin-right: 0.5rem;"
+                        onchange="changeRole(${member.id}, this.value)">
+                  <option value="viewer" ${member.role === 'viewer' ? 'selected' : ''}>Viewer</option>
+                  <option value="editor" ${member.role === 'editor' ? 'selected' : ''}>Editor</option>
+                  <option value="member" ${member.role === 'member' ? 'selected' : ''}>Member</option>
+                  <option value="admin" ${member.role === 'admin' ? 'selected' : ''}>Admin</option>
+                  ${currentUser.role === 'owner' ? `<option value="owner" ${member.role === 'owner' ? 'selected' : ''}>Owner</option>` : ''}
+                </select>
+                <button class="btn btn-danger" onclick="removeMember(${member.id}, '${member.name}')">Remove</button>
+              ` : '—'}
+            </td>
+          `;
+
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error('Failed to load team:', err);
+      }
+    }
+
+    // Change member role
+    async function changeRole(userId, newRole) {
+      try {
+        const res = await fetch(`/api/team/${userId}/role`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role: newRole })
+        });
+
+        if (res.ok) {
+          await loadTeamMembers();
+        } else {
+          const data = await res.json();
+          alert(data.error || 'Failed to change role');
+        }
+      } catch (err) {
+        alert('Failed to change role');
+      }
+    }
+
+    // Remove member
+    async function removeMember(userId, name) {
+      if (!confirm(`Are you sure you want to remove ${name} from the team?`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/team/${userId}`, {
+          method: 'DELETE'
+        });
+
+        if (res.ok) {
+          await loadTeamMembers();
+        } else {
+          const data = await res.json();
+          alert(data.error || 'Failed to remove member');
+        }
+      } catch (err) {
+        alert('Failed to remove member');
+      }
+    }
+
+    // Load credit usage
+    async function loadCreditUsage() {
+      try {
+        const res = await fetch('/api/credits');
+        const data = await res.json();
+
+        document.getElementById('creditsUsed').textContent = data.creditsUsed.toFixed(2);
+        document.getElementById('creditsAllocated').textContent = data.creditsAllocated.toFixed(2);
+        document.getElementById('percentUsed').textContent = Math.round(data.percentUsed);
+
+        // Render simple bar chart
+        const chartDom = document.getElementById('creditChart');
+        const myChart = echarts.init(chartDom);
+
+        const option = {
+          backgroundColor: 'transparent',
+          tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+              type: 'shadow'
+            }
+          },
+          grid: {
+            left: '3%',
+            right: '4%',
+            bottom: '3%',
+            containLabel: true
+          },
+          xAxis: {
+            type: 'category',
+            data: ['This Month'],
+            axisLine: { lineStyle: { color: '#232330' } },
+            axisLabel: { color: '#8888a0' }
+          },
+          yAxis: {
+            type: 'value',
+            axisLine: { lineStyle: { color: '#232330' } },
+            axisLabel: { color: '#8888a0' },
+            splitLine: { lineStyle: { color: '#232330' } }
+          },
+          series: [{
+            name: 'Credits Used',
+            type: 'bar',
+            data: [data.creditsUsed],
+            itemStyle: {
+              color: '#5b7cfa'
+            }
+          }, {
+            name: 'Credits Allocated',
+            type: 'bar',
+            data: [data.creditsAllocated],
+            itemStyle: {
+              color: '#232330'
+            }
+          }]
+        };
+
+        myChart.setOption(option);
+      } catch (err) {
+        console.error('Failed to load credits:', err);
+      }
+    }
+
+    // Invite modal
+    document.getElementById('inviteBtn').addEventListener('click', () => {
+      document.getElementById('inviteModal').classList.add('active');
+    });
+
+    function closeInviteModal() {
+      document.getElementById('inviteModal').classList.remove('active');
+      document.getElementById('inviteForm').reset();
+      document.getElementById('inviteAlert').style.display = 'none';
+    }
+
+    document.getElementById('inviteForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById('inviteEmail').value;
+      const name = document.getElementById('inviteName').value;
+      const password = document.getElementById('invitePassword').value;
+      const role = document.getElementById('inviteRole').value;
+
+      try {
+        const res = await fetch('/api/team/invite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, name, password, role })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          const alert = document.getElementById('inviteAlert');
+          alert.className = 'alert alert-success';
+          alert.textContent = 'Team member invited successfully!';
+          alert.style.display = 'block';
+
+          document.getElementById('inviteForm').reset();
+
+          setTimeout(() => {
+            closeInviteModal();
+            loadTeamMembers();
+          }, 1500);
+        } else {
+          const alert = document.getElementById('inviteAlert');
+          alert.className = 'alert alert-error';
+          alert.textContent = data.error || 'Failed to invite member';
+          alert.style.display = 'block';
+        }
+      } catch (err) {
+        const alert = document.getElementById('inviteAlert');
+        alert.className = 'alert alert-error';
+        alert.textContent = 'Failed to send invite';
+        alert.style.display = 'block';
+      }
+    });
+
+    // Profile form
+    document.getElementById('profileForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      alert('Profile update coming soon');
+    });
+
+    // Password form
+    document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      alert('Password change coming soon');
+    });
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await fetch('/auth/logout', { method: 'POST' });
+      window.location.href = '/login';
+    });
+
+    // Initialize
+    loadUserInfo();
+  </script>
+</body>
+</html>

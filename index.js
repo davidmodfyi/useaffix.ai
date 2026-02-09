@@ -1759,6 +1759,50 @@ app.delete('/api/widgets/:id', requireAuth, requireTenant, requireRole('owner', 
 });
 
 // ============================================
+// Dashboard Sharing API Routes
+// ============================================
+
+// Toggle public sharing for a dashboard
+app.put('/api/dashboards/:id/share', requireAuth, requireTenant, requireRole('owner', 'admin', 'editor', 'member'), (req, res) => {
+  try {
+    const dashboardId = req.params.id;
+    const { isPublic } = req.body;
+
+    // Verify dashboard belongs to tenant
+    const dashboard = db.prepare('SELECT * FROM dashboards WHERE id = ? AND tenant_id = ?').get(dashboardId, req.tenantId);
+    if (!dashboard) {
+      return res.status(404).json({ error: 'Dashboard not found' });
+    }
+
+    let shareToken = dashboard.share_token;
+
+    if (isPublic && !shareToken) {
+      // Generate new share token
+      shareToken = crypto.randomBytes(16).toString('hex');
+    } else if (!isPublic) {
+      // Revoke sharing
+      shareToken = null;
+    }
+
+    db.prepare(`
+      UPDATE dashboards
+      SET is_public = ?, share_token = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(isPublic ? 1 : 0, shareToken, dashboardId);
+
+    res.json({
+      success: true,
+      isPublic: isPublic,
+      shareToken: shareToken,
+      shareUrl: shareToken ? `${req.protocol}://${req.get('host')}/public/dashboards/${shareToken}` : null,
+      embedUrl: shareToken ? `${req.protocol}://${req.get('host')}/embed/dashboards/${shareToken}` : null
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================
 // Credits Usage API Routes
 // ============================================
 
@@ -2008,12 +2052,69 @@ app.post('/api/team/invite', requireAuth, requireTenant, requireRole('owner', 'a
 
     const user = await tenantManager.createUser(req.tenantId, { email, name, password });
 
-    // Set role
-    db.prepare('UPDATE users SET role = ? WHERE id = ?').run(role, user.id);
+    // Set role and invited_by
+    db.prepare('UPDATE users SET role = ?, invited_by = ? WHERE id = ?').run(role, req.userId, user.id);
 
     res.json({ success: true, user });
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// Change user role
+app.put('/api/team/:userId/role', requireAuth, requireTenant, requireRole('owner', 'admin'), (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { role } = req.body;
+
+    // Validate role
+    const validRoles = ['owner', 'admin', 'editor', 'viewer', 'member'];
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
+
+    // Check user belongs to tenant
+    const user = db.prepare('SELECT * FROM users WHERE id = ? AND tenant_id = ?').get(userId, req.tenantId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Prevent changing own role
+    if (parseInt(userId) === req.userId) {
+      return res.status(400).json({ error: 'Cannot change your own role' });
+    }
+
+    // Update role
+    db.prepare('UPDATE users SET role = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(role, userId);
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Remove user from tenant
+app.delete('/api/team/:userId', requireAuth, requireTenant, requireRole('owner', 'admin'), (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Check user belongs to tenant
+    const user = db.prepare('SELECT * FROM users WHERE id = ? AND tenant_id = ?').get(userId, req.tenantId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Prevent removing self
+    if (parseInt(userId) === req.userId) {
+      return res.status(400).json({ error: 'Cannot remove yourself' });
+    }
+
+    // Delete user
+    db.prepare('DELETE FROM users WHERE id = ?').run(userId);
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -2024,6 +2125,78 @@ app.post('/api/team/invite', requireAuth, requireTenant, requireRole('owner', 'a
 // App dashboard (requires auth)
 app.get('/app', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'app.html'));
+});
+
+// Settings page (requires auth)
+app.get('/settings', requireAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'settings.html'));
+});
+
+// Public dashboard view (no auth required)
+app.get('/public/dashboards/:shareToken', async (req, res) => {
+  try {
+    const { shareToken } = req.params;
+
+    // Find dashboard by share token
+    const dashboard = db.prepare(`
+      SELECT d.*, p.name as project_name, t.name as tenant_name
+      FROM dashboards d
+      JOIN projects p ON d.project_id = p.id
+      JOIN tenants t ON d.tenant_id = t.id
+      WHERE d.share_token = ? AND d.is_public = 1
+    `).get(shareToken);
+
+    if (!dashboard) {
+      return res.status(404).send('Dashboard not found or not publicly shared');
+    }
+
+    // Get widgets with their queries and data
+    const widgets = db.prepare(`
+      SELECT w.*, q.*
+      FROM dashboard_widgets w
+      JOIN queries q ON w.query_id = q.id
+      WHERE w.dashboard_id = ?
+    `).all(dashboard.id);
+
+    // Render public dashboard view
+    res.send(renderPublicDashboard(dashboard, widgets));
+  } catch (err) {
+    console.error('Public dashboard error:', err);
+    res.status(500).send('Error loading dashboard');
+  }
+});
+
+// Embed dashboard view (no auth required, minimal chrome)
+app.get('/embed/dashboards/:shareToken', async (req, res) => {
+  try {
+    const { shareToken } = req.params;
+
+    // Find dashboard by share token
+    const dashboard = db.prepare(`
+      SELECT d.*, p.name as project_name
+      FROM dashboards d
+      JOIN projects p ON d.project_id = p.id
+      WHERE d.share_token = ? AND d.is_public = 1
+    `).get(shareToken);
+
+    if (!dashboard) {
+      return res.status(404).send('Dashboard not found or not publicly shared');
+    }
+
+    // Get widgets with their queries
+    const widgets = db.prepare(`
+      SELECT w.*, q.*
+      FROM dashboard_widgets w
+      JOIN queries q ON w.query_id = q.id
+      WHERE w.dashboard_id = ?
+    `).all(dashboard.id);
+
+    // Render embed dashboard view
+    res.send(renderEmbedDashboard(dashboard, widgets));
+  } catch (err) {
+    console.error('Embed dashboard error:', err);
+    res.status(500).send('Error loading dashboard');
+  }
 });
 
 // Root route for app subdomain
@@ -2052,6 +2225,251 @@ app.get('/modfyinew', (req, res) => {
 app.get('/strideforge', (req, res) => {
   res.sendFile(path.join(__dirname, 'strideforge.html'));
 });
+
+// ============================================
+// Helper Functions for Public Dashboards
+// ============================================
+
+function renderPublicDashboard(dashboard, widgets) {
+  const widgetsHtml = widgets.map(w => {
+    const vizConfig = w.visualization_config ? JSON.parse(w.visualization_config) : null;
+    const resultSummary = w.result_summary ? JSON.parse(w.result_summary) : null;
+
+    return `
+      <div class="widget-card">
+        <h3 class="widget-title">${w.pin_title || w.question}</h3>
+        <div class="chart-container" id="chart-${w.id}"></div>
+        <script>
+          (function() {
+            const chartDom = document.getElementById('chart-${w.id}');
+            const myChart = echarts.init(chartDom, 'feather-dark');
+            const option = ${JSON.stringify(vizConfig)};
+            myChart.setOption(option);
+            window.addEventListener('resize', () => myChart.resize());
+          })();
+        </script>
+      </div>
+    `;
+  }).join('');
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${dashboard.name} - Shared Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <style>
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-card: #16161f;
+      --border: #232330;
+      --text-primary: #e8e8f0;
+      --text-secondary: #8888a0;
+      --accent: #5b7cfa;
+      --font-display: 'Instrument Serif', serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+    .header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .dashboard-title {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+    .branding {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+    .branding a {
+      color: var(--accent);
+      text-decoration: none;
+      margin-left: 0.5rem;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    .widget-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+      gap: 1.5rem;
+    }
+    .widget-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+    }
+    .widget-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--text-secondary);
+    }
+    .chart-container {
+      width: 100%;
+      height: 400px;
+    }
+    .footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1 class="dashboard-title">${dashboard.name}</h1>
+    <div class="branding">
+      Powered by <strong>Affix</strong>
+      <a href="https://useaffix.ai" target="_blank">Try Affix free →</a>
+    </div>
+  </div>
+
+  <div class="container">
+    ${dashboard.description ? `<p style="color: var(--text-secondary); margin-bottom: 2rem;">${dashboard.description}</p>` : ''}
+    <div class="widget-grid">
+      ${widgetsHtml || '<p style="color: var(--text-secondary);">No widgets in this dashboard</p>'}
+    </div>
+  </div>
+
+  <div class="footer">
+    Shared from ${dashboard.tenant_name} · ${dashboard.project_name}
+  </div>
+
+  <script>
+    // Register ECharts theme
+    echarts.registerTheme('feather-dark', {
+      color: ['#00d4ff', '#a78bfa', '#34d399', '#f59e0b', '#f472b6', '#60a5fa', '#fbbf24', '#c084fc'],
+      backgroundColor: 'transparent',
+      textStyle: { color: '#8888a0' },
+      title: { textStyle: { color: '#e8e8f0' } },
+      legend: { textStyle: { color: '#8888a0' } },
+      axisPointer: { lineStyle: { color: '#232330' }, label: { backgroundColor: '#16161f' } },
+      categoryAxis: { axisLine: { lineStyle: { color: '#232330' } }, splitLine: { lineStyle: { color: '#232330' } }, axisLabel: { color: '#8888a0' } },
+      valueAxis: { axisLine: { lineStyle: { color: '#232330' } }, splitLine: { lineStyle: { color: '#232330' } }, axisLabel: { color: '#8888a0' } }
+    });
+  </script>
+</body>
+</html>
+  `;
+}
+
+function renderEmbedDashboard(dashboard, widgets) {
+  const widgetsHtml = widgets.map(w => {
+    const vizConfig = w.visualization_config ? JSON.parse(w.visualization_config) : null;
+
+    return `
+      <div class="widget-card">
+        <div class="chart-container" id="chart-${w.id}"></div>
+        <script>
+          (function() {
+            const chartDom = document.getElementById('chart-${w.id}');
+            const myChart = echarts.init(chartDom, 'feather-dark');
+            const option = ${JSON.stringify(vizConfig)};
+            myChart.setOption(option);
+            window.addEventListener('resize', () => myChart.resize());
+          })();
+        </script>
+      </div>
+    `;
+  }).join('');
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${dashboard.name}</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <style>
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-card: #16161f;
+      --border: #232330;
+      --text-primary: #e8e8f0;
+      --text-secondary: #8888a0;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      padding: 1rem;
+      position: relative;
+    }
+    .widget-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 1rem;
+    }
+    .widget-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      padding: 1rem;
+    }
+    .chart-container {
+      width: 100%;
+      height: 350px;
+    }
+    .affix-link {
+      position: fixed;
+      bottom: 8px;
+      right: 8px;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      text-decoration: none;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+    .affix-link:hover {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="widget-grid">
+    ${widgetsHtml || '<p style="color: var(--text-secondary);">No widgets</p>'}
+  </div>
+
+  <a href="https://useaffix.ai" target="_blank" class="affix-link">Affix</a>
+
+  <script>
+    echarts.registerTheme('feather-dark', {
+      color: ['#00d4ff', '#a78bfa', '#34d399', '#f59e0b', '#f472b6', '#60a5fa', '#fbbf24', '#c084fc'],
+      backgroundColor: 'transparent',
+      textStyle: { color: '#8888a0' },
+      axisPointer: { lineStyle: { color: '#232330' } },
+      categoryAxis: { axisLine: { lineStyle: { color: '#232330' } }, splitLine: { lineStyle: { color: '#232330' } }, axisLabel: { color: '#8888a0' } },
+      valueAxis: { axisLine: { lineStyle: { color: '#232330' } }, splitLine: { lineStyle: { color: '#232330' } }, axisLabel: { color: '#8888a0' } }
+    });
+  </script>
+</body>
+</html>
+  `;
+}
 
 // Clean up expired sessions periodically
 setInterval(() => {

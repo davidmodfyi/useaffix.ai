@@ -77,7 +77,11 @@ function requireAuth(req, res, next) {
     const user = stmt.get(req.session.userId);
     if (user) {
       req.user = user;
+      req.userId = user.id;
       req.tenantId = user.tenant_id;
+
+      // Update last_active_at
+      db.prepare('UPDATE users SET last_active_at = CURRENT_TIMESTAMP WHERE id = ?').run(user.id);
 
       // Ensure default project exists for this tenant
       if (user.tenant_id) {

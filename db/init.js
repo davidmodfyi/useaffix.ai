@@ -67,6 +67,14 @@ try {
   if (!hasRole) {
     db.exec(`ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'member'`);
   }
+  const hasInvitedBy = columns.some(col => col.name === 'invited_by');
+  if (!hasInvitedBy) {
+    db.exec(`ALTER TABLE users ADD COLUMN invited_by INTEGER REFERENCES users(id)`);
+  }
+  const hasLastActiveAt = columns.some(col => col.name === 'last_active_at');
+  if (!hasLastActiveAt) {
+    db.exec(`ALTER TABLE users ADD COLUMN last_active_at DATETIME`);
+  }
 } catch (err) {
   // Table might not exist yet, that's fine
 }
@@ -320,5 +328,42 @@ try {
 } catch (err) {
   // Table might not exist yet, that's fine
 }
+
+// Add sharing columns to dashboards table if missing
+try {
+  const dashboardColumns = db.prepare(`PRAGMA table_info(dashboards)`).all();
+  const hasShareToken = dashboardColumns.some(col => col.name === 'share_token');
+  if (!hasShareToken) {
+    db.exec(`ALTER TABLE dashboards ADD COLUMN share_token TEXT`);
+  }
+  const hasIsPublic = dashboardColumns.some(col => col.name === 'is_public');
+  if (!hasIsPublic) {
+    db.exec(`ALTER TABLE dashboards ADD COLUMN is_public INTEGER DEFAULT 0`);
+  }
+} catch (err) {
+  // Table might not exist yet, that's fine
+}
+
+// ============================================
+// Invite Tokens Table
+// ============================================
+// For team member invitations
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS invite_tokens (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    email TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'member',
+    token TEXT UNIQUE NOT NULL,
+    invited_by INTEGER NOT NULL REFERENCES users(id),
+    expires_at DATETIME NOT NULL,
+    used INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
+db.exec(`CREATE INDEX IF NOT EXISTS idx_invite_tokens_token ON invite_tokens(token)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_invite_tokens_tenant ON invite_tokens(tenant_id)`);
 
 module.exports = db;

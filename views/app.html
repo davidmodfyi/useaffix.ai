@@ -160,6 +160,60 @@
       font-size: 0.75rem;
     }
 
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border);
+      transition: 0.3s;
+      border-radius: 24px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background-color: var(--text-secondary);
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background-color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .toggle-switch input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+      background-color: white;
+    }
+
     /* Sidebar */
     .app-sidebar {
       position: fixed;
@@ -2339,6 +2393,30 @@
 
     .modal-body {
       padding: 24px;
+    }
+
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+    }
+
+    .alert-success {
+      background: rgba(52, 211, 153, 0.1);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      color: var(--success);
+    }
+
+    .alert-error {
+      background: rgba(248, 113, 113, 0.1);
+      border: 1px solid rgba(248, 113, 113, 0.3);
+      color: var(--error);
+    }
+
+    .alert-info {
+      background: rgba(91, 124, 250, 0.1);
+      border: 1px solid rgba(91, 124, 250, 0.3);
+      color: var(--accent);
     }
 
     .form-group {
@@ -4722,6 +4800,59 @@
       <div class="modal-body">
         <div class="fullscreen-chart-container" id="fullscreenChartContainer">
           <!-- Chart will be rendered here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Share Dashboard Modal -->
+  <div class="modal-overlay" id="shareDashboardModal">
+    <div class="modal" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Share Dashboard</h3>
+        <button class="modal-close" id="closeShareModal">×</button>
+      </div>
+      <div class="modal-body">
+        <div id="shareAlert" style="display: none; margin-bottom: 16px;"></div>
+
+        <!-- Public Link Toggle -->
+        <div style="margin-bottom: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div>
+              <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 4px;">Public Link</h4>
+              <p style="font-size: 12px; color: var(--text-secondary);">
+                Anyone with the link can view this dashboard
+              </p>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="publicLinkToggle">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <!-- Link Display -->
+          <div id="publicLinkSection" style="display: none;">
+            <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+              <label style="font-size: 12px; color: var(--text-secondary); display: block; margin-bottom: 8px;">
+                Public URL
+              </label>
+              <div style="display: flex; gap: 8px;">
+                <input type="text" id="publicLinkUrl" readonly
+                       style="flex: 1; background: transparent; border: none; color: var(--text-primary); font-family: var(--font-mono); font-size: 12px; padding: 0;">
+                <button class="btn btn-sm" id="copyPublicLinkBtn">Copy</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Embed Code -->
+        <div id="embedSection" style="display: none;">
+          <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Embed Code</h4>
+          <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+            <textarea id="embedCode" readonly rows="3"
+                      style="width: 100%; background: transparent; border: none; color: var(--text-primary); font-family: var(--font-mono); font-size: 11px; resize: none; padding: 0;"></textarea>
+          </div>
+          <button class="btn btn-sm" id="copyEmbedCodeBtn">Copy Embed Code</button>
         </div>
       </div>
     </div>
@@ -7937,9 +8068,9 @@
       // Auto-layout button
       autoLayoutBtn.addEventListener('click', autoLayoutDashboard);
 
-      // Share button (UI only for now)
+      // Share button
       shareDashboardBtn.addEventListener('click', () => {
-        showToast('Share functionality coming soon!', 'info');
+        openShareModal();
       });
 
       // Dashboard title blur - save on change
@@ -9744,6 +9875,120 @@
         alert(`SQL:\n\n${query.sql_generated}`);
       }
     };
+
+    // ============================================
+    // Share Dashboard Modal
+    // ============================================
+
+    const shareDashboardModal = document.getElementById('shareDashboardModal');
+    const closeShareModal = document.getElementById('closeShareModal');
+    const publicLinkToggle = document.getElementById('publicLinkToggle');
+    const publicLinkSection = document.getElementById('publicLinkSection');
+    const embedSection = document.getElementById('embedSection');
+    const publicLinkUrl = document.getElementById('publicLinkUrl');
+    const embedCode = document.getElementById('embedCode');
+    const copyPublicLinkBtn = document.getElementById('copyPublicLinkBtn');
+    const copyEmbedCodeBtn = document.getElementById('copyEmbedCodeBtn');
+    const shareAlert = document.getElementById('shareAlert');
+
+    async function openShareModal() {
+      if (!currentDashboard) {
+        showToast('Please select a dashboard first', 'error');
+        return;
+      }
+
+      // Check current sharing status
+      const isPublic = currentDashboard.is_public === 1;
+      publicLinkToggle.checked = isPublic;
+
+      if (isPublic) {
+        publicLinkSection.style.display = 'block';
+        embedSection.style.display = 'block';
+        const baseUrl = window.location.origin;
+        publicLinkUrl.value = `${baseUrl}/public/dashboards/${currentDashboard.share_token}`;
+        embedCode.value = `<iframe src="${baseUrl}/embed/dashboards/${currentDashboard.share_token}" width="100%" height="600" frameborder="0"></iframe>`;
+      } else {
+        publicLinkSection.style.display = 'none';
+        embedSection.style.display = 'none';
+      }
+
+      shareDashboardModal.classList.add('active');
+    }
+
+    function closeShareModalFn() {
+      shareDashboardModal.classList.remove('active');
+      shareAlert.style.display = 'none';
+    }
+
+    closeShareModal.addEventListener('click', closeShareModalFn);
+
+    publicLinkToggle.addEventListener('change', async () => {
+      const isPublic = publicLinkToggle.checked;
+
+      try {
+        const res = await fetch(`/api/dashboards/${currentDashboard.id}/share`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isPublic })
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to update sharing');
+        }
+
+        const data = await res.json();
+
+        if (isPublic) {
+          publicLinkSection.style.display = 'block';
+          embedSection.style.display = 'block';
+          publicLinkUrl.value = data.shareUrl;
+          embedCode.value = `<iframe src="${data.embedUrl}" width="100%" height="600" frameborder="0"></iframe>`;
+
+          shareAlert.className = 'alert alert-success';
+          shareAlert.textContent = 'Dashboard is now publicly shared!';
+          shareAlert.style.display = 'block';
+
+          // Update current dashboard
+          currentDashboard.share_token = data.shareToken;
+          currentDashboard.is_public = 1;
+        } else {
+          publicLinkSection.style.display = 'none';
+          embedSection.style.display = 'none';
+
+          shareAlert.className = 'alert alert-info';
+          shareAlert.textContent = 'Public sharing has been disabled.';
+          shareAlert.style.display = 'block';
+
+          // Update current dashboard
+          currentDashboard.share_token = null;
+          currentDashboard.is_public = 0;
+        }
+
+        setTimeout(() => {
+          shareAlert.style.display = 'none';
+        }, 3000);
+
+      } catch (err) {
+        console.error('Share error:', err);
+        publicLinkToggle.checked = !isPublic; // Revert toggle
+        shareAlert.className = 'alert alert-error';
+        shareAlert.textContent = err.message || 'Failed to update sharing';
+        shareAlert.style.display = 'block';
+      }
+    });
+
+    copyPublicLinkBtn.addEventListener('click', () => {
+      publicLinkUrl.select();
+      document.execCommand('copy');
+      showToast('Link copied to clipboard!', 'success');
+    });
+
+    copyEmbedCodeBtn.addEventListener('click', () => {
+      embedCode.select();
+      document.execCommand('copy');
+      showToast('Embed code copied to clipboard!', 'success');
+    });
 
     // Initialize app
     init();

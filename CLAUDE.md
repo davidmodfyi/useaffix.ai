@@ -299,9 +299,11 @@ The default project:
 ### User Roles
 | Role | Permissions |
 |------|-------------|
-| `owner` | Full tenant control, can delete tenant |
-| `admin` | Manage team and data sources |
-| `member` | Read-only access to data |
+| `owner` | Full tenant control, can delete tenant, manage billing |
+| `admin` | Manage team, invite users, manage data sources and projects |
+| `editor` | Create/edit projects, queries, dashboards. Cannot manage users |
+| `viewer` | View projects and dashboards, ask queries. Cannot edit or delete |
+| `member` | Legacy role, equivalent to viewer |
 
 ---
 
@@ -328,7 +330,9 @@ CREATE TABLE users (
   password_hash TEXT NOT NULL,      -- bcrypt, 12 salt rounds
   name TEXT NOT NULL,
   tenant_id TEXT REFERENCES tenants(id),
-  role TEXT DEFAULT 'member',       -- 'owner', 'admin', 'member'
+  role TEXT DEFAULT 'member',       -- 'owner', 'admin', 'editor', 'viewer', 'member'
+  invited_by INTEGER REFERENCES users(id),
+  last_active_at DATETIME,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   last_login DATETIME
@@ -424,8 +428,25 @@ CREATE TABLE dashboards (
   description TEXT,
   layout TEXT,                      -- JSON: grid layout config
   is_pinned INTEGER DEFAULT 0,
+  share_token TEXT,                 -- Public sharing token
+  is_public INTEGER DEFAULT 0,      -- 1 if publicly shared
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### invite_tokens
+```sql
+CREATE TABLE invite_tokens (
+  id TEXT PRIMARY KEY,              -- UUID
+  tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  email TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'member',
+  token TEXT UNIQUE NOT NULL,
+  invited_by INTEGER NOT NULL REFERENCES users(id),
+  expires_at DATETIME NOT NULL,
+  used INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
@@ -638,6 +659,20 @@ CREATE INDEX idx_background_jobs_status ON background_jobs(status);
 |--------|----------|------|-------------|
 | GET | `/api/team` | ✓ | List users in tenant |
 | POST | `/api/team/invite` | ✓ owner/admin | Create user in tenant |
+| PUT | `/api/team/:userId/role` | ✓ owner/admin | Change user role |
+| DELETE | `/api/team/:userId` | ✓ owner/admin | Remove user from tenant |
+
+### Dashboard Sharing
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| PUT | `/api/dashboards/:id/share` | ✓ | Toggle public sharing, get share URLs |
+| GET | `/public/dashboards/:shareToken` | — | View public dashboard (no auth) |
+| GET | `/embed/dashboards/:shareToken` | — | Embed dashboard (minimal chrome, no auth) |
+
+### Settings
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/settings` | ✓ | Settings page with team, billing, profile tabs |
 
 ---
 
