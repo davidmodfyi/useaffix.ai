@@ -396,6 +396,329 @@
       transition: width 0.3s ease;
     }
 
+    .credits-fill.warning {
+      background: linear-gradient(90deg, var(--warning), #f59e0b);
+    }
+
+    .credits-fill.danger {
+      background: linear-gradient(90deg, var(--error), #ef4444);
+    }
+
+    .credits-text {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+      text-align: center;
+    }
+
+    /* Background Jobs Sidebar Styles */
+    .job-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .job-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .job-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .job-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .job-status-dot.running {
+      background: var(--accent);
+      animation: pulse 1.5s infinite;
+    }
+
+    .job-status-dot.queued {
+      background: var(--warning);
+    }
+
+    .job-status-dot.completed {
+      background: var(--success);
+    }
+
+    .job-status-dot.failed {
+      background: var(--error);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .job-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .job-name {
+      font-size: 0.85rem;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .job-progress {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    /* Background Analysis Button */
+    .background-analysis-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 12px 20px;
+      margin-top: 16px;
+      background: linear-gradient(135deg, rgba(91, 124, 250, 0.15), rgba(192, 132, 252, 0.15));
+      border: 1px solid rgba(91, 124, 250, 0.3);
+      border-radius: 12px;
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .background-analysis-btn:hover {
+      background: linear-gradient(135deg, rgba(91, 124, 250, 0.25), rgba(192, 132, 252, 0.25));
+      border-color: rgba(91, 124, 250, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .background-analysis-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .background-analysis-btn.running {
+      background: linear-gradient(135deg, rgba(91, 124, 250, 0.2), rgba(192, 132, 252, 0.2));
+    }
+
+    .analysis-progress-text {
+      font-size: 0.85rem;
+    }
+
+    /* Background Analysis Modal */
+    .analysis-modal-content {
+      padding: 24px;
+    }
+
+    .analysis-modal-header {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      margin-bottom: 16px;
+    }
+
+    .analysis-modal-description {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .budget-slider-container {
+      margin-bottom: 24px;
+    }
+
+    .budget-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+    }
+
+    .budget-value {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .budget-slider {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--bg-secondary);
+      appearance: none;
+      outline: none;
+    }
+
+    .budget-slider::-webkit-slider-thumb {
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      cursor: pointer;
+      border: 2px solid var(--bg-card);
+    }
+
+    .credits-remaining {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+      margin-bottom: 24px;
+      font-size: 0.9rem;
+    }
+
+    .credits-remaining-value {
+      color: var(--success);
+      font-weight: 500;
+    }
+
+    .analysis-start-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-family: var(--font-body);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .analysis-start-btn:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .analysis-start-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Analysis Results Page */
+    .analysis-results {
+      padding: 20px 0;
+    }
+
+    .analysis-summary-card {
+      background: linear-gradient(135deg, rgba(91, 124, 250, 0.1), rgba(192, 132, 252, 0.1));
+      border: 1px solid rgba(91, 124, 250, 0.2);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .analysis-summary-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+    }
+
+    .analysis-summary-title {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .analysis-summary-text {
+      color: var(--text-secondary);
+      line-height: 1.7;
+      font-size: 0.95rem;
+    }
+
+    .analysis-question-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .analysis-question-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .analysis-question-header:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .analysis-question-number {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .analysis-question-text {
+      flex: 1;
+      font-size: 0.95rem;
+    }
+
+    .analysis-question-expand {
+      color: var(--text-muted);
+      transition: transform 0.3s;
+    }
+
+    .analysis-question-expand.expanded {
+      transform: rotate(180deg);
+    }
+
+    .analysis-question-content {
+      padding: 0 20px 20px;
+      display: none;
+    }
+
+    .analysis-question-content.expanded {
+      display: block;
+    }
+
+    .analysis-credit-summary {
+      text-align: center;
+      padding: 20px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .analysis-credit-summary strong {
+      color: var(--accent);
+    }
+
     .user-menu {
       display: flex;
       align-items: center;
@@ -3702,14 +4025,16 @@
         <div class="sidebar-section-header">
           <span class="sidebar-section-title">Background Jobs</span>
         </div>
-        <div style="padding: 10px 16px; font-size: 0.85rem; color: var(--text-muted); text-align: center;">
-          No active jobs
-        </div>
+        <ul class="job-list" id="backgroundJobsList">
+          <li style="padding: 10px 16px; font-size: 0.85rem; color: var(--text-muted); text-align: center;" id="noJobsMessage">
+            No active jobs
+          </li>
+        </ul>
       </div>
     </div>
 
     <div class="sidebar-footer">
-      <div class="credits-usage">
+      <div class="credits-usage" id="creditsUsage" title="Credits reset on the first of each month">
         <div class="credits-label">
           <span>Credits</span>
           <span id="creditsPercentage">0%</span>
@@ -3717,6 +4042,7 @@
         <div class="credits-bar">
           <div class="credits-fill" id="creditsFill" style="width: 0%"></div>
         </div>
+        <div class="credits-text" id="creditsText">$0.00 / $10.00 used</div>
       </div>
       <div class="user-menu" id="userMenu">
         <div class="user-avatar" id="userAvatar">A</div>
@@ -3812,6 +4138,12 @@
           <div class="suggested-questions" id="suggestedQuestions">
             <!-- Will be populated dynamically -->
           </div>
+
+          <!-- Background Analysis Button -->
+          <button class="background-analysis-btn" id="backgroundAnalysisBtn">
+            <span>✨</span>
+            <span id="backgroundAnalysisBtnText">Run Background Analysis</span>
+          </button>
 
           <!-- Loading State -->
           <div class="query-loading" id="projectQueryLoading">
@@ -4473,6 +4805,46 @@
     </div>
   </div>
 
+  <!-- Background Analysis Modal -->
+  <div class="modal-overlay" id="backgroundAnalysisModal">
+    <div class="modal" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Run Background Analysis</h3>
+        <button class="modal-close" id="closeBackgroundAnalysisModal">&times;</button>
+      </div>
+      <div class="modal-body analysis-modal-content">
+        <p class="analysis-modal-description">
+          The AI will autonomously explore your data, looking for hidden insights, anomalies, cost-saving opportunities, and patterns you haven't thought to ask about.
+        </p>
+
+        <div class="budget-slider-container">
+          <div class="budget-label">
+            <span>Credit budget for this run:</span>
+            <span class="budget-value" id="analysisBudgetValue">$2.00</span>
+          </div>
+          <input
+            type="range"
+            class="budget-slider"
+            id="analysisBudgetSlider"
+            min="0.5"
+            max="5"
+            step="0.5"
+            value="2"
+          />
+        </div>
+
+        <div class="credits-remaining">
+          <span>Remaining credits this month:</span>
+          <span class="credits-remaining-value" id="analysisCreditsRemaining">$10.00</span>
+        </div>
+
+        <button class="analysis-start-btn" id="startAnalysisBtn">
+          Start Analysis
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast-container" id="toastContainer"></div>
 
   <script>
@@ -4579,15 +4951,38 @@
     const emptyActionNew = document.getElementById('emptyActionNew');
     const emptyActionAuto = document.getElementById('emptyActionAuto');
 
+    // Background Analysis Elements
+    const backgroundAnalysisBtn = document.getElementById('backgroundAnalysisBtn');
+    const backgroundAnalysisBtnText = document.getElementById('backgroundAnalysisBtnText');
+    const backgroundAnalysisModal = document.getElementById('backgroundAnalysisModal');
+    const closeBackgroundAnalysisModal = document.getElementById('closeBackgroundAnalysisModal');
+    const analysisBudgetSlider = document.getElementById('analysisBudgetSlider');
+    const analysisBudgetValue = document.getElementById('analysisBudgetValue');
+    const analysisCreditsRemaining = document.getElementById('analysisCreditsRemaining');
+    const startAnalysisBtn = document.getElementById('startAnalysisBtn');
+    const backgroundJobsList = document.getElementById('backgroundJobsList');
+    const noJobsMessage = document.getElementById('noJobsMessage');
+    const creditsFill = document.getElementById('creditsFill');
+    const creditsPercentage = document.getElementById('creditsPercentage');
+    const creditsText = document.getElementById('creditsText');
+
+    // Background analysis state
+    let currentBackgroundJob = null;
+    let backgroundJobPollInterval = null;
+    let creditsData = null;
+
     // Initialize
     async function init() {
       await loadUserInfo();
       await loadProjects();
       await loadPinnedQueries();
+      await loadCreditsUsage();
+      await loadBackgroundJobs();
       setupSidebarHandlers();
       setupModalHandlers();
       setupProjectHomeHandlers();
       setupDashboardHandlers();
+      setupBackgroundAnalysisHandlers();
     }
 
     // Toast notifications
@@ -8840,6 +9235,515 @@
         showToast('Failed to update dashboard', 'error');
       }
     }
+
+    // ============================================
+    // Credits Usage Functions
+    // ============================================
+
+    async function loadCreditsUsage() {
+      try {
+        const response = await fetch('/api/credits');
+        if (response.ok) {
+          creditsData = await response.json();
+          updateCreditsDisplay();
+        }
+      } catch (err) {
+        console.error('Failed to load credits:', err);
+      }
+    }
+
+    function updateCreditsDisplay() {
+      if (!creditsData) return;
+
+      const percentUsed = creditsData.percentUsed || 0;
+      creditsPercentage.textContent = `${Math.round(percentUsed)}%`;
+      creditsFill.style.width = `${percentUsed}%`;
+
+      // Update color based on usage
+      creditsFill.classList.remove('warning', 'danger');
+      if (percentUsed >= 90) {
+        creditsFill.classList.add('danger');
+      } else if (percentUsed >= 70) {
+        creditsFill.classList.add('warning');
+      }
+
+      // Update text
+      const used = creditsData.creditsUsed || 0;
+      const allocated = creditsData.creditsAllocated || 10;
+      creditsText.textContent = `$${used.toFixed(2)} / $${allocated.toFixed(2)} used`;
+
+      // Update tooltip with reset date
+      const nextMonth = new Date();
+      nextMonth.setMonth(nextMonth.getMonth() + 1);
+      nextMonth.setDate(1);
+      const resetDate = nextMonth.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      document.getElementById('creditsUsage').title = `Resets on ${resetDate}. Usage includes all AI queries and background analysis.`;
+    }
+
+    // ============================================
+    // Background Jobs Functions
+    // ============================================
+
+    async function loadBackgroundJobs() {
+      try {
+        // Load active jobs
+        const activeResponse = await fetch('/api/background-jobs/active');
+        const activeJobs = activeResponse.ok ? await activeResponse.json() : [];
+
+        // Load recent completed jobs
+        const recentResponse = await fetch('/api/background-jobs/recent?limit=3');
+        const recentJobs = recentResponse.ok ? await recentResponse.json() : [];
+
+        renderBackgroundJobs([...activeJobs, ...recentJobs]);
+
+        // Check if there's a running job for the current project
+        if (currentProject) {
+          const runningJob = activeJobs.find(j => j.project_id === currentProject.id);
+          if (runningJob) {
+            currentBackgroundJob = runningJob;
+            updateAnalysisButtonState();
+            startBackgroundJobPolling(runningJob.id);
+          } else {
+            currentBackgroundJob = null;
+            updateAnalysisButtonState();
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load background jobs:', err);
+      }
+    }
+
+    function renderBackgroundJobs(jobs) {
+      if (!jobs || jobs.length === 0) {
+        noJobsMessage.style.display = '';
+        backgroundJobsList.innerHTML = '';
+        backgroundJobsList.appendChild(noJobsMessage);
+        return;
+      }
+
+      noJobsMessage.style.display = 'none';
+      backgroundJobsList.innerHTML = '';
+
+      jobs.forEach(job => {
+        const li = document.createElement('li');
+        li.className = 'job-item';
+        li.onclick = () => viewBackgroundJob(job.id);
+
+        const statusClass = job.status === 'running' ? 'running' :
+                           job.status === 'queued' ? 'queued' :
+                           job.status === 'completed' ? 'completed' : 'failed';
+
+        const progressText = job.status === 'running' || job.status === 'queued'
+          ? `${job.questions_completed || 0}/${job.total_questions_planned || 10} questions`
+          : job.status === 'completed'
+            ? `${(job.findings || []).filter(f => f.status === 'success').length} insights`
+            : job.status;
+
+        li.innerHTML = `
+          <div class="job-status-dot ${statusClass}"></div>
+          <div class="job-info">
+            <div class="job-name">${job.project_name || 'Analysis'}</div>
+            <div class="job-progress">${progressText}</div>
+          </div>
+        `;
+
+        backgroundJobsList.appendChild(li);
+      });
+    }
+
+    function setupBackgroundAnalysisHandlers() {
+      // Open modal
+      backgroundAnalysisBtn.addEventListener('click', () => {
+        if (currentBackgroundJob && (currentBackgroundJob.status === 'running' || currentBackgroundJob.status === 'queued')) {
+          // If there's a running job, view its results instead
+          viewBackgroundJob(currentBackgroundJob.id);
+          return;
+        }
+
+        // Update credits remaining display
+        if (creditsData) {
+          const remaining = (creditsData.creditsAllocated || 10) - (creditsData.creditsUsed || 0);
+          analysisCreditsRemaining.textContent = `$${remaining.toFixed(2)}`;
+
+          // Adjust max budget based on remaining credits
+          const maxBudget = Math.min(5, remaining);
+          analysisBudgetSlider.max = Math.max(0.5, maxBudget);
+
+          // If not enough credits, disable start button
+          if (remaining < 0.5) {
+            startAnalysisBtn.disabled = true;
+            startAnalysisBtn.textContent = 'Not Enough Credits';
+          } else {
+            startAnalysisBtn.disabled = false;
+            startAnalysisBtn.textContent = 'Start Analysis';
+          }
+        }
+
+        backgroundAnalysisModal.classList.add('active');
+      });
+
+      // Close modal
+      closeBackgroundAnalysisModal.addEventListener('click', () => {
+        backgroundAnalysisModal.classList.remove('active');
+      });
+
+      backgroundAnalysisModal.addEventListener('click', (e) => {
+        if (e.target === backgroundAnalysisModal) {
+          backgroundAnalysisModal.classList.remove('active');
+        }
+      });
+
+      // Budget slider
+      analysisBudgetSlider.addEventListener('input', () => {
+        analysisBudgetValue.textContent = `$${parseFloat(analysisBudgetSlider.value).toFixed(2)}`;
+      });
+
+      // Start analysis
+      startAnalysisBtn.addEventListener('click', startBackgroundAnalysis);
+    }
+
+    async function startBackgroundAnalysis() {
+      if (!currentProject) {
+        showToast('Please select a project first', 'error');
+        return;
+      }
+
+      const budget = parseFloat(analysisBudgetSlider.value);
+
+      startAnalysisBtn.disabled = true;
+      startAnalysisBtn.textContent = 'Starting...';
+
+      try {
+        const response = await fetch(`/api/projects/${currentProject.id}/background-analysis`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ creditsBudget: budget })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          backgroundAnalysisModal.classList.remove('active');
+          showToast('Background analysis started!', 'success');
+
+          // Set current job and update UI
+          currentBackgroundJob = { id: data.jobId, status: 'queued', project_id: currentProject.id };
+          updateAnalysisButtonState();
+
+          // Start polling for progress
+          startBackgroundJobPolling(data.jobId);
+
+          // Reload jobs list
+          await loadBackgroundJobs();
+        } else {
+          showToast(data.error || 'Failed to start analysis', 'error');
+        }
+      } catch (err) {
+        console.error('Error starting analysis:', err);
+        showToast('Failed to start analysis', 'error');
+      } finally {
+        startAnalysisBtn.disabled = false;
+        startAnalysisBtn.textContent = 'Start Analysis';
+      }
+    }
+
+    function updateAnalysisButtonState() {
+      if (currentBackgroundJob && (currentBackgroundJob.status === 'running' || currentBackgroundJob.status === 'queued')) {
+        backgroundAnalysisBtn.classList.add('running');
+        const progress = currentBackgroundJob.questions_completed || 0;
+        const total = currentBackgroundJob.total_questions_planned || 10;
+        backgroundAnalysisBtnText.textContent = `Analyzing... (${progress}/${total} questions)`;
+      } else {
+        backgroundAnalysisBtn.classList.remove('running');
+        backgroundAnalysisBtnText.textContent = 'Run Background Analysis';
+      }
+    }
+
+    function startBackgroundJobPolling(jobId) {
+      // Clear any existing poll
+      if (backgroundJobPollInterval) {
+        clearInterval(backgroundJobPollInterval);
+      }
+
+      // Poll every 3 seconds
+      backgroundJobPollInterval = setInterval(async () => {
+        try {
+          const response = await fetch(`/api/background-jobs/${jobId}`);
+          if (response.ok) {
+            const job = await response.json();
+            currentBackgroundJob = job;
+            updateAnalysisButtonState();
+
+            // Update sidebar jobs list
+            await loadBackgroundJobs();
+
+            // Reload credits (they're being consumed)
+            await loadCreditsUsage();
+
+            // Stop polling if job is done
+            if (job.status === 'completed' || job.status === 'failed' || job.status === 'paused_credits') {
+              clearInterval(backgroundJobPollInterval);
+              backgroundJobPollInterval = null;
+
+              if (job.status === 'completed') {
+                showToast('Background analysis completed!', 'success');
+              } else if (job.status === 'paused_credits') {
+                showToast('Analysis paused - credit budget exhausted', 'warning');
+              } else if (job.status === 'failed') {
+                showToast('Background analysis failed', 'error');
+              }
+
+              currentBackgroundJob = null;
+              updateAnalysisButtonState();
+
+              // Refresh insights if we're on the current project
+              if (currentProject && job.project_id === currentProject.id) {
+                loadInsightSummary(currentProject.id);
+                // Refresh insights tab if it's active
+                const insightsTab = document.querySelector('.tab-btn[data-tab="insights"]');
+                if (insightsTab && insightsTab.classList.contains('active')) {
+                  loadProjectInsights(currentProject.id);
+                }
+              }
+            }
+          }
+        } catch (err) {
+          console.error('Error polling job status:', err);
+        }
+      }, 3000);
+    }
+
+    async function viewBackgroundJob(jobId) {
+      try {
+        const response = await fetch(`/api/background-jobs/${jobId}`);
+        if (!response.ok) {
+          showToast('Failed to load analysis results', 'error');
+          return;
+        }
+
+        const job = await response.json();
+
+        // Get queries generated by this job
+        const queriesResponse = await fetch(`/api/background-jobs/${jobId}/queries`);
+        const queries = queriesResponse.ok ? await queriesResponse.json() : [];
+
+        // Render results page
+        renderAnalysisResultsPage(job, queries);
+
+      } catch (err) {
+        console.error('Error loading job:', err);
+        showToast('Failed to load analysis results', 'error');
+      }
+    }
+
+    function renderAnalysisResultsPage(job, queries) {
+      // Hide project home and show analysis results
+      projectHome.style.display = 'none';
+      dashboardPage.style.display = 'none';
+
+      // Create or update results container
+      let resultsContainer = document.getElementById('analysisResultsPage');
+      if (!resultsContainer) {
+        resultsContainer = document.createElement('section');
+        resultsContainer.id = 'analysisResultsPage';
+        resultsContainer.className = 'analysis-results';
+        appMain.querySelector('.container').appendChild(resultsContainer);
+      }
+
+      resultsContainer.style.display = 'block';
+
+      // Build the results HTML
+      const statusIcon = job.status === 'completed' ? '✅' :
+                        job.status === 'paused_credits' ? '⏸️' :
+                        job.status === 'failed' ? '❌' : '🔄';
+
+      let html = `
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+          <button class="btn" id="backToProjectBtn">← Back to Project</button>
+          <h2 style="font-family: var(--font-display); font-size: 1.5rem; flex: 1;">
+            Background Analysis Results ${statusIcon}
+          </h2>
+        </div>
+      `;
+
+      // Executive Summary
+      if (job.executive_summary) {
+        html += `
+          <div class="analysis-summary-card">
+            <div class="analysis-summary-title">✨ Executive Summary</div>
+            <p class="analysis-summary-text">${job.executive_summary}</p>
+          </div>
+        `;
+      }
+
+      // Individual Questions/Findings
+      if (queries && queries.length > 0) {
+        html += '<h3 style="margin-bottom: 16px; font-size: 1.1rem;">Explored Questions</h3>';
+
+        queries.forEach((query, index) => {
+          const finding = (job.findings || []).find(f => f.queryId === query.id);
+          const insightCount = query.insight_count || 0;
+
+          html += `
+            <div class="analysis-question-section" data-query-id="${query.id}">
+              <div class="analysis-question-header" onclick="toggleAnalysisQuestion(this)">
+                <div class="analysis-question-number">${index + 1}</div>
+                <div class="analysis-question-text">${query.question}</div>
+                <span style="font-size: 0.8rem; color: var(--text-muted); margin-right: 8px;">
+                  ${insightCount} insight${insightCount !== 1 ? 's' : ''}
+                </span>
+                <span class="analysis-question-expand">▼</span>
+              </div>
+              <div class="analysis-question-content" id="questionContent_${query.id}">
+                <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 16px;">
+                  ${query.explanation || ''}
+                </div>
+                <div class="chart-wrapper" id="analysisChart_${query.id}" style="height: 300px; margin-bottom: 16px;"></div>
+                <div class="result-actions" style="margin-bottom: 16px;">
+                  <button class="result-action-btn" onclick="pinAnalysisQuery('${query.id}')">
+                    ${query.is_pinned ? '📌 Pinned' : '📌 Pin'}
+                  </button>
+                  <button class="result-action-btn" onclick="showAnalysisSql('${query.id}')">
+                    📝 Show SQL
+                  </button>
+                </div>
+                <div id="analysisInsights_${query.id}"></div>
+              </div>
+            </div>
+          `;
+        });
+      } else if (job.status !== 'completed') {
+        html += `
+          <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+            ${job.status === 'running' || job.status === 'queued' ? 'Analysis in progress...' : 'No results available'}
+          </div>
+        `;
+      }
+
+      // Credit usage summary
+      html += `
+        <div class="analysis-credit-summary">
+          This analysis used <strong>$${(job.credits_used || 0).toFixed(2)}</strong> of
+          <strong>$${(job.credits_budget || 2).toFixed(2)}</strong> budget,
+          exploring ${job.questions_completed || 0} questions.
+        </div>
+      `;
+
+      resultsContainer.innerHTML = html;
+
+      // Back button handler
+      document.getElementById('backToProjectBtn').addEventListener('click', () => {
+        resultsContainer.style.display = 'none';
+        projectHome.style.display = 'block';
+      });
+
+      // Store queries for chart rendering
+      window.analysisQueries = queries;
+
+      // Render charts for expanded sections
+      queries.forEach(query => {
+        if (query.visualization_config) {
+          try {
+            const config = typeof query.visualization_config === 'string'
+              ? JSON.parse(query.visualization_config)
+              : query.visualization_config;
+
+            setTimeout(() => {
+              const chartContainer = document.getElementById(`analysisChart_${query.id}`);
+              if (chartContainer) {
+                const chart = echarts.init(chartContainer, 'feather-dark');
+                chart.setOption(config);
+              }
+            }, 100);
+          } catch (e) {
+            console.error('Failed to render analysis chart:', e);
+          }
+        }
+      });
+    }
+
+    // Toggle analysis question expansion
+    window.toggleAnalysisQuestion = function(header) {
+      const section = header.closest('.analysis-question-section');
+      const content = section.querySelector('.analysis-question-content');
+      const icon = header.querySelector('.analysis-question-expand');
+
+      const isExpanded = content.classList.contains('expanded');
+
+      if (isExpanded) {
+        content.classList.remove('expanded');
+        icon.classList.remove('expanded');
+      } else {
+        content.classList.add('expanded');
+        icon.classList.add('expanded');
+
+        // Load insights if not already loaded
+        const queryId = section.dataset.queryId;
+        const insightsContainer = document.getElementById(`analysisInsights_${queryId}`);
+        if (insightsContainer && !insightsContainer.dataset.loaded) {
+          loadAnalysisQueryInsights(queryId, insightsContainer);
+        }
+      }
+    };
+
+    async function loadAnalysisQueryInsights(queryId, container) {
+      try {
+        const response = await fetch(`/api/queries/${queryId}/insights`);
+        if (response.ok) {
+          const insights = await response.json();
+          container.dataset.loaded = 'true';
+
+          if (insights.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">No insights generated for this query.</p>';
+            return;
+          }
+
+          container.innerHTML = insights.map(insight => `
+            <div class="insight-card ${insight.severity}" style="margin-bottom: 12px; padding: 12px 16px; background: var(--bg-secondary); border-radius: 8px; border-left: 3px solid ${
+              insight.severity === 'critical' ? 'var(--error)' :
+              insight.severity === 'warning' ? 'var(--warning)' :
+              insight.severity === 'opportunity' ? 'var(--success)' : 'var(--accent)'
+            };">
+              <div style="font-weight: 500; margin-bottom: 4px;">
+                ${insight.insight_type === 'anomaly' ? '📉' :
+                  insight.insight_type === 'trend' ? '📈' :
+                  insight.insight_type === 'opportunity' ? '💡' :
+                  insight.insight_type === 'warning' ? '⚠️' : '🔗'}
+                ${insight.title}
+              </div>
+              <div style="font-size: 0.85rem; color: var(--text-secondary);">${insight.description}</div>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        console.error('Error loading insights:', err);
+      }
+    }
+
+    window.pinAnalysisQuery = async function(queryId) {
+      try {
+        const response = await fetch(`/api/queries/${queryId}/pin`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isPinned: true })
+        });
+
+        if (response.ok) {
+          showToast('Query pinned!', 'success');
+          await loadPinnedQueries();
+        }
+      } catch (err) {
+        console.error('Error pinning query:', err);
+        showToast('Failed to pin query', 'error');
+      }
+    };
+
+    window.showAnalysisSql = function(queryId) {
+      const query = (window.analysisQueries || []).find(q => q.id === queryId);
+      if (query && query.sql_generated) {
+        alert(`SQL:\n\n${query.sql_generated}`);
+      }
+    };
 
     // Initialize app
     init();

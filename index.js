@@ -31,7 +31,8 @@ const SQLiteStore = require('./middleware/session-store');
 const { TenantManager } = require('./lib/tenant');
 const { askQuestion } = require('./lib/nlquery');
 const { generateInsights } = require('./lib/insights');
-const { trackApiUsage } = require('./lib/api-usage');
+const { trackApiUsage, getCurrentUsage, setMonthlyBudget } = require('./lib/api-usage');
+const backgroundAnalysis = require('./lib/backgroundAnalysis');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -1754,6 +1755,235 @@ app.delete('/api/widgets/:id', requireAuth, requireTenant, requireRole('owner', 
     res.json({ success: true, message: 'Widget deleted' });
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// ============================================
+// Credits Usage API Routes
+// ============================================
+
+// Get current month's credit usage for tenant
+app.get('/api/credits', requireAuth, requireTenant, (req, res) => {
+  try {
+    const usage = getCurrentUsage(db, req.tenantId);
+
+    if (!usage) {
+      // Return default values for new tenants
+      return res.json({
+        creditsAllocated: 10.00,
+        creditsUsed: 0,
+        queryCount: 0,
+        backgroundAnalysisCount: 0,
+        percentUsed: 0
+      });
+    }
+
+    const creditsAllocated = usage.credits_allocated || 10.00;
+    const percentUsed = creditsAllocated > 0 ? (usage.credits_used / creditsAllocated) * 100 : 0;
+
+    res.json({
+      creditsAllocated: creditsAllocated,
+      creditsUsed: usage.credits_used || 0,
+      queryCount: usage.query_count || 0,
+      backgroundAnalysisCount: usage.background_analysis_count || 0,
+      percentUsed: Math.min(100, percentUsed),
+      month: usage.month
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Set monthly credit budget (owner/admin only)
+app.put('/api/credits/budget', requireAuth, requireTenant, requireRole('owner', 'admin'), (req, res) => {
+  try {
+    const { budget } = req.body;
+
+    if (typeof budget !== 'number' || budget < 0) {
+      return res.status(400).json({ error: 'Invalid budget value' });
+    }
+
+    const usage = setMonthlyBudget(db, req.tenantId, budget);
+    res.json({ success: true, usage });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// ============================================
+// Background Analysis API Routes
+// ============================================
+
+// Start a background analysis job for a project
+app.post('/api/projects/:id/background-analysis', requireAuth, requireTenant, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const { creditsBudget = 2.00 } = req.body;
+
+    // Verify project belongs to tenant
+    const project = db.prepare('SELECT * FROM projects WHERE id = ? AND tenant_id = ?').get(projectId, req.tenantId);
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    // Check if there's already a running job for this project
+    const runningJob = db.prepare(`
+      SELECT id FROM background_jobs
+      WHERE project_id = ? AND status IN ('queued', 'running')
+    `).get(projectId);
+
+    if (runningJob) {
+      return res.status(400).json({
+        error: 'A background analysis is already running for this project',
+        jobId: runningJob.id
+      });
+    }
+
+    // Get the default data source for the tenant
+    const defaultDs = tenantManager.getDefaultDataSource(req.tenantId);
+    if (!defaultDs) {
+      return res.status(400).json({
+        error: 'No data source found. Please upload some data first.'
+      });
+    }
+
+    // Get connected data source instance
+    const dataSource = await tenantManager.getDataSourceInstance(req.tenantId, defaultDs.id);
+
+    // Gather schema context
+    const schemaContext = await dataSource.gatherSchemaContext();
+
+    if (!schemaContext || schemaContext.includes('No tables found')) {
+      return res.status(400).json({
+        error: 'No data found. Please upload some data first.'
+      });
+    }
+
+    // Validate budget range
+    const validBudget = Math.max(0.50, Math.min(5.00, creditsBudget));
+
+    // Start the background analysis
+    const jobId = await backgroundAnalysis.startBackgroundAnalysis({
+      db,
+      tenantId: req.tenantId,
+      projectId,
+      creditsBudget: validBudget,
+      dataSource,
+      schemaContext
+    });
+
+    res.json({
+      success: true,
+      jobId,
+      message: 'Background analysis started'
+    });
+
+  } catch (err) {
+    console.error('Background analysis start error:', err);
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Get active background jobs for current tenant (for sidebar)
+// NOTE: This route must come BEFORE /api/background-jobs/:id to avoid matching "active" as an ID
+app.get('/api/background-jobs/active', requireAuth, requireTenant, (req, res) => {
+  try {
+    const jobs = backgroundAnalysis.getActiveJobs(db, req.tenantId);
+    res.json(jobs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get recent completed jobs for current tenant (for sidebar)
+// NOTE: This route must come BEFORE /api/background-jobs/:id to avoid matching "recent" as an ID
+app.get('/api/background-jobs/recent', requireAuth, requireTenant, (req, res) => {
+  try {
+    const limit = Math.min(10, parseInt(req.query.limit) || 5);
+    const jobs = backgroundAnalysis.getRecentCompletedJobs(db, req.tenantId, limit);
+    res.json(jobs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get a specific background job
+app.get('/api/background-jobs/:id', requireAuth, requireTenant, (req, res) => {
+  try {
+    const jobId = req.params.id;
+    const job = backgroundAnalysis.getJob(db, jobId, req.tenantId);
+
+    if (!job) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+
+    res.json(job);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get queries generated by a background job
+app.get('/api/background-jobs/:id/queries', requireAuth, requireTenant, (req, res) => {
+  try {
+    const jobId = req.params.id;
+
+    // Verify job belongs to tenant
+    const job = backgroundAnalysis.getJob(db, jobId, req.tenantId);
+    if (!job) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+
+    const queries = backgroundAnalysis.getJobQueries(db, jobId, req.tenantId);
+    res.json(queries);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Cancel a running background job
+app.post('/api/background-jobs/:id/cancel', requireAuth, requireTenant, (req, res) => {
+  try {
+    const jobId = req.params.id;
+
+    // Verify job belongs to tenant
+    const job = backgroundAnalysis.getJob(db, jobId, req.tenantId);
+    if (!job) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+
+    if (job.status !== 'running' && job.status !== 'queued') {
+      return res.status(400).json({ error: 'Job is not running' });
+    }
+
+    const cancelled = backgroundAnalysis.cancelJob(jobId);
+
+    if (cancelled) {
+      res.json({ success: true, message: 'Job cancelled' });
+    } else {
+      // Job might have just finished
+      res.json({ success: true, message: 'Job cancellation requested' });
+    }
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// List all background jobs for a project
+app.get('/api/projects/:id/background-jobs', requireAuth, requireTenant, (req, res) => {
+  try {
+    const projectId = req.params.id;
+
+    // Verify project belongs to tenant
+    const project = db.prepare('SELECT * FROM projects WHERE id = ? AND tenant_id = ?').get(projectId, req.tenantId);
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    const jobs = backgroundAnalysis.getJobsForProject(db, projectId, req.tenantId);
+    res.json(jobs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

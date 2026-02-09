@@ -240,6 +240,30 @@ db.exec(`
 `);
 
 // ============================================
+// Background Jobs Table
+// ============================================
+// Tracks background analysis jobs
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS background_jobs (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'queued',
+    total_questions_planned INTEGER DEFAULT 0,
+    questions_completed INTEGER DEFAULT 0,
+    credits_used REAL DEFAULT 0,
+    credits_budget REAL DEFAULT 2.00,
+    findings TEXT DEFAULT '[]',
+    executive_summary TEXT,
+    error_message TEXT,
+    started_at DATETIME,
+    completed_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
+// ============================================
 // Indexes
 // ============================================
 
@@ -276,5 +300,25 @@ db.exec(`CREATE INDEX IF NOT EXISTS idx_insights_type ON insights(insight_type)`
 
 db.exec(`CREATE INDEX IF NOT EXISTS idx_credits_tenant ON credits_usage(tenant_id)`);
 db.exec(`CREATE INDEX IF NOT EXISTS idx_credits_month ON credits_usage(month)`);
+
+// Background jobs indexes
+db.exec(`CREATE INDEX IF NOT EXISTS idx_background_jobs_tenant ON background_jobs(tenant_id)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_background_jobs_project ON background_jobs(project_id)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_background_jobs_status ON background_jobs(status)`);
+
+// Add source column to queries table if missing (for tracking background vs user queries)
+try {
+  const queryColumns = db.prepare(`PRAGMA table_info(queries)`).all();
+  const hasSource = queryColumns.some(col => col.name === 'source');
+  if (!hasSource) {
+    db.exec(`ALTER TABLE queries ADD COLUMN source TEXT DEFAULT 'user'`);
+  }
+  const hasBackgroundJobId = queryColumns.some(col => col.name === 'background_job_id');
+  if (!hasBackgroundJobId) {
+    db.exec(`ALTER TABLE queries ADD COLUMN background_job_id TEXT REFERENCES background_jobs(id)`);
+  }
+} catch (err) {
+  // Table might not exist yet, that's fine
+}
 
 module.exports = db;
