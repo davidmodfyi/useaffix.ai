@@ -9861,39 +9861,42 @@
       if (!newQueryResult || !currentDashboard) return;
 
       try {
-        // The query was already saved, so we need to create a widget from it
+        // The query was already saved by the API, use queryId from the response
         const res = await fetch(`/api/dashboards/${currentDashboard.id}/widgets`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            queryId: newQueryResult.id,
-            widgetType: newQueryResult.visualization_type || 'bar_chart',
+            queryId: newQueryResult.queryId,
+            widgetType: newQueryResult.visualizationType || 'bar_chart',
             position: null
           })
         });
 
-        if (res.ok) {
-          const data = await res.json();
-          const widget = data.widget;
-
-          // Add result summary
-          widget.question = newQueryResult.question;
-          widget.pin_title = newQueryResult.pin_title;
-          widget.visualization_type = newQueryResult.visualization_type;
-          widget.result_summary = newQueryResult.result_summary;
-
-          dashboardWidgets.push(widget);
-          addWidgetToGrid(widget);
-          dashboardEmptyState.style.display = 'none';
-
-          showToast('Widget added', 'success');
-          closeWidgetPickerModalFn();
-        } else {
-          throw new Error('Failed to add widget');
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Failed to add widget');
         }
+
+        const data = await res.json();
+        const widget = data.widget;
+
+        // Build result_summary from the query response for rendering
+        widget.result_summary = {
+          columns: newQueryResult.columns || [],
+          columnTypes: newQueryResult.columnTypes || [],
+          rows: newQueryResult.rows || []
+        };
+        widget.visualization_type = newQueryResult.visualizationType;
+
+        dashboardWidgets.push(widget);
+        addWidgetToGrid(widget);
+        dashboardEmptyState.style.display = 'none';
+
+        showToast('Widget added to dashboard', 'success');
+        closeWidgetPickerModalFn();
       } catch (err) {
         console.error('Error adding widget:', err);
-        showToast('Failed to add widget', 'error');
+        showToast(err.message || 'Failed to add widget', 'error');
       }
     }
 
