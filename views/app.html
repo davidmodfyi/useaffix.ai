@@ -7062,8 +7062,7 @@
       const chartWrapper = document.getElementById('projectChartWrapper');
       chartWrapper.innerHTML = '';
 
-      const analysis = analyzeColumns(columns, rows, columnTypes);
-      const chartConfig = buildVisualization(vizType, analysis, columns, rows);
+      const chartConfig = buildChartConfig(vizType, columns, columnTypes, rows);
 
       if (!chartConfig) {
         renderProjectTable(columns, rows);

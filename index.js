@@ -2026,7 +2026,7 @@ app.get('/api/projects/:id/dashboard-suggestions', requireAuth, requireTenant, a
       return res.status(404).json({ error: 'No data source found' });
     }
 
-    const ds = await tenantManager.getDataSourceInstance(dsRecord.id, req.tenantId);
+    const ds = await tenantManager.getDataSourceInstance(req.tenantId, dsRecord.id);
     const schemaContext = await ds.gatherSchemaContext();
 
     const prompts = await generateSuggestedPrompts(schemaContext);
@@ -2068,7 +2068,7 @@ app.post('/api/projects/:id/generate-dashboard', requireAuth, requireTenant, req
       return res.status(404).json({ error: 'No data source found. Please upload data first.' });
     }
 
-    const ds = await tenantManager.getDataSourceInstance(dsRecord.id, req.tenantId);
+    const ds = await tenantManager.getDataSourceInstance(req.tenantId, dsRecord.id);
     const schemaContext = await ds.gatherSchemaContext();
 
     // Generate the dashboard specification
@@ -2140,7 +2140,7 @@ app.post('/api/dashboards/:id/execute-widget', requireAuth, requireTenant, requi
       return res.status(404).json({ error: 'No data source found' });
     }
 
-    const ds = await tenantManager.getDataSourceInstance(dsRecord.id, req.tenantId);
+    const ds = await tenantManager.getDataSourceInstance(req.tenantId, dsRecord.id);
 
     // Execute the question through the NL query pipeline
     const result = await askQuestion(question, ds, req.tenantId);
@@ -2315,7 +2315,7 @@ app.post('/api/projects/:id/column-mappings', requireAuth, requireTenant, async 
       return res.status(404).json({ error: 'No data source found' });
     }
 
-    const ds = await tenantManager.getDataSourceInstance(dsRecord.id, req.tenantId);
+    const ds = await tenantManager.getDataSourceInstance(req.tenantId, dsRecord.id);
     const tables = await ds.getTables();
 
     // Get columns from first table (assuming single-table upload for now)
@@ -2691,7 +2691,7 @@ app.post('/api/projects/:id/detect-relationships', requireAuth, requireTenant, a
       return res.status(400).json({ error: 'No data source configured' });
     }
 
-    const dataSource = await tenantManager.getDataSourceInstance(dsRecord.id, req.tenantId);
+    const dataSource = await tenantManager.getDataSourceInstance(req.tenantId, dsRecord.id);
     await dataSource.connect();
 
     // Detect relationships
@@ -2803,7 +2803,7 @@ app.get('/api/queries/:id/export/csv', requireAuth, requireTenant, async (req, r
 
     // Get data source and re-execute query
     const dsRecord = tenantManager.getDefaultDataSource(req.tenantId);
-    const dataSource = await tenantManager.getDataSourceInstance(dsRecord.id, req.tenantId);
+    const dataSource = await tenantManager.getDataSourceInstance(req.tenantId, dsRecord.id);
     await dataSource.connect();
 
     const result = await dataSource.execute(query.sql_generated);
@@ -2859,7 +2859,7 @@ app.get('/api/queries/:id/export/excel', requireAuth, requireTenant, async (req,
 
     // Get data source and re-execute query
     const dsRecord = tenantManager.getDefaultDataSource(req.tenantId);
-    const dataSource = await tenantManager.getDataSourceInstance(dsRecord.id, req.tenantId);
+    const dataSource = await tenantManager.getDataSourceInstance(req.tenantId, dsRecord.id);
     await dataSource.connect();
 
     const result = await dataSource.execute(query.sql_generated);
@@ -3194,7 +3194,7 @@ app.post('/api/sources/:id/refresh', requireAuth, requireTenant, requireRole('ow
 
     // Get tenant data source instance
     const dsRecord = tenantManager.getDefaultDataSource(req.tenantId);
-    const dataSource = await tenantManager.getDataSourceInstance(dsRecord.id, req.tenantId);
+    const dataSource = await tenantManager.getDataSourceInstance(req.tenantId, dsRecord.id);
     await dataSource.connect();
 
     // Drop existing table
