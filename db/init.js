@@ -381,4 +381,100 @@ try {
   // Table might not exist yet, that's fine
 }
 
+// ============================================
+// Data Relationships Table (Phase 12)
+// ============================================
+// Auto-detected and user-confirmed relationships between tables
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS data_relationships (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    source_table TEXT NOT NULL,
+    source_column TEXT NOT NULL,
+    target_table TEXT NOT NULL,
+    target_column TEXT NOT NULL,
+    confidence REAL DEFAULT 0,
+    status TEXT DEFAULT 'suggested',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
+db.exec(`CREATE INDEX IF NOT EXISTS idx_relationships_project ON data_relationships(project_id)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_relationships_status ON data_relationships(status)`);
+
+// ============================================
+// Webhooks Table (Phase 12)
+// ============================================
+// Outgoing webhooks for integrations
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS webhooks (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    url TEXT NOT NULL,
+    triggers TEXT NOT NULL,
+    is_active INTEGER DEFAULT 1,
+    last_triggered_at DATETIME,
+    last_status TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
+db.exec(`CREATE INDEX IF NOT EXISTS idx_webhooks_tenant ON webhooks(tenant_id)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_webhooks_project ON webhooks(project_id)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_webhooks_active ON webhooks(is_active)`);
+
+// ============================================
+// Webhook Delivery Logs Table (Phase 12)
+// ============================================
+// Track webhook delivery attempts and outcomes
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS webhook_deliveries (
+    id TEXT PRIMARY KEY,
+    webhook_id TEXT NOT NULL REFERENCES webhooks(id) ON DELETE CASCADE,
+    event_type TEXT NOT NULL,
+    payload TEXT NOT NULL,
+    status TEXT NOT NULL,
+    response_status INTEGER,
+    response_body TEXT,
+    error_message TEXT,
+    delivered_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
+db.exec(`CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_webhook ON webhook_deliveries(webhook_id)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_status ON webhook_deliveries(status)`);
+
+// ============================================
+// Scheduled Exports Table (Phase 12)
+// ============================================
+// Configuration for scheduled dashboard/data exports
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS scheduled_exports (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    dashboard_id TEXT REFERENCES dashboards(id) ON DELETE CASCADE,
+    query_id TEXT REFERENCES queries(id) ON DELETE CASCADE,
+    export_type TEXT NOT NULL,
+    frequency TEXT NOT NULL,
+    email_to TEXT NOT NULL,
+    is_active INTEGER DEFAULT 1,
+    last_exported_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
+db.exec(`CREATE INDEX IF NOT EXISTS idx_scheduled_exports_tenant ON scheduled_exports(tenant_id)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_scheduled_exports_dashboard ON scheduled_exports(dashboard_id)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_scheduled_exports_active ON scheduled_exports(is_active)`);
+
 module.exports = db;

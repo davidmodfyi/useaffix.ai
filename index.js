@@ -828,10 +828,16 @@ app.post('/api/projects/:id/query', requireAuth, requireTenant, async (req, res)
 
     const startTime = Date.now();
 
+    // Get relationships context for this project
+    const RelationshipDetector = require('./lib/relationshipDetector');
+    const detector = new RelationshipDetector(db, null);
+    const relationshipsContext = detector.getConfirmedRelationshipsContext(projectId);
+
     // Ask the question
     const result = await askQuestion(ds, question.trim(), {
       timeout: 30000,
-      conversationContext
+      conversationContext,
+      relationshipsContext
     });
 
     const executionTime = Date.now() - startTime;
@@ -910,6 +916,7 @@ app.post('/api/projects/:id/query', requireAuth, requireTenant, async (req, res)
 
           // Save insights to database
           if (insightResult.insights && insightResult.insights.length > 0) {
+            const { fireWebhooks } = require('./lib/webhookDelivery');
             const insertInsight = db.prepare(`
               INSERT INTO insights
               (id, project_id, tenant_id, query_id, insight_type, title, description, severity, data_evidence, source)
@@ -917,8 +924,9 @@ app.post('/api/projects/:id/query', requireAuth, requireTenant, async (req, res)
             `);
 
             for (const insight of insightResult.insights) {
+              const insightId = uuidv4();
               insertInsight.run(
-                uuidv4(),
+                insightId,
                 projectId,
                 req.tenantId,
                 queryId,
@@ -928,6 +936,18 @@ app.post('/api/projects/:id/query', requireAuth, requireTenant, async (req, res)
                 insight.severity,
                 JSON.stringify(insight.evidence)
               );
+
+              // Fire webhooks for critical insights
+              if (insight.severity === 'critical') {
+                fireWebhooks(db, req.tenantId, 'insight.critical', {
+                  insightId,
+                  title: insight.title,
+                  description: insight.description,
+                  severity: insight.severity,
+                  evidence: insight.evidence,
+                  project: project.name
+                }, projectId);
+              }
             }
           }
         } catch (err) {
@@ -1521,6 +1541,15 @@ app.put('/api/dashboards/:id', requireAuth, requireTenant, requireRole('owner', 
       layout ? JSON.stringify(layout) : null,
       dashboardId
     );
+
+    // Fire webhook for dashboard update
+    const { fireWebhooks } = require('./lib/webhookDelivery');
+    const project = db.prepare('SELECT name FROM projects WHERE id = ?').get(dashboard.project_id);
+    fireWebhooks(db, req.tenantId, 'dashboard.updated', {
+      dashboardId,
+      dashboardName: name || dashboard.name,
+      project: project?.name || 'Unknown Project'
+    }, dashboard.project_id);
 
     const updated = db.prepare('SELECT * FROM dashboards WHERE id = ?').get(dashboardId);
     res.json({
@@ -2453,6 +2482,580 @@ app.delete('/api/team/:userId', requireAuth, requireTenant, requireRole('owner',
     db.prepare('DELETE FROM users WHERE id = ?').run(userId);
 
     res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================
+// Phase 12: Data Relationships API
+// ============================================
+
+const RelationshipDetector = require('./lib/relationshipDetector');
+
+// Auto-detect relationships for a project
+app.post('/api/projects/:id/detect-relationships', requireAuth, requireTenant, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+
+    // Verify project belongs to tenant
+    const project = db.prepare('SELECT * FROM projects WHERE id = ? AND tenant_id = ?').get(projectId, req.tenantId);
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    // Get data source instance
+    const dsRecord = tenantManager.getDefaultDataSource(req.tenantId);
+    if (!dsRecord) {
+      return res.status(400).json({ error: 'No data source configured' });
+    }
+
+    const dataSource = await tenantManager.getDataSourceInstance(dsRecord.id, req.tenantId);
+    await dataSource.connect();
+
+    // Detect relationships
+    const detector = new RelationshipDetector(db, dataSource);
+    const relationships = await detector.detectRelationships(projectId, req.tenantId);
+    await detector.saveRelationships(relationships);
+
+    await dataSource.disconnect();
+
+    res.json({ success: true, relationships });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get relationships for a project
+app.get('/api/projects/:id/relationships', requireAuth, requireTenant, (req, res) => {
+  try {
+    const projectId = req.params.id;
+
+    // Verify project belongs to tenant
+    const project = db.prepare('SELECT * FROM projects WHERE id = ? AND tenant_id = ?').get(projectId, req.tenantId);
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    const detector = new RelationshipDetector(db, null);
+    const relationships = detector.getProjectRelationships(projectId);
+
+    res.json(relationships);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update relationship status
+app.put('/api/relationships/:id', requireAuth, requireTenant, requireRole('owner', 'admin'), (req, res) => {
+  try {
+    const relationshipId = req.params.id;
+    const { status } = req.body;
+
+    // Validate status
+    const validStatuses = ['suggested', 'confirmed', 'rejected'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+
+    // Verify relationship belongs to tenant
+    const relationship = db.prepare(`
+      SELECT * FROM data_relationships WHERE id = ? AND tenant_id = ?
+    `).get(relationshipId, req.tenantId);
+
+    if (!relationship) {
+      return res.status(404).json({ error: 'Relationship not found' });
+    }
+
+    const detector = new RelationshipDetector(db, null);
+    detector.updateRelationshipStatus(relationshipId, status);
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete a relationship
+app.delete('/api/relationships/:id', requireAuth, requireTenant, requireRole('owner', 'admin'), (req, res) => {
+  try {
+    const relationshipId = req.params.id;
+
+    // Verify relationship belongs to tenant
+    const relationship = db.prepare(`
+      SELECT * FROM data_relationships WHERE id = ? AND tenant_id = ?
+    `).get(relationshipId, req.tenantId);
+
+    if (!relationship) {
+      return res.status(404).json({ error: 'Relationship not found' });
+    }
+
+    const detector = new RelationshipDetector(db, null);
+    detector.deleteRelationship(relationshipId);
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================
+// Phase 12: Export API
+// ============================================
+
+const ExcelJS = require('exceljs');
+const { v4: uuidv4 } = require('uuid');
+
+// Export query result as CSV
+app.get('/api/queries/:id/export/csv', requireAuth, requireTenant, async (req, res) => {
+  try {
+    const queryId = req.params.id;
+
+    // Get query and verify access
+    const query = db.prepare(`
+      SELECT * FROM queries WHERE id = ? AND tenant_id = ?
+    `).get(queryId, req.tenantId);
+
+    if (!query) {
+      return res.status(404).json({ error: 'Query not found' });
+    }
+
+    // Get data source and re-execute query
+    const dsRecord = tenantManager.getDefaultDataSource(req.tenantId);
+    const dataSource = await tenantManager.getDataSourceInstance(dsRecord.id, req.tenantId);
+    await dataSource.connect();
+
+    const result = await dataSource.execute(query.sql_generated);
+    await dataSource.disconnect();
+
+    // Build CSV
+    const rows = result.rows;
+    const columns = result.columns;
+
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({ error: 'No data to export' });
+    }
+
+    // CSV header
+    let csv = columns.join(',') + '\n';
+
+    // CSV rows
+    for (const row of rows) {
+      const values = columns.map(col => {
+        const value = row[col];
+        if (value === null || value === undefined) return '';
+        // Escape commas and quotes
+        const str = String(value);
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+          return '"' + str.replace(/"/g, '""') + '"';
+        }
+        return str;
+      });
+      csv += values.join(',') + '\n';
+    }
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="query-${queryId}.csv"`);
+    res.send(csv);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Export query result as Excel
+app.get('/api/queries/:id/export/excel', requireAuth, requireTenant, async (req, res) => {
+  try {
+    const queryId = req.params.id;
+
+    // Get query and verify access
+    const query = db.prepare(`
+      SELECT * FROM queries WHERE id = ? AND tenant_id = ?
+    `).get(queryId, req.tenantId);
+
+    if (!query) {
+      return res.status(404).json({ error: 'Query not found' });
+    }
+
+    // Get data source and re-execute query
+    const dsRecord = tenantManager.getDefaultDataSource(req.tenantId);
+    const dataSource = await tenantManager.getDataSourceInstance(dsRecord.id, req.tenantId);
+    await dataSource.connect();
+
+    const result = await dataSource.execute(query.sql_generated);
+    await dataSource.disconnect();
+
+    const rows = result.rows;
+    const columns = result.columns;
+
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({ error: 'No data to export' });
+    }
+
+    // Create Excel workbook
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Query Results');
+
+    // Add header row
+    worksheet.addRow(columns);
+
+    // Style header
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF5b7cfa' }
+    };
+
+    // Add data rows
+    for (const row of rows) {
+      const values = columns.map(col => row[col]);
+      worksheet.addRow(values);
+    }
+
+    // Auto-fit columns
+    worksheet.columns.forEach(column => {
+      column.width = 15;
+    });
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="query-${queryId}.xlsx"`);
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Export dashboard as PDF
+app.get('/api/dashboards/:id/export/pdf', requireAuth, requireTenant, async (req, res) => {
+  try {
+    const dashboardId = req.params.id;
+
+    // TODO: Implement PDF export with headless browser (puppeteer)
+    // This is a placeholder that returns an error with instructions
+
+    res.status(501).json({
+      error: 'PDF export not yet implemented',
+      message: 'PDF export requires puppeteer or playwright for headless rendering. Implementation pending.'
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get scheduled exports for tenant
+app.get('/api/scheduled-exports', requireAuth, requireTenant, (req, res) => {
+  try {
+    const exports = db.prepare(`
+      SELECT se.*, d.name as dashboard_name, q.question
+      FROM scheduled_exports se
+      LEFT JOIN dashboards d ON se.dashboard_id = d.id
+      LEFT JOIN queries q ON se.query_id = q.id
+      WHERE se.tenant_id = ?
+      ORDER BY se.created_at DESC
+    `).all(req.tenantId);
+
+    res.json(exports);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Create scheduled export
+app.post('/api/scheduled-exports', requireAuth, requireTenant, requireRole('owner', 'admin'), (req, res) => {
+  try {
+    const { dashboardId, queryId, exportType, frequency, emailTo } = req.body;
+
+    if (!exportType || !frequency || !emailTo) {
+      return res.status(400).json({ error: 'exportType, frequency, and emailTo are required' });
+    }
+
+    if (!dashboardId && !queryId) {
+      return res.status(400).json({ error: 'Either dashboardId or queryId is required' });
+    }
+
+    const validFrequencies = ['daily', 'weekly', 'monthly'];
+    if (!validFrequencies.includes(frequency.toLowerCase())) {
+      return res.status(400).json({ error: 'Invalid frequency' });
+    }
+
+    const validTypes = ['pdf', 'csv', 'excel', 'zip'];
+    if (!validTypes.includes(exportType.toLowerCase())) {
+      return res.status(400).json({ error: 'Invalid export type' });
+    }
+
+    const id = uuidv4();
+    db.prepare(`
+      INSERT INTO scheduled_exports (
+        id, tenant_id, dashboard_id, query_id, export_type, frequency, email_to
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(id, req.tenantId, dashboardId || null, queryId || null, exportType, frequency, emailTo);
+
+    res.json({ success: true, id });
+
+    // TODO: Wire up scheduled export with cron job and email service
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete scheduled export
+app.delete('/api/scheduled-exports/:id', requireAuth, requireTenant, requireRole('owner', 'admin'), (req, res) => {
+  try {
+    const exportId = req.params.id;
+
+    // Verify export belongs to tenant
+    const exportRecord = db.prepare(`
+      SELECT * FROM scheduled_exports WHERE id = ? AND tenant_id = ?
+    `).get(exportId, req.tenantId);
+
+    if (!exportRecord) {
+      return res.status(404).json({ error: 'Scheduled export not found' });
+    }
+
+    db.prepare('DELETE FROM scheduled_exports WHERE id = ?').run(exportId);
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================
+// Phase 12: Webhooks API
+// ============================================
+
+// Get webhooks for tenant
+app.get('/api/webhooks', requireAuth, requireTenant, (req, res) => {
+  try {
+    const webhooks = db.prepare(`
+      SELECT w.*, p.name as project_name
+      FROM webhooks w
+      LEFT JOIN projects p ON w.project_id = p.id
+      WHERE w.tenant_id = ?
+      ORDER BY w.created_at DESC
+    `).all(req.tenantId);
+
+    res.json(webhooks);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Create webhook
+app.post('/api/webhooks', requireAuth, requireTenant, requireRole('owner', 'admin'), (req, res) => {
+  try {
+    const { name, url, triggers, projectId } = req.body;
+
+    if (!name || !url || !triggers) {
+      return res.status(400).json({ error: 'name, url, and triggers are required' });
+    }
+
+    // Validate URL format
+    try {
+      new URL(url);
+    } catch {
+      return res.status(400).json({ error: 'Invalid URL format' });
+    }
+
+    // Validate triggers is array
+    if (!Array.isArray(triggers)) {
+      return res.status(400).json({ error: 'triggers must be an array' });
+    }
+
+    const id = uuidv4();
+    db.prepare(`
+      INSERT INTO webhooks (
+        id, tenant_id, project_id, name, url, triggers
+      ) VALUES (?, ?, ?, ?, ?, ?)
+    `).run(id, req.tenantId, projectId || null, name, url, JSON.stringify(triggers));
+
+    res.json({ success: true, id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update webhook
+app.put('/api/webhooks/:id', requireAuth, requireTenant, requireRole('owner', 'admin'), (req, res) => {
+  try {
+    const webhookId = req.params.id;
+    const { name, url, triggers, isActive } = req.body;
+
+    // Verify webhook belongs to tenant
+    const webhook = db.prepare(`
+      SELECT * FROM webhooks WHERE id = ? AND tenant_id = ?
+    `).get(webhookId, req.tenantId);
+
+    if (!webhook) {
+      return res.status(404).json({ error: 'Webhook not found' });
+    }
+
+    // Build update query dynamically
+    const updates = [];
+    const params = [];
+
+    if (name !== undefined) {
+      updates.push('name = ?');
+      params.push(name);
+    }
+
+    if (url !== undefined) {
+      try {
+        new URL(url);
+        updates.push('url = ?');
+        params.push(url);
+      } catch {
+        return res.status(400).json({ error: 'Invalid URL format' });
+      }
+    }
+
+    if (triggers !== undefined) {
+      if (!Array.isArray(triggers)) {
+        return res.status(400).json({ error: 'triggers must be an array' });
+      }
+      updates.push('triggers = ?');
+      params.push(JSON.stringify(triggers));
+    }
+
+    if (isActive !== undefined) {
+      updates.push('is_active = ?');
+      params.push(isActive ? 1 : 0);
+    }
+
+    if (updates.length > 0) {
+      updates.push('updated_at = CURRENT_TIMESTAMP');
+      params.push(webhookId);
+      db.prepare(`UPDATE webhooks SET ${updates.join(', ')} WHERE id = ?`).run(...params);
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete webhook
+app.delete('/api/webhooks/:id', requireAuth, requireTenant, requireRole('owner', 'admin'), (req, res) => {
+  try {
+    const webhookId = req.params.id;
+
+    // Verify webhook belongs to tenant
+    const webhook = db.prepare(`
+      SELECT * FROM webhooks WHERE id = ? AND tenant_id = ?
+    `).get(webhookId, req.tenantId);
+
+    if (!webhook) {
+      return res.status(404).json({ error: 'Webhook not found' });
+    }
+
+    db.prepare('DELETE FROM webhooks WHERE id = ?').run(webhookId);
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get webhook delivery logs
+app.get('/api/webhooks/:id/deliveries', requireAuth, requireTenant, (req, res) => {
+  try {
+    const webhookId = req.params.id;
+
+    // Verify webhook belongs to tenant
+    const webhook = db.prepare(`
+      SELECT * FROM webhooks WHERE id = ? AND tenant_id = ?
+    `).get(webhookId, req.tenantId);
+
+    if (!webhook) {
+      return res.status(404).json({ error: 'Webhook not found' });
+    }
+
+    const deliveries = db.prepare(`
+      SELECT * FROM webhook_deliveries
+      WHERE webhook_id = ?
+      ORDER BY delivered_at DESC
+      LIMIT 100
+    `).all(webhookId);
+
+    res.json(deliveries);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================
+// Phase 12: Data Refresh API
+// ============================================
+
+// Refresh a data source (re-upload file)
+app.post('/api/sources/:id/refresh', requireAuth, requireTenant, requireRole('owner', 'admin'), upload.single('file'), async (req, res) => {
+  try {
+    const sourceId = req.params.id;
+
+    // Get data source and verify access
+    const source = db.prepare(`
+      SELECT ds.*, p.id as project_id
+      FROM data_sources ds
+      JOIN projects p ON ds.project_id = p.id
+      WHERE ds.id = ? AND ds.tenant_id = ?
+    `).get(sourceId, req.tenantId);
+
+    if (!source) {
+      return res.status(404).json({ error: 'Data source not found' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // Get tenant data source instance
+    const dsRecord = tenantManager.getDefaultDataSource(req.tenantId);
+    const dataSource = await tenantManager.getDataSourceInstance(dsRecord.id, req.tenantId);
+    await dataSource.connect();
+
+    // Drop existing table
+    const tableName = source.name.replace(/[^a-zA-Z0-9_]/g, '_');
+    await dataSource.execute(`DROP TABLE IF EXISTS ${tableName}`);
+
+    // Re-import file with same table name
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    const fileBuffer = req.file.buffer;
+
+    await dataSource.importFile(fileBuffer, ext, tableName);
+
+    // Update schema snapshot
+    const columns = await dataSource.getColumns(tableName);
+    const rowCountResult = await dataSource.execute(`SELECT COUNT(*) as count FROM ${tableName}`);
+    const rowCount = rowCountResult.rows[0].count;
+
+    db.prepare(`
+      UPDATE data_sources
+      SET schema_snapshot = ?,
+          row_count = ?,
+          column_count = ?,
+          size_bytes = ?,
+          status = 'ready',
+          uploaded_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(
+      JSON.stringify({ columns }),
+      rowCount,
+      columns.length,
+      req.file.size,
+      sourceId
+    );
+
+    await dataSource.disconnect();
+
+    res.json({
+      success: true,
+      message: 'Data source refreshed successfully',
+      rowCount,
+      columnCount: columns.length
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

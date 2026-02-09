@@ -516,6 +516,72 @@ CREATE TABLE background_jobs (
 );
 ```
 
+### data_relationships (Phase 12)
+```sql
+CREATE TABLE data_relationships (
+  id TEXT PRIMARY KEY,              -- UUID
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  source_table TEXT NOT NULL,
+  source_column TEXT NOT NULL,
+  target_table TEXT NOT NULL,
+  target_column TEXT NOT NULL,
+  confidence REAL DEFAULT 0,        -- 0-1 confidence score
+  status TEXT DEFAULT 'suggested',  -- 'suggested', 'confirmed', 'rejected'
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### webhooks (Phase 12)
+```sql
+CREATE TABLE webhooks (
+  id TEXT PRIMARY KEY,              -- UUID
+  tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  url TEXT NOT NULL,
+  triggers TEXT NOT NULL,           -- JSON array of event types
+  is_active INTEGER DEFAULT 1,
+  last_triggered_at DATETIME,
+  last_status TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### webhook_deliveries (Phase 12)
+```sql
+CREATE TABLE webhook_deliveries (
+  id TEXT PRIMARY KEY,              -- UUID
+  webhook_id TEXT NOT NULL REFERENCES webhooks(id) ON DELETE CASCADE,
+  event_type TEXT NOT NULL,
+  payload TEXT NOT NULL,            -- JSON payload sent
+  status TEXT NOT NULL,             -- 'success', 'failed'
+  response_status INTEGER,          -- HTTP status code
+  response_body TEXT,
+  error_message TEXT,
+  delivered_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### scheduled_exports (Phase 12)
+```sql
+CREATE TABLE scheduled_exports (
+  id TEXT PRIMARY KEY,              -- UUID
+  tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  dashboard_id TEXT REFERENCES dashboards(id) ON DELETE CASCADE,
+  query_id TEXT REFERENCES queries(id) ON DELETE CASCADE,
+  export_type TEXT NOT NULL,        -- 'pdf', 'csv', 'excel', 'zip'
+  frequency TEXT NOT NULL,          -- 'daily', 'weekly', 'monthly'
+  email_to TEXT NOT NULL,
+  is_active INTEGER DEFAULT 1,
+  last_exported_at DATETIME,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+
 ### Indexes
 ```sql
 -- Core tables
@@ -563,6 +629,22 @@ CREATE INDEX idx_credits_month ON credits_usage(month);
 CREATE INDEX idx_background_jobs_tenant ON background_jobs(tenant_id);
 CREATE INDEX idx_background_jobs_project ON background_jobs(project_id);
 CREATE INDEX idx_background_jobs_status ON background_jobs(status);
+
+-- Phase 12: Relationships
+CREATE INDEX idx_relationships_project ON data_relationships(project_id);
+CREATE INDEX idx_relationships_status ON data_relationships(status);
+
+-- Phase 12: Webhooks
+CREATE INDEX idx_webhooks_tenant ON webhooks(tenant_id);
+CREATE INDEX idx_webhooks_project ON webhooks(project_id);
+CREATE INDEX idx_webhooks_active ON webhooks(is_active);
+CREATE INDEX idx_webhook_deliveries_webhook ON webhook_deliveries(webhook_id);
+CREATE INDEX idx_webhook_deliveries_status ON webhook_deliveries(status);
+
+-- Phase 12: Scheduled Exports
+CREATE INDEX idx_scheduled_exports_tenant ON scheduled_exports(tenant_id);
+CREATE INDEX idx_scheduled_exports_dashboard ON scheduled_exports(dashboard_id);
+CREATE INDEX idx_scheduled_exports_active ON scheduled_exports(is_active);
 ```
 
 ---
@@ -602,6 +684,8 @@ CREATE INDEX idx_background_jobs_status ON background_jobs(status);
 | POST | `/api/projects/:id/generate-dashboard` | ✓ | Auto-generate dashboard from description |
 | POST | `/api/projects/from-template` | ✓ owner/admin | Create project from template |
 | POST | `/api/projects/:id/column-mappings` | ✓ | Suggest column mappings for template |
+| POST | `/api/projects/:id/detect-relationships` | ✓ | Auto-detect relationships between tables |
+| GET | `/api/projects/:id/relationships` | ✓ | Get relationships for a project |
 
 ### Data Sources (Legacy endpoints - still supported)
 | Method | Endpoint | Auth | Description |
@@ -622,6 +706,8 @@ CREATE INDEX idx_background_jobs_status ON background_jobs(status);
 |--------|----------|------|-------------|
 | PUT | `/api/queries/:id/pin` | ✓ | Toggle pin status, optionally set pin_title |
 | GET | `/api/queries/pinned` | ✓ | Get all pinned queries across all projects |
+| GET | `/api/queries/:id/export/csv` | ✓ | Export query result as CSV |
+| GET | `/api/queries/:id/export/excel` | ✓ | Export query result as Excel |
 
 ### Dashboards
 | Method | Endpoint | Auth | Description |
@@ -630,6 +716,7 @@ CREATE INDEX idx_background_jobs_status ON background_jobs(status);
 | DELETE | `/api/dashboards/:id` | ✓ | Delete a dashboard |
 | POST | `/api/dashboards/:id/widgets` | ✓ | Add a widget to dashboard (from pinned query) |
 | POST | `/api/dashboards/:id/execute-widget` | ✓ | Execute widget question and add to dashboard |
+| GET | `/api/dashboards/:id/export/pdf` | ✓ | Export dashboard as PDF (placeholder) |
 
 ### Dashboard Widgets
 | Method | Endpoint | Auth | Description |
@@ -684,6 +771,33 @@ CREATE INDEX idx_background_jobs_status ON background_jobs(status);
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | GET | `/settings` | ✓ | Settings page with team, billing, profile tabs |
+
+### Data Relationships (Phase 12)
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| PUT | `/api/relationships/:id` | ✓ owner/admin | Update relationship status (confirmed/rejected) |
+| DELETE | `/api/relationships/:id` | ✓ owner/admin | Delete a relationship |
+
+### Webhooks (Phase 12)
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/webhooks` | ✓ | List all webhooks for tenant |
+| POST | `/api/webhooks` | ✓ owner/admin | Create a new webhook |
+| PUT | `/api/webhooks/:id` | ✓ owner/admin | Update webhook config |
+| DELETE | `/api/webhooks/:id` | ✓ owner/admin | Delete a webhook |
+| GET | `/api/webhooks/:id/deliveries` | ✓ | Get webhook delivery logs |
+
+### Scheduled Exports (Phase 12)
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/scheduled-exports` | ✓ | List scheduled exports |
+| POST | `/api/scheduled-exports` | ✓ owner/admin | Create scheduled export |
+| DELETE | `/api/scheduled-exports/:id` | ✓ owner/admin | Delete scheduled export |
+
+### Data Refresh (Phase 12)
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/sources/:id/refresh` | ✓ owner/admin | Refresh data source with new file |
 
 ---
 
@@ -980,6 +1094,135 @@ Templates are defined in `lib/projectTemplates.js`:
 
 **projects table:**
 - Added `template_id TEXT` - References which template was used
+
+---
+
+## Phase 12: Integration Framework, Data Relationships, and Export
+
+Phase 12 adds practical features for daily work: relationship detection, exports, webhooks, and data refresh.
+
+### Auto-Detected Data Relationships
+
+**Relationship Detection:**
+- Automatically detects potential foreign key relationships between tables
+- Compares column names across all tables in a project
+- Identifies patterns like:
+  - Exact name matches (e.g., `customer_id` in both tables)
+  - Naming conventions (e.g., `orders.customer_id` → `customers.id`)
+  - Partial matches with common patterns
+- Each relationship has a confidence score (0-1)
+- Stored in `data_relationships` table with status: `suggested`, `confirmed`, `rejected`
+
+**Detection Algorithm:**
+- Exact name match: +0.6 confidence
+- Naming convention FK pattern: +0.9 confidence
+- Partial table name match: +0.7 confidence
+- Base name match: +0.5 confidence
+- Only relationships with confidence > 0.4 are saved
+
+**Usage in Queries:**
+- Confirmed and high-confidence relationships are included in schema context for Claude
+- Format: `CONFIRMED RELATIONSHIPS: orders.customer_id → customers.id`
+- Dramatically improves Claude's ability to write correct JOIN queries
+
+**API Endpoints:**
+- `POST /api/projects/:id/detect-relationships` - Auto-detect relationships
+- `GET /api/projects/:id/relationships` - List relationships
+- `PUT /api/relationships/:id` - Confirm or reject
+- `DELETE /api/relationships/:id` - Delete relationship
+
+### Export Capabilities
+
+**Query Export:**
+- CSV export: `GET /api/queries/:id/export/csv`
+- Excel export: `GET /api/queries/:id/export/excel`
+- Re-executes query to get fresh data
+- Excel exports include styled headers and auto-fit columns
+
+**Dashboard PDF Export:**
+- Placeholder endpoint: `GET /api/dashboards/:id/export/pdf`
+- Returns 501 Not Implemented with instructions
+- Implementation requires puppeteer/playwright for headless rendering
+- TODO: Render dashboard, capture widgets as images, compose PDF
+
+**Scheduled Exports (UI + Config Only):**
+- Users can configure scheduled exports via API
+- Frequency options: daily, weekly, monthly
+- Export types: pdf, csv, excel, zip
+- Email delivery configuration stored
+- TODO: Wire up with cron job and email service
+
+### Webhook Integrations
+
+**Outgoing Webhooks:**
+- Connect Affix to external tools via HTTP POST
+- Configure webhook URLs with event triggers
+- Supported events:
+  - `insight.critical` - Critical insight detected
+  - `background_analysis.completed` - Background job finished
+  - `dashboard.updated` - Dashboard modified
+
+**Webhook Payload Format:**
+```json
+{
+  "event": "insight.critical",
+  "timestamp": "2026-02-08T...",
+  "data": {
+    "insightId": "uuid",
+    "title": "Revenue dropped 23%...",
+    "severity": "critical",
+    "project": "Sales Analytics"
+  }
+}
+```
+
+**Delivery Tracking:**
+- All webhook deliveries logged in `webhook_deliveries` table
+- Tracks status, HTTP response, errors
+- 10-second timeout per delivery
+- Webhooks fire asynchronously (non-blocking)
+
+**Management:**
+- Create, update, delete webhooks via API
+- View delivery logs per webhook
+- Enable/disable webhooks
+- Project-scoped or tenant-wide triggers
+
+### Data Refresh
+
+**File Re-upload:**
+- Refresh existing data sources without breaking queries
+- `POST /api/sources/:id/refresh` with new file
+- Drops old table, imports new data with same table name
+- Updates schema snapshot and row counts
+- All existing queries, dashboards, insights continue to work
+
+**Process:**
+1. User clicks "Refresh" on data source card
+2. Uploads new file (same format expected)
+3. System drops old table
+4. Imports new data with identical table name
+5. Re-computes schema metadata
+6. Shows "Data refreshed" notification
+
+### Files Added in Phase 12
+
+- `lib/relationshipDetector.js` - Auto-detection and management
+- `lib/webhookDelivery.js` - Webhook firing logic
+- Updated `lib/nlquery.js` - Added relationships context support
+- Updated `lib/backgroundAnalysis.js` - Integrated relationships + webhooks
+- Updated `index.js` - Added all Phase 12 API endpoints
+
+### Database Schema Changes
+
+**New tables:**
+- `data_relationships` - Detected and confirmed relationships
+- `webhooks` - Webhook configurations
+- `webhook_deliveries` - Delivery logs
+- `scheduled_exports` - Export schedules (config only)
+
+**Dependencies:**
+- Added `exceljs` ^4.4.0 for Excel export
 
 ---
 
