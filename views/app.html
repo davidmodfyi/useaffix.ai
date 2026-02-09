@@ -10732,12 +10732,19 @@
           closeGenerateDashboardModal();
           showToast(`Dashboard created with ${completedWidgets} widgets!`, 'success');
 
-          // Reload dashboards list and open the new one
-          await loadDashboards();
-          const newDashboard = allDashboards.find(d => d.id === dashboardId);
-          if (newDashboard) {
-            await openDashboard(newDashboard);
+          // Reload dashboards list
+          if (currentProject) {
+            await loadDashboards(currentProject.id);
           }
+
+          // Open the new dashboard directly
+          const newDashboard = {
+            id: dashboardId,
+            name: dashboard.name,
+            description: dashboard.description,
+            project_id: currentProject?.id
+          };
+          await openDashboard(newDashboard);
         }, 1500);
 
       } catch (err) {

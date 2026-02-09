@@ -2143,10 +2143,10 @@ app.post('/api/dashboards/:id/execute-widget', requireAuth, requireTenant, requi
     const ds = await tenantManager.getDataSourceInstance(req.tenantId, dsRecord.id);
 
     // Execute the question through the NL query pipeline
-    const result = await askQuestion(question, ds, req.tenantId);
+    const result = await askQuestion(ds, question);
 
-    if (!result.success) {
-      throw new Error(result.error || 'Query execution failed');
+    if (result.error) {
+      throw new Error(result.message || 'Query execution failed');
     }
 
     // Save the query
@@ -2170,18 +2170,19 @@ app.post('/api/dashboards/:id/execute-widget', requireAuth, requireTenant, requi
       result.visualizationType,
       result.chartConfig ? JSON.stringify(result.chartConfig) : null,
       JSON.stringify({
-        rowCount: result.data?.length || 0,
+        rowCount: result.rows?.length || 0,
         columns: result.columns || [],
-        preview: result.data?.slice(0, 5) || []
+        columnTypes: result.columnTypes || [],
+        rows: result.rows?.slice(0, 100) || []
       }),
-      result.executionTime || 0,
+      result.queryTime || 0,
       'success',
       'dashboard_generation'
     );
 
     // Generate insights for this query
     try {
-      await generateInsights(queryId, req.tenantId, dashboard.project_id, result.data, result.columns, question);
+      await generateInsights(queryId, req.tenantId, dashboard.project_id, result.rows, result.columns, question);
     } catch (insightErr) {
       console.error('Insight generation failed:', insightErr);
       // Don't fail the whole request if insights fail
