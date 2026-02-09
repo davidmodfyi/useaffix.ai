@@ -4779,25 +4779,14 @@
         <!-- Tabbed Content -->
         <div class="tabs">
           <ul class="tab-list">
-            <li><button class="tab-button active" data-tab="recent">Recent</button></li>
-            <li><button class="tab-button" data-tab="sources">Data Sources</button></li>
+            <li><button class="tab-button active" data-tab="sources">Data Sources</button></li>
             <li><button class="tab-button" data-tab="dashboards">Dashboards</button></li>
             <li><button class="tab-button" data-tab="insights" id="insightsTabBtn">Insights<span class="tab-badge" id="insightsTabBadge" style="display: none;">0</span></button></li>
           </ul>
         </div>
 
-        <!-- Tab: Recent -->
-        <div class="tab-content active" id="tabRecent">
-          <div class="timeline" id="recentTimeline">
-            <div class="empty-state-card">
-              <div class="empty-state-icon">📝</div>
-              <div class="empty-state-text">No queries yet. Ask your first question above!</div>
-            </div>
-          </div>
-        </div>
-
         <!-- Tab: Data Sources -->
-        <div class="tab-content" id="tabSources">
+        <div class="tab-content active" id="tabSources">
           <div style="margin-bottom: 16px;">
             <button class="btn btn-primary" id="uploadDataBtn">+ Upload Data</button>
           </div>
@@ -5903,9 +5892,6 @@
         // Load project data sources
         await loadProjectDataSources(projectId);
 
-        // Load recent queries
-        await loadRecentQueries(projectId);
-
         // Load dashboards and check if we should auto-open one
         const dashboards = await loadDashboards(projectId);
 
@@ -6007,62 +5993,6 @@
           </div>
         </div>
       `).join('');
-    }
-
-    // Load recent queries
-    async function loadRecentQueries(projectId) {
-      try {
-        const response = await fetch(`/api/projects/${projectId}/queries?limit=10`);
-        if (response.ok) {
-          const data = await response.json();
-          // API returns { queries: [...], pagination: {...} }
-          const queries = data.queries || [];
-          renderRecentQueries(queries);
-        }
-      } catch (err) {
-        console.error('Failed to load recent queries:', err);
-      }
-    }
-
-    // Render recent queries timeline
-    function renderRecentQueries(queries) {
-      const timeline = document.getElementById('recentTimeline');
-
-      if (queries.length === 0) {
-        timeline.innerHTML = `
-          <div class="empty-state-card">
-            <div class="empty-state-icon">📝</div>
-            <div class="empty-state-text">No queries yet. Ask your first question above!</div>
-          </div>
-        `;
-        return;
-      }
-
-      timeline.innerHTML = queries.map(query => {
-        const createdAt = new Date(query.created_at);
-        const timeAgo = getTimeAgo(createdAt);
-
-        return `
-          <div class="timeline-item" data-query-id="${query.id}">
-            <div class="timeline-header">
-              <div class="timeline-question">${escapeHtml(query.question)}</div>
-              <div class="timeline-meta">
-                ${query.visualization_type ? `<span class="viz-badge">${query.visualization_type.replace('_', ' ')}</span>` : ''}
-                <span class="timeline-time">${timeAgo}</span>
-              </div>
-            </div>
-            <div class="timeline-preview" id="preview-${query.id}">
-              <!-- Mini chart preview would go here -->
-            </div>
-            <div class="timeline-actions">
-              <button class="timeline-action-btn ${query.is_pinned ? 'pinned' : ''}" data-action="pin">
-                ${query.is_pinned ? '⭐' : '📌'} ${query.is_pinned ? 'Pinned' : 'Pin'}
-              </button>
-              <button class="timeline-action-btn" data-action="view">👁️ View</button>
-            </div>
-          </div>
-        `;
-      }).join('');
     }
 
     // Load dashboards
@@ -6814,8 +6744,7 @@
           clearFollowUpMode();
         }
 
-        // Reload recent queries
-        await loadRecentQueries(currentProject.id);
+        // Reload project stats
         await loadProjectStats(currentProject.id);
 
       } catch (err) {
@@ -8136,10 +8065,33 @@
                /^(week|wk)\s*\d+/i.test(str);  // Week 1
       }
 
+      // Helper to check if values in a column are numeric by sampling actual data
+      function isColumnNumeric(col) {
+        if (rows.length === 0) return false;
+        // Check first few rows to determine if values are numeric
+        const samplesToCheck = Math.min(rows.length, 5);
+        let numericCount = 0;
+        for (let i = 0; i < samplesToCheck; i++) {
+          const val = rows[i][col];
+          if (val !== null && val !== undefined && val !== '') {
+            // Check if value is a number or can be parsed as one
+            if (typeof val === 'number' || (typeof val === 'string' && !isNaN(Number(val)) && val.trim() !== '')) {
+              numericCount++;
+            }
+          }
+        }
+        // If most samples are numeric, consider it a numeric column
+        return numericCount >= samplesToCheck * 0.5;
+      }
+
       columns.forEach((col, idx) => {
         const rawType = columnTypes[idx];
         const type = (typeof rawType === 'string' ? rawType : String(rawType || '')).toUpperCase() || 'TEXT';
-        const isNumeric = ['INTEGER', 'REAL', 'FLOAT', 'DOUBLE', 'DECIMAL', 'NUMBER'].includes(type);
+        const typeIsNumeric = ['INTEGER', 'REAL', 'FLOAT', 'DOUBLE', 'DECIMAL', 'NUMBER'].includes(type);
+
+        // Also check actual data to determine if numeric (fallback when columnTypes is unreliable)
+        const dataIsNumeric = isColumnNumeric(col);
+        const isNumeric = typeIsNumeric || dataIsNumeric;
 
         // Check column name for date-related keywords
         const nameIsDate = /date|time|created|updated|month|year|week|day|quarter|period|^m$|^dt$|^yr$/i.test(col) ||
