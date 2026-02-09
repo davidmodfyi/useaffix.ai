@@ -38,6 +38,14 @@ async function seedDefaultUser() {
       `).run(dataSourceId, tenantId, dsConfig);
       console.log(`Default data source created for tenant`);
 
+      // Create default project for the tenant
+      const projectId = uuidv4();
+      db.prepare(`
+        INSERT INTO projects (id, tenant_id, name, description, icon, color, is_default)
+        VALUES (?, ?, 'My First Project', 'Your default project for data exploration', '📊', '#5b7cfa', 1)
+      `).run(projectId, tenantId);
+      console.log(`Default project created for tenant`);
+
       // Create user with tenant association
       const result = db.prepare(`
         INSERT INTO users (email, password_hash, name, tenant_id, role)
@@ -76,6 +84,14 @@ async function seedDefaultUser() {
           VALUES (?, ?, 'Default', 'file', ?, 1)
         `).run(dataSourceId, tenantId, dsConfig);
         console.log(`Default data source created for tenant`);
+
+        // Create default project for the tenant
+        const projectId = uuidv4();
+        db.prepare(`
+          INSERT INTO projects (id, tenant_id, name, description, icon, color, is_default)
+          VALUES (?, ?, 'My First Project', 'Your default project for data exploration', '📊', '#5b7cfa', 1)
+        `).run(projectId, tenantId);
+        console.log(`Default project created for tenant`);
       }
 
       // Associate users with tenant

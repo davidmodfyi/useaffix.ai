@@ -9,6 +9,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <!-- GridStack.js for dashboard layout -->
+  <link href="https://cdn.jsdelivr.net/npm/gridstack@10/dist/gridstack.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/gridstack@10/dist/gridstack-extra.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/gridstack@10/dist/gridstack-all.js"></script>
   <style>
     :root {
       --bg-primary: #0a0a0f;
@@ -156,10 +160,414 @@
       font-size: 0.75rem;
     }
 
+    /* Sidebar */
+    .app-sidebar {
+      position: fixed;
+      top: 64px;
+      left: 0;
+      bottom: 0;
+      width: 260px;
+      background: rgba(255, 255, 255, 0.03);
+      border-right: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      flex-direction: column;
+      z-index: 90;
+      transition: transform 0.3s ease, width 0.3s ease;
+      overflow: hidden;
+    }
+
+    .app-sidebar.collapsed {
+      width: 64px;
+    }
+
+    .sidebar-header {
+      padding: 20px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sidebar-toggle {
+      width: 32px;
+      height: 32px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .sidebar-toggle:hover {
+      border-color: var(--text-muted);
+      color: var(--text-primary);
+    }
+
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .sidebar-section {
+      padding: 20px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sidebar-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px 12px;
+    }
+
+    .sidebar-section-title {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .sidebar-add-btn {
+      width: 24px;
+      height: 24px;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      transition: all 0.2s;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .sidebar-add-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .project-list {
+      list-style: none;
+    }
+
+    .project-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      margin: 0 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      white-space: nowrap;
+    }
+
+    .project-item:hover {
+      background: var(--bg-hover);
+    }
+
+    .project-item.active {
+      background: rgba(91, 124, 250, 0.1);
+    }
+
+    .project-item.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 6px;
+      bottom: 6px;
+      width: 3px;
+      background: var(--project-color, var(--accent));
+      border-radius: 0 2px 2px 0;
+    }
+
+    .project-icon {
+      font-size: 1.2rem;
+      flex-shrink: 0;
+      width: 28px;
+      text-align: center;
+    }
+
+    .project-name {
+      flex: 1;
+      font-size: 0.9rem;
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .project-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--project-color, var(--accent));
+      flex-shrink: 0;
+    }
+
+    .app-sidebar.collapsed .project-name,
+    .app-sidebar.collapsed .project-dot,
+    .app-sidebar.collapsed .sidebar-section-title,
+    .app-sidebar.collapsed .sidebar-add-btn {
+      display: none;
+    }
+
+    .app-sidebar.collapsed .project-item {
+      justify-content: center;
+      padding: 10px 0;
+    }
+
+    .app-sidebar.collapsed .sidebar-section-header {
+      justify-content: center;
+      padding-bottom: 8px;
+    }
+
+    .pinned-list {
+      list-style: none;
+    }
+
+    .pinned-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      margin: 0 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .pinned-item:hover {
+      background: var(--bg-hover);
+    }
+
+    .pinned-icon {
+      font-size: 1rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .pinned-title {
+      flex: 1;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .sidebar-footer {
+      padding: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .credits-usage {
+      margin-bottom: 12px;
+    }
+
+    .credits-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .credits-bar {
+      height: 4px;
+      background: var(--bg-secondary);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .credits-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+      transition: width 0.3s ease;
+    }
+
+    .user-menu {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .user-menu:hover {
+      background: var(--bg-hover);
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .user-details {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .user-menu-name {
+      font-size: 0.85rem;
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .user-menu-role {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    .settings-icon {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .app-sidebar.collapsed .user-details,
+    .app-sidebar.collapsed .settings-icon,
+    .app-sidebar.collapsed .credits-label,
+    .app-sidebar.collapsed .credits-bar {
+      display: none;
+    }
+
+    .app-sidebar.collapsed .user-menu {
+      justify-content: center;
+      padding: 10px 0;
+    }
+
+    /* Hamburger menu for mobile */
+    .hamburger-btn {
+      display: none;
+      width: 40px;
+      height: 40px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    /* Sidebar overlay for mobile */
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      top: 64px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 85;
+    }
+
+    .sidebar-overlay.active {
+      display: block;
+    }
+
     /* Main Content */
     .app-main {
       padding-top: 64px;
+      padding-left: 260px;
       min-height: 100vh;
+      transition: padding-left 0.3s ease;
+    }
+
+    .app-main.sidebar-collapsed {
+      padding-left: 64px;
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+      .hamburger-btn {
+        display: flex;
+      }
+
+      .app-sidebar {
+        transform: translateX(-100%);
+      }
+
+      .app-sidebar.mobile-open {
+        transform: translateX(0);
+      }
+
+      .app-main {
+        padding-left: 0;
+      }
+
+      .app-main.sidebar-collapsed {
+        padding-left: 0;
+      }
+
+      .app-header .app-logo span {
+        display: none;
+      }
+
+      .user-info {
+        display: none;
+      }
+    }
+
+    @media (max-width: 1200px) and (min-width: 769px) {
+      .app-sidebar {
+        width: 64px;
+      }
+
+      .app-sidebar .project-name,
+      .app-sidebar .project-dot,
+      .app-sidebar .sidebar-section-title,
+      .app-sidebar .sidebar-add-btn,
+      .app-sidebar .user-details,
+      .app-sidebar .settings-icon,
+      .app-sidebar .credits-label,
+      .app-sidebar .credits-bar {
+        display: none;
+      }
+
+      .app-sidebar .project-item {
+        justify-content: center;
+        padding: 10px 0;
+      }
+
+      .app-sidebar .sidebar-section-header {
+        justify-content: center;
+        padding-bottom: 8px;
+      }
+
+      .app-sidebar .user-menu {
+        justify-content: center;
+        padding: 10px 0;
+      }
+
+      .app-main {
+        padding-left: 64px;
+      }
     }
 
     .container {
@@ -897,6 +1305,421 @@
       color: var(--error);
     }
 
+    /* ============================================
+       INSIGHT CARDS
+       AI-generated business insights
+       ============================================ */
+
+    .insights-container {
+      margin-top: 24px;
+    }
+
+    .insights-loading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: linear-gradient(90deg,
+        rgba(91, 124, 250, 0.05),
+        rgba(192, 132, 252, 0.05),
+        rgba(91, 124, 250, 0.05)
+      );
+      background-size: 200% 100%;
+      animation: insightShimmer 2s ease-in-out infinite;
+      border-radius: 12px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    @keyframes insightShimmer {
+      0%, 100% { background-position: 200% 0; }
+      50% { background-position: 0% 0; }
+    }
+
+    .insights-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 12px;
+    }
+
+    .insight-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      opacity: 0;
+      transform: translateY(12px);
+      animation: insightFadeIn 0.4s ease forwards;
+    }
+
+    .insight-card:nth-child(1) { animation-delay: 0.1s; }
+    .insight-card:nth-child(2) { animation-delay: 0.3s; }
+    .insight-card:nth-child(3) { animation-delay: 0.5s; }
+    .insight-card:nth-child(4) { animation-delay: 0.7s; }
+
+    @keyframes insightFadeIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .insight-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      border-radius: 4px 0 0 4px;
+    }
+
+    .insight-card.severity-info::before {
+      background: var(--accent);
+    }
+
+    .insight-card.severity-warning::before {
+      background: var(--warning);
+    }
+
+    .insight-card.severity-critical::before {
+      background: var(--error);
+    }
+
+    .insight-card.severity-opportunity::before {
+      background: var(--success);
+    }
+
+    .insight-card.severity-info {
+      background: linear-gradient(135deg,
+        var(--bg-card),
+        rgba(91, 124, 250, 0.03)
+      );
+    }
+
+    .insight-card.severity-warning {
+      background: linear-gradient(135deg,
+        var(--bg-card),
+        rgba(251, 191, 36, 0.03)
+      );
+    }
+
+    .insight-card.severity-critical {
+      background: linear-gradient(135deg,
+        var(--bg-card),
+        rgba(248, 113, 113, 0.03)
+      );
+    }
+
+    .insight-card.severity-opportunity {
+      background: linear-gradient(135deg,
+        var(--bg-card),
+        rgba(52, 211, 153, 0.03)
+      );
+    }
+
+    .insight-card-content {
+      padding: 16px 16px 16px 20px;
+    }
+
+    .insight-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .insight-icon {
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      line-height: 1.4;
+    }
+
+    .insight-title {
+      flex: 1;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      line-height: 1.4;
+    }
+
+    .insight-dismiss {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 24px;
+      height: 24px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      opacity: 0;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+
+    .insight-card:hover .insight-dismiss {
+      opacity: 1;
+    }
+
+    .insight-dismiss:hover {
+      background: var(--bg-hover);
+      color: var(--text-secondary);
+    }
+
+    .insight-description {
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.65);
+      line-height: 1.6;
+      margin-left: 26px;
+    }
+
+    .insight-evidence {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+      margin-left: 26px;
+    }
+
+    .insight-evidence-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+    }
+
+    .insight-evidence-tag .label {
+      color: var(--text-muted);
+    }
+
+    .insight-evidence-tag .value {
+      color: var(--accent-bright);
+      font-weight: 500;
+    }
+
+    .severity-warning .insight-evidence-tag .value {
+      color: var(--warning);
+    }
+
+    .severity-critical .insight-evidence-tag .value {
+      color: var(--error);
+    }
+
+    .severity-opportunity .insight-evidence-tag .value {
+      color: var(--success);
+    }
+
+    /* Insight Summary Strip */
+    .insight-summary-strip {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 0.85rem;
+    }
+
+    .insight-summary-strip.has-critical {
+      animation: criticalPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes criticalPulse {
+      0%, 100% {
+        background: rgba(255, 255, 255, 0.02);
+        box-shadow: none;
+      }
+      50% {
+        background: rgba(248, 113, 113, 0.05);
+        box-shadow: 0 0 20px rgba(248, 113, 113, 0.1);
+      }
+    }
+
+    .insight-count {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+
+    .insight-count:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .insight-count .count-icon {
+      font-size: 0.9rem;
+    }
+
+    .insight-count .count-number {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Tab badge for insights count */
+    .tab-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      background: var(--error);
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 600;
+      border-radius: 100px;
+      margin-left: 8px;
+    }
+
+    .tab-badge.warning {
+      background: var(--warning);
+      color: #000;
+    }
+
+    /* Widget insight indicator */
+    .widget-insights-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .widget-insights-indicator:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .widget-insights-indicator .indicator-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .widget-insights-indicator .indicator-dot.critical {
+      background: var(--error);
+      box-shadow: 0 0 6px var(--error);
+    }
+
+    .widget-insights-indicator .indicator-dot.warning {
+      background: var(--warning);
+      box-shadow: 0 0 6px var(--warning);
+    }
+
+    .widget-insights-indicator .indicator-dot.opportunity {
+      background: var(--success);
+    }
+
+    .widget-insights-indicator .indicator-dot.info {
+      background: var(--accent);
+    }
+
+    /* Insights Tab Panel */
+    .insights-filter-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .insights-filter-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      color: var(--text-secondary);
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .insights-filter-btn:hover {
+      border-color: var(--text-muted);
+      color: var(--text-primary);
+    }
+
+    .insights-filter-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .insights-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .insight-list-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .insight-list-card:hover {
+      border-color: var(--accent);
+      background: var(--bg-hover);
+    }
+
+    .insight-list-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      border-radius: 4px 0 0 4px;
+    }
+
+    .insight-list-card.severity-info::before { background: var(--accent); }
+    .insight-list-card.severity-warning::before { background: var(--warning); }
+    .insight-list-card.severity-critical::before { background: var(--error); }
+    .insight-list-card.severity-opportunity::before { background: var(--success); }
+
+    .insight-list-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .insight-list-meta a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .insight-list-meta a:hover {
+      text-decoration: underline;
+    }
+
     /* Tables List */
     .tables-grid {
       display: grid;
@@ -1113,6 +1936,201 @@
       }
     }
 
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      max-width: 500px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: modalSlideIn 0.3s ease;
+    }
+
+    @keyframes modalSlideIn {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .modal-header {
+      padding: 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 400;
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.5rem;
+      line-height: 1;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .modal-close:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+
+    .form-input {
+      width: 100%;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      color: var(--text-primary);
+      transition: all 0.2s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: var(--bg-primary);
+    }
+
+    .form-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    textarea.form-input {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .emoji-picker {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .emoji-option {
+      width: 40px;
+      height: 40px;
+      background: transparent;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .emoji-option:hover {
+      border-color: var(--text-muted);
+      background: var(--bg-hover);
+    }
+
+    .emoji-option.selected {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    .color-picker {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .color-option {
+      width: 40px;
+      height: 40px;
+      background: transparent;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s;
+    }
+
+    .color-option::before {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      border-radius: 6px;
+      background: var(--option-color);
+    }
+
+    .color-option:hover {
+      border-color: var(--text-muted);
+    }
+
+    .color-option.selected {
+      border-color: #fff;
+      box-shadow: 0 0 0 1px var(--option-color);
+    }
+
+    .modal-footer {
+      padding: 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
     /* Upload Progress */
     .upload-progress {
       display: none;
@@ -1189,14 +2207,1454 @@
       max-height: 300px;
       overflow-y: auto;
     }
+
+    /* Project Home Page */
+    .project-home {
+      display: none;
+    }
+
+    .project-home.active {
+      display: block;
+    }
+
+    .project-header {
+      margin-bottom: 32px;
+    }
+
+    .project-title-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .project-icon-large {
+      font-size: 2.5rem;
+      flex-shrink: 0;
+    }
+
+    .project-title {
+      flex: 1;
+    }
+
+    .project-name-editable {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 4px 0;
+      cursor: text;
+      transition: border-color 0.2s;
+      outline: none;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .project-name-editable:hover {
+      border-bottom-color: var(--border);
+    }
+
+    .project-name-editable:focus {
+      border-bottom-color: var(--accent);
+    }
+
+    .project-description-editable {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid transparent;
+      padding: 4px 0;
+      cursor: text;
+      transition: border-color 0.2s;
+      outline: none;
+      width: 100%;
+      max-width: 700px;
+      line-height: 1.5;
+    }
+
+    .project-description-editable:hover {
+      border-bottom-color: var(--border);
+    }
+
+    .project-description-editable:focus {
+      border-bottom-color: var(--accent);
+    }
+
+    .project-description-editable::placeholder {
+      color: var(--text-muted);
+    }
+
+    .stat-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.2s;
+    }
+
+    .stat-card:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 500;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--project-accent, var(--accent));
+      font-family: var(--font-display);
+    }
+
+    /* Ask Your Data Section */
+    .ask-section {
+      margin-bottom: 32px;
+    }
+
+    .ask-header {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .suggested-questions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .suggested-pill {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .suggested-pill:hover {
+      border-color: var(--accent);
+      color: var(--text-primary);
+      background: var(--accent-glow);
+    }
+
+    /* Category-based pill styling */
+    .suggested-pill.category-ranking {
+      border-color: rgba(96, 165, 250, 0.3);
+    }
+    .suggested-pill.category-ranking:hover {
+      border-color: rgba(96, 165, 250, 0.6);
+      background: rgba(96, 165, 250, 0.1);
+    }
+
+    .suggested-pill.category-trend {
+      border-color: rgba(52, 211, 153, 0.3);
+    }
+    .suggested-pill.category-trend:hover {
+      border-color: rgba(52, 211, 153, 0.6);
+      background: rgba(52, 211, 153, 0.1);
+    }
+
+    .suggested-pill.category-opportunity {
+      border-color: rgba(251, 191, 36, 0.3);
+    }
+    .suggested-pill.category-opportunity:hover {
+      border-color: rgba(251, 191, 36, 0.6);
+      background: rgba(251, 191, 36, 0.1);
+    }
+
+    .suggested-pill.category-comparison {
+      border-color: rgba(167, 139, 250, 0.3);
+    }
+    .suggested-pill.category-comparison:hover {
+      border-color: rgba(167, 139, 250, 0.6);
+      background: rgba(167, 139, 250, 0.1);
+    }
+
+    .loading-pills {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      padding: 8px 0;
+    }
+
+    /* Tabs */
+    .tabs {
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+      overflow-x: auto;
+      scrollbar-width: thin;
+    }
+
+    .tabs::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .tabs::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 2px;
+    }
+
+    .tab-list {
+      display: flex;
+      gap: 0;
+      list-style: none;
+      min-width: min-content;
+    }
+
+    .tab-button {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 12px 24px;
+      color: var(--text-secondary);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .tab-button:hover {
+      color: var(--text-primary);
+      background: var(--bg-hover);
+    }
+
+    .tab-button.active {
+      color: var(--text-primary);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Recent Timeline */
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .timeline-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .timeline-item:hover {
+      border-color: var(--accent);
+      background: var(--bg-hover);
+    }
+
+    .timeline-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .timeline-question {
+      flex: 1;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .timeline-meta {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .viz-badge {
+      background: var(--accent-glow);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .timeline-time {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .timeline-preview {
+      width: 100%;
+      height: 120px;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    .timeline-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .timeline-action-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .timeline-action-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .timeline-action-btn.pinned {
+      border-color: var(--warning);
+      color: var(--warning);
+      background: var(--warning-glow);
+    }
+
+    /* Data Sources Grid */
+    .sources-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .source-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .source-card:hover {
+      border-color: var(--accent);
+      background: var(--bg-hover);
+    }
+
+    .source-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .source-card h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    .source-card-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--accent-glow);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+      margin-left: 12px;
+    }
+
+    .source-card-meta {
+      display: flex;
+      gap: 16px;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      flex-wrap: wrap;
+    }
+
+    .source-card-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Dashboards Grid */
+    .dashboards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    .dashboard-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .dashboard-card:hover {
+      border-color: var(--accent);
+      background: var(--bg-hover);
+    }
+
+    .dashboard-card h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .dashboard-card-meta {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+    }
+
+    .dashboard-thumbnail {
+      width: 100%;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .dashboard-thumbnail-empty {
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-secondary);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      border-radius: 8px;
+    }
+
+    .dashboard-card-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .dashboard-mini-action {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      flex: 1;
+    }
+
+    .dashboard-mini-action:hover {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    /* Action Buttons for Query Results */
+    .result-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .result-action-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .result-action-btn:hover {
+      border-color: var(--accent);
+      color: var(--text-primary);
+      background: var(--accent-glow);
+    }
+
+    /* Follow-up Context Chip */
+    .follow-up-context-chip {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: rgba(91, 124, 250, 0.1);
+      border: 1px solid rgba(91, 124, 250, 0.3);
+      border-radius: 8px;
+      margin-bottom: 12px;
+      animation: slideIn 0.3s ease;
+    }
+
+    .follow-up-context-chip .context-text {
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      flex: 1;
+    }
+
+    .follow-up-context-chip .context-close {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+
+    .follow-up-context-chip .context-close:hover {
+      color: var(--text-primary);
+    }
+
+    /* Chart Explanation Box */
+    .chart-explanation {
+      margin-top: 16px;
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(91, 124, 250, 0.08), rgba(192, 132, 252, 0.08));
+      border: 1px solid rgba(91, 124, 250, 0.2);
+      border-radius: 12px;
+      animation: slideIn 0.3s ease;
+    }
+
+    .chart-explanation .explanation-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .chart-explanation h4 {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .chart-explanation .explanation-close {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+
+    .chart-explanation .explanation-close:hover {
+      color: var(--text-primary);
+    }
+
+    .chart-explanation p {
+      color: var(--text-primary);
+      line-height: 1.6;
+      margin: 0;
+      font-size: 0.95rem;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Drill-down Popover */
+    .drill-down-popover {
+      position: fixed;
+      z-index: 10000;
+      background: var(--bg-card);
+      border: 1px solid var(--accent);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      width: 300px;
+      animation: popIn 0.3s ease;
+      transition: opacity 0.3s ease;
+    }
+
+    .drill-down-popover .popover-content {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .drill-down-popover .popover-question {
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .drill-down-popover .popover-ask-btn {
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      border: none;
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .drill-down-popover .popover-ask-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px var(--accent-glow);
+    }
+
+    @keyframes popIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .result-action-btn.pinned {
+      border-color: var(--warning);
+      color: var(--warning);
+      background: var(--warning-glow);
+    }
+
+    /* Collapsible Explanation */
+    .explanation-section {
+      margin-bottom: 16px;
+    }
+
+    .explanation-toggle {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .explanation-toggle h4 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+    }
+
+    .explanation-toggle-icon {
+      color: var(--text-muted);
+      transition: transform 0.2s;
+    }
+
+    .explanation-toggle-icon.expanded {
+      transform: rotate(180deg);
+    }
+
+    .explanation-content {
+      padding: 16px 0;
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+
+    .explanation-content.collapsed {
+      display: none;
+    }
+
+    /* Empty states */
+    .empty-state-card {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--text-muted);
+    }
+
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .empty-state-text {
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .stat-cards {
+        grid-template-columns: 1fr;
+      }
+
+      .project-name-editable {
+        font-size: 1.5rem;
+      }
+
+      .suggested-questions {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        scrollbar-width: thin;
+      }
+
+      .suggested-pill {
+        flex-shrink: 0;
+      }
+
+      .timeline-header {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .timeline-meta {
+        align-self: flex-start;
+      }
+
+      .result-actions {
+        flex-direction: column;
+      }
+
+      .result-action-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+
+    /* ============================================
+       DASHBOARD BUILDER GRID ENGINE
+       GridStack.js integration with dark luxury theme
+       ============================================ */
+
+    /* Dashboard View Container */
+    .dashboard-view {
+      display: none;
+      height: calc(100vh - 64px);
+      flex-direction: column;
+    }
+
+    .dashboard-view.active {
+      display: flex;
+    }
+
+    /* Dashboard Top Bar */
+    .dashboard-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.02);
+      flex-shrink: 0;
+    }
+
+    .dashboard-topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .dashboard-back-btn {
+      width: 36px;
+      height: 36px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      font-size: 1.1rem;
+    }
+
+    .dashboard-back-btn:hover {
+      border-color: var(--text-muted);
+      color: var(--text-primary);
+      background: var(--bg-hover);
+    }
+
+    .dashboard-title-container {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .dashboard-title-input {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 400;
+      color: var(--text-primary);
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 2px 0;
+      outline: none;
+      min-width: 200px;
+      max-width: 400px;
+      transition: border-color 0.2s;
+    }
+
+    .dashboard-title-input:hover {
+      border-bottom-color: var(--border);
+    }
+
+    .dashboard-title-input:focus {
+      border-bottom-color: var(--accent);
+    }
+
+    .dashboard-project-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .dashboard-project-badge .project-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .dashboard-topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .dashboard-save-indicator {
+      display: flex;
+      align-items: center;
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+    }
+
+    .save-status {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      transition: color 0.2s;
+    }
+
+    .save-status.saving {
+      color: var(--warning);
+    }
+
+    .save-status.saved {
+      color: var(--success);
+    }
+
+    /* Mode Toggle */
+    .mode-toggle {
+      display: flex;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      padding: 4px;
+      border: 1px solid var(--border);
+    }
+
+    .mode-toggle-btn {
+      padding: 8px 16px;
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      color: var(--text-secondary);
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .mode-toggle-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .mode-toggle-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    /* Dashboard Action Buttons */
+    .dashboard-action-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .dashboard-action-btn:hover {
+      border-color: var(--text-muted);
+      color: var(--text-primary);
+      background: var(--bg-hover);
+    }
+
+    .dashboard-action-btn.primary {
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      border: none;
+      color: #fff;
+    }
+
+    .dashboard-action-btn.primary:hover {
+      opacity: 0.9;
+    }
+
+    /* Dashboard Canvas */
+    .dashboard-canvas {
+      flex: 1;
+      overflow: auto;
+      position: relative;
+      background:
+        radial-gradient(ellipse at center, rgba(91, 124, 250, 0.03) 0%, transparent 70%),
+        var(--bg-primary);
+    }
+
+    /* Grid overlay in edit mode */
+    .dashboard-canvas.edit-mode::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+      background-size: calc(100% / 12) 80px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .dashboard-grid-container {
+      padding: 24px;
+      min-height: 100%;
+    }
+
+    /* GridStack Overrides for Dark Theme */
+    .grid-stack {
+      background: transparent;
+    }
+
+    .grid-stack-item-content {
+      background: linear-gradient(135deg, rgba(15, 15, 25, 0.85), rgba(20, 20, 35, 0.7));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .grid-stack-item-content::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    }
+
+    /* View mode hover effect */
+    .dashboard-canvas:not(.edit-mode) .grid-stack-item-content:hover {
+      border-color: var(--dashboard-accent, var(--accent));
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.3), 0 0 20px var(--dashboard-accent-glow, var(--accent-glow));
+    }
+
+    /* Widget Header */
+    .widget-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      flex-shrink: 0;
+    }
+
+    .widget-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .widget-drag-handle {
+      display: none;
+      width: 24px;
+      height: 24px;
+      color: var(--text-muted);
+      cursor: grab;
+      flex-shrink: 0;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      opacity: 0.5;
+      transition: opacity 0.2s;
+    }
+
+    .edit-mode .widget-drag-handle {
+      display: flex;
+    }
+
+    .widget-drag-handle:hover {
+      opacity: 1;
+    }
+
+    .widget-drag-handle:active {
+      cursor: grabbing;
+    }
+
+    .widget-title {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+
+    .widget-menu-btn {
+      width: 28px;
+      height: 28px;
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .widget-menu-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    /* Widget Menu Dropdown */
+    .widget-menu {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 4px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      min-width: 180px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      z-index: 100;
+      display: none;
+      overflow: hidden;
+    }
+
+    .widget-menu.active {
+      display: block;
+      animation: menuFadeIn 0.15s ease;
+    }
+
+    @keyframes menuFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .widget-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .widget-menu-item:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .widget-menu-item.danger {
+      color: var(--error);
+    }
+
+    .widget-menu-item.danger:hover {
+      background: var(--error-glow);
+    }
+
+    .widget-menu-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+    }
+
+    /* Widget Content */
+    .widget-content {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .widget-chart {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Widget Resize Handle */
+    .grid-stack-item > .ui-resizable-se {
+      display: none;
+      width: 20px;
+      height: 20px;
+      right: 4px;
+      bottom: 4px;
+      background: transparent;
+      cursor: se-resize;
+    }
+
+    .edit-mode .grid-stack-item > .ui-resizable-se {
+      display: block;
+    }
+
+    .grid-stack-item > .ui-resizable-se::before {
+      content: '';
+      position: absolute;
+      right: 4px;
+      bottom: 4px;
+      width: 10px;
+      height: 10px;
+      border-right: 2px solid var(--text-muted);
+      border-bottom: 2px solid var(--text-muted);
+      opacity: 0.5;
+    }
+
+    .grid-stack-item:hover > .ui-resizable-se::before {
+      opacity: 1;
+      border-color: var(--text-secondary);
+    }
+
+    /* GridStack placeholder styling */
+    .grid-stack-placeholder > .placeholder-content {
+      border: 2px dashed var(--accent);
+      background: var(--accent-glow);
+      border-radius: 16px;
+    }
+
+    /* Empty widget click area */
+    .dashboard-empty-slot {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .edit-mode .dashboard-empty-slot:hover {
+      opacity: 1;
+    }
+
+    .empty-slot-btn {
+      width: 48px;
+      height: 48px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .empty-slot-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    /* Dashboard Empty State */
+    .dashboard-empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 400px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .dashboard-empty-icon {
+      font-size: 4rem;
+      margin-bottom: 24px;
+      opacity: 0.3;
+    }
+
+    .dashboard-empty-title {
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .dashboard-empty-subtitle {
+      font-size: 0.95rem;
+      margin-bottom: 32px;
+    }
+
+    .dashboard-empty-actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      max-width: 700px;
+      width: 100%;
+    }
+
+    .empty-action-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .empty-action-card:hover {
+      border-color: var(--accent);
+      background: var(--bg-hover);
+      transform: translateY(-2px);
+    }
+
+    .empty-action-icon {
+      font-size: 2rem;
+      margin-bottom: 12px;
+      opacity: 0.9;
+    }
+
+    .empty-action-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+
+    .empty-action-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* Chart Type Selector */
+    .chart-type-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .chart-type-option {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .chart-type-option:hover {
+      border-color: var(--accent);
+      background: var(--bg-hover);
+      transform: translateY(-2px);
+    }
+
+    .chart-type-option.selected {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    .chart-type-icon {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+    }
+
+    .chart-type-label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* Widget Picker Modal */
+    .widget-picker-modal .modal {
+      max-width: 700px;
+    }
+
+    .widget-picker-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .widget-picker-item {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .widget-picker-item:hover {
+      border-color: var(--accent);
+      background: var(--bg-hover);
+    }
+
+    .widget-picker-item.selected {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    .widget-picker-icon {
+      font-size: 1.5rem;
+      margin-bottom: 12px;
+    }
+
+    .widget-picker-title {
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .widget-picker-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* Fullscreen Chart Modal */
+    .fullscreen-modal .modal {
+      max-width: 95vw;
+      max-height: 95vh;
+      width: 95vw;
+      height: 95vh;
+    }
+
+    .fullscreen-chart-container {
+      width: 100%;
+      height: calc(95vh - 100px);
+    }
+
+    /* Responsive Dashboard */
+    @media (max-width: 768px) {
+      .dashboard-topbar {
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+      }
+
+      .dashboard-topbar-left {
+        justify-content: center;
+      }
+
+      .dashboard-topbar-right {
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .dashboard-title-input {
+        font-size: 1.1rem;
+        text-align: center;
+      }
+
+      .dashboard-grid-container {
+        padding: 16px;
+      }
+    }
   </style>
 </head>
 <body>
   <header class="app-header">
-    <a href="/" class="app-logo">
-      <div class="app-logo-icon">A</div>
-      <span>Affix</span>
-    </a>
+    <div style="display: flex; align-items: center; gap: 16px;">
+      <button class="hamburger-btn" id="hamburgerBtn">☰</button>
+      <a href="/" class="app-logo">
+        <div class="app-logo-icon">A</div>
+        <span>Affix</span>
+      </a>
+    </div>
 
     <div class="app-user">
       <div class="user-info">
@@ -1207,8 +3665,419 @@
     </div>
   </header>
 
-  <main class="app-main">
+  <!-- Sidebar -->
+  <aside class="app-sidebar" id="appSidebar">
+    <div class="sidebar-header">
+      <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">
+        <span>←</span>
+      </button>
+    </div>
+
+    <div class="sidebar-content">
+      <!-- Projects Section -->
+      <div class="sidebar-section">
+        <div class="sidebar-section-header">
+          <span class="sidebar-section-title">Projects</span>
+          <button class="sidebar-add-btn" id="addProjectBtn" title="New project">+</button>
+        </div>
+        <ul class="project-list" id="projectList">
+          <!-- Projects will be loaded here -->
+        </ul>
+      </div>
+
+      <!-- Pinned Section -->
+      <div class="sidebar-section">
+        <div class="sidebar-section-header">
+          <span class="sidebar-section-title">Pinned</span>
+        </div>
+        <ul class="pinned-list" id="pinnedList">
+          <li style="padding: 10px 16px; font-size: 0.85rem; color: var(--text-muted); text-align: center;">
+            No pinned items
+          </li>
+        </ul>
+      </div>
+
+      <!-- Background Jobs Section -->
+      <div class="sidebar-section">
+        <div class="sidebar-section-header">
+          <span class="sidebar-section-title">Background Jobs</span>
+        </div>
+        <div style="padding: 10px 16px; font-size: 0.85rem; color: var(--text-muted); text-align: center;">
+          No active jobs
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="credits-usage">
+        <div class="credits-label">
+          <span>Credits</span>
+          <span id="creditsPercentage">0%</span>
+        </div>
+        <div class="credits-bar">
+          <div class="credits-fill" id="creditsFill" style="width: 0%"></div>
+        </div>
+      </div>
+      <div class="user-menu" id="userMenu">
+        <div class="user-avatar" id="userAvatar">A</div>
+        <div class="user-details">
+          <div class="user-menu-name" id="userMenuName">Loading...</div>
+          <div class="user-menu-role" id="userMenuRole">Member</div>
+        </div>
+        <div class="settings-icon">⚙</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Sidebar overlay for mobile -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <main class="app-main" id="appMain">
     <div class="container">
+      <!-- Project Home Page -->
+      <section class="project-home" id="projectHome">
+        <!-- Project Header -->
+        <div class="project-header">
+          <div class="project-title-row">
+            <span class="project-icon-large" id="projectIconLarge">📊</span>
+            <div class="project-title">
+              <input
+                type="text"
+                class="project-name-editable"
+                id="projectNameEditable"
+                value="My First Project"
+                placeholder="Project Name"
+              />
+              <input
+                type="text"
+                class="project-description-editable"
+                id="projectDescriptionEditable"
+                placeholder="Add a description..."
+              />
+            </div>
+          </div>
+
+          <!-- Stat Cards -->
+          <div class="stat-cards">
+            <div class="stat-card">
+              <div class="stat-label">Data Sources</div>
+              <div class="stat-value" id="statDataSources">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Queries Asked</div>
+              <div class="stat-value" id="statQueriesAsked">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Dashboards</div>
+              <div class="stat-value" id="statDashboards">0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Insight Summary Strip -->
+        <div class="insight-summary-strip" id="insightSummaryStrip" style="display: none;">
+          <span style="color: var(--text-muted); font-size: 0.85rem;">Active Insights:</span>
+          <div class="insight-count" data-severity="critical" id="insightCountCritical" style="display: none;">
+            <span class="count-icon">🔴</span>
+            <span class="count-number" id="criticalCountNum">0</span>
+          </div>
+          <div class="insight-count" data-severity="warning" id="insightCountWarning" style="display: none;">
+            <span class="count-icon">⚠️</span>
+            <span class="count-number" id="warningCountNum">0</span>
+          </div>
+          <div class="insight-count" data-severity="opportunity" id="insightCountOpportunity" style="display: none;">
+            <span class="count-icon">💡</span>
+            <span class="count-number" id="opportunityCountNum">0</span>
+          </div>
+          <div class="insight-count" data-severity="info" id="insightCountInfo" style="display: none;">
+            <span class="count-icon">ℹ️</span>
+            <span class="count-number" id="infoCountNum">0</span>
+          </div>
+        </div>
+
+        <!-- Ask Your Data Section -->
+        <div class="ask-section">
+          <h3 class="ask-header">Ask Your Data</h3>
+          <div class="query-input-container">
+            <textarea
+              class="query-input"
+              id="projectQueryInput"
+              placeholder="Ask a question about your data..."
+              rows="1"
+            ></textarea>
+            <button class="btn btn-primary query-btn" id="projectAskBtn">Ask</button>
+          </div>
+
+          <!-- Suggested Questions -->
+          <div class="suggested-questions" id="suggestedQuestions">
+            <!-- Will be populated dynamically -->
+          </div>
+
+          <!-- Loading State -->
+          <div class="query-loading" id="projectQueryLoading">
+            <div class="spinner"></div>
+            Analyzing your data...
+          </div>
+
+          <!-- Query Response -->
+          <div class="query-response" id="projectQueryResponse">
+            <!-- Explanation Section (Collapsible) -->
+            <div class="explanation-section" id="explanationSection" style="display: none;">
+              <div class="explanation-toggle" id="explanationToggle">
+                <h4>Claude's Explanation</h4>
+                <span class="explanation-toggle-icon expanded" id="explanationToggleIcon">▼</span>
+              </div>
+              <div class="explanation-content" id="explanationContent">
+                <p id="explanationText"></p>
+              </div>
+            </div>
+
+            <!-- Chart Visualization -->
+            <div class="chart-container" id="projectChartContainer" style="display: none;">
+              <div class="chart-actions">
+                <button class="chart-action-btn" id="projectChartDownloadBtn" title="Download chart as PNG">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  <span>PNG</span>
+                </button>
+                <button class="chart-action-btn" id="projectSqlDownloadBtn" title="Download SQL query">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                  </svg>
+                  <span>SQL</span>
+                </button>
+              </div>
+              <div class="result-summary" id="projectResultSummary">
+                <span class="result-summary-left" id="projectSummaryLeft"></span>
+                <span class="result-summary-right" id="projectSummaryRight"></span>
+              </div>
+              <div class="chart-wrapper" id="projectChartWrapper">
+                <!-- Chart will be rendered here -->
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="result-actions">
+                <button class="result-action-btn" id="explainChartBtn">
+                  ✨ Explain
+                </button>
+                <button class="result-action-btn" id="pinQueryBtn">
+                  📌 Pin
+                </button>
+                <button class="result-action-btn" id="addToDashboardBtn">
+                  📊 Add to Dashboard
+                </button>
+                <button class="result-action-btn" id="showSqlBtn">
+                  📝 Show SQL
+                </button>
+                <button class="result-action-btn" id="downloadDataBtn">
+                  ⬇️ Download Data
+                </button>
+                <button class="result-action-btn" id="followUpBtn">
+                  🔄 Ask a follow-up
+                </button>
+              </div>
+
+              <!-- Chart Explanation (appears after clicking Explain) -->
+              <div class="chart-explanation" id="chartExplanation" style="display: none;">
+                <div class="explanation-header">
+                  <h4>📊 Executive Summary</h4>
+                  <button class="explanation-close" onclick="document.getElementById('chartExplanation').style.display='none'">×</button>
+                </div>
+                <p id="chartExplanationText"></p>
+              </div>
+
+              <!-- Insight Cards -->
+              <div class="insights-container" id="insightsContainer">
+                <div class="insights-loading" id="insightsLoading" style="display: none;">
+                  <div class="spinner" style="width: 16px; height: 16px;"></div>
+                  Analyzing data for insights...
+                </div>
+                <div class="insights-grid" id="insightsGrid">
+                  <!-- Insight cards will be rendered here -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Results Table (fallback) -->
+            <div class="response-card" id="projectResultsCard" style="display: none;">
+              <div class="response-card-header">
+                Results
+                <span class="results-info" id="projectResultsInfo"></span>
+              </div>
+              <div class="response-card-body">
+                <div class="enhanced-table-container">
+                  <table class="enhanced-table enhanced-table-fade-in" id="projectResultsTable">
+                    <thead id="projectResultsHead"></thead>
+                    <tbody id="projectResultsBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Error Card -->
+            <div class="response-card error-card" id="projectErrorCard" style="display: none;">
+              <div class="response-card-header">Error</div>
+              <div class="response-card-body">
+                <div class="error-message" id="projectErrorMessage"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hidden SQL storage for download -->
+          <pre id="projectSqlCode" style="display:none;"></pre>
+        </div>
+
+        <!-- Tabbed Content -->
+        <div class="tabs">
+          <ul class="tab-list">
+            <li><button class="tab-button active" data-tab="recent">Recent</button></li>
+            <li><button class="tab-button" data-tab="sources">Data Sources</button></li>
+            <li><button class="tab-button" data-tab="dashboards">Dashboards</button></li>
+            <li><button class="tab-button" data-tab="insights" id="insightsTabBtn">Insights<span class="tab-badge" id="insightsTabBadge" style="display: none;">0</span></button></li>
+          </ul>
+        </div>
+
+        <!-- Tab: Recent -->
+        <div class="tab-content active" id="tabRecent">
+          <div class="timeline" id="recentTimeline">
+            <div class="empty-state-card">
+              <div class="empty-state-icon">📝</div>
+              <div class="empty-state-text">No queries yet. Ask your first question above!</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Data Sources -->
+        <div class="tab-content" id="tabSources">
+          <div style="margin-bottom: 16px;">
+            <button class="btn btn-primary" id="uploadDataBtn">+ Upload Data</button>
+          </div>
+          <div class="sources-grid" id="sourcesGrid">
+            <div class="empty-state-card">
+              <div class="empty-state-icon">📁</div>
+              <div class="empty-state-text">No data sources yet. Upload your first file!</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Dashboards -->
+        <div class="tab-content" id="tabDashboards">
+          <div style="margin-bottom: 16px;">
+            <button class="btn btn-primary" id="newDashboardBtn">+ New Dashboard</button>
+          </div>
+          <div class="dashboards-grid" id="dashboardsGrid">
+            <div class="empty-state-card">
+              <div class="empty-state-icon">📊</div>
+              <div class="empty-state-text">No dashboards yet. Create one from pinned queries!</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Insights -->
+        <div class="tab-content" id="tabInsights">
+          <!-- Insights Filter Bar -->
+          <div class="insights-filter-bar" id="insightsFilterBar">
+            <button class="insights-filter-btn active" data-filter="all">All</button>
+            <button class="insights-filter-btn" data-filter="critical">🔴 Critical</button>
+            <button class="insights-filter-btn" data-filter="warning">⚠️ Warning</button>
+            <button class="insights-filter-btn" data-filter="opportunity">💡 Opportunity</button>
+            <button class="insights-filter-btn" data-filter="info">ℹ️ Info</button>
+          </div>
+
+          <!-- Insights List -->
+          <div class="insights-list" id="insightsList">
+            <div class="empty-state-card">
+              <div class="empty-state-icon">💡</div>
+              <div class="empty-state-text">No insights yet. Ask questions about your data to generate AI insights!</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Dashboard Builder View -->
+      <section class="dashboard-view" id="dashboardView">
+        <!-- Dashboard Top Bar -->
+        <div class="dashboard-topbar">
+          <div class="dashboard-topbar-left">
+            <button class="dashboard-back-btn" id="dashboardBackBtn" title="Back to project">
+              ←
+            </button>
+            <div class="dashboard-title-container">
+              <input
+                type="text"
+                class="dashboard-title-input"
+                id="dashboardTitleInput"
+                value="Untitled Dashboard"
+                placeholder="Dashboard name"
+              />
+              <div class="dashboard-project-badge">
+                <span class="project-dot" id="dashboardProjectDot" style="background: var(--accent);"></span>
+                <span id="dashboardProjectName">Project</span>
+              </div>
+            </div>
+          </div>
+          <div class="dashboard-topbar-right">
+            <div class="dashboard-save-indicator" id="dashboardSaveIndicator" style="display: none;">
+              <span class="save-status" id="saveStatus">Saved ✓</span>
+            </div>
+            <div class="mode-toggle">
+              <button class="mode-toggle-btn" id="viewModeBtn">View</button>
+              <button class="mode-toggle-btn active" id="editModeBtn">Edit</button>
+            </div>
+            <button class="dashboard-action-btn" id="autoLayoutBtn">
+              ✨ Auto-Layout
+            </button>
+            <button class="dashboard-action-btn primary" id="addWidgetBtn">
+              + Add Widget
+            </button>
+            <button class="dashboard-action-btn" id="shareDashboardBtn" title="Share dashboard">
+              🔗 Share
+            </button>
+          </div>
+        </div>
+
+        <!-- Dashboard Canvas -->
+        <div class="dashboard-canvas edit-mode" id="dashboardCanvas">
+          <div class="dashboard-grid-container">
+            <div class="grid-stack" id="dashboardGrid">
+              <!-- Widgets will be added here dynamically -->
+            </div>
+
+            <!-- Empty State -->
+            <div class="dashboard-empty-state" id="dashboardEmptyState">
+              <div class="dashboard-empty-icon">📊</div>
+              <div class="dashboard-empty-title">Your dashboard is empty</div>
+              <div class="dashboard-empty-subtitle">
+                Add your first widget by clicking the button above, or try asking a question
+              </div>
+              <div class="dashboard-empty-actions">
+                <div class="empty-action-card" id="emptyActionPinned">
+                  <div class="empty-action-icon">📊</div>
+                  <div class="empty-action-title">Add from Pinned Queries</div>
+                  <div class="empty-action-desc">Choose from your saved queries</div>
+                </div>
+                <div class="empty-action-card" id="emptyActionNew">
+                  <div class="empty-action-icon">💬</div>
+                  <div class="empty-action-title">Ask a New Question</div>
+                  <div class="empty-action-desc">Query your data directly</div>
+                </div>
+                <div class="empty-action-card" id="emptyActionAuto">
+                  <div class="empty-action-icon">✨</div>
+                  <div class="empty-action-title">Auto-Generate Dashboard</div>
+                  <div class="empty-action-desc">AI creates insights for you</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Upload Section (shown when no data) -->
       <section class="upload-section" id="uploadSection">
         <div class="upload-icon">+</div>
@@ -1369,11 +4238,248 @@
     </div>
   </main>
 
+  <!-- Project Creation Modal -->
+  <div class="modal-overlay" id="projectModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Create New Project</h3>
+        <button class="modal-close" id="closeProjectModal">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="projectForm">
+          <div class="form-group">
+            <label class="form-label" for="projectName">Project Name *</label>
+            <input type="text" class="form-input" id="projectName" placeholder="My Analytics Project" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="projectDescription">Description</label>
+            <textarea class="form-input" id="projectDescription" placeholder="What's this project about?"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Icon</label>
+            <div class="emoji-picker" id="emojiPicker">
+              <button type="button" class="emoji-option selected" data-emoji="📊">📊</button>
+              <button type="button" class="emoji-option" data-emoji="📈">📈</button>
+              <button type="button" class="emoji-option" data-emoji="💰">💰</button>
+              <button type="button" class="emoji-option" data-emoji="🏪">🏪</button>
+              <button type="button" class="emoji-option" data-emoji="📦">📦</button>
+              <button type="button" class="emoji-option" data-emoji="🎯">🎯</button>
+              <button type="button" class="emoji-option" data-emoji="🔍">🔍</button>
+              <button type="button" class="emoji-option" data-emoji="💡">💡</button>
+              <button type="button" class="emoji-option" data-emoji="🏗️">🏗️</button>
+              <button type="button" class="emoji-option" data-emoji="⚡">⚡</button>
+              <button type="button" class="emoji-option" data-emoji="🚀">🚀</button>
+              <button type="button" class="emoji-option" data-emoji="🎨">🎨</button>
+              <button type="button" class="emoji-option" data-emoji="📱">📱</button>
+              <button type="button" class="emoji-option" data-emoji="💻">💻</button>
+              <button type="button" class="emoji-option" data-emoji="🌐">🌐</button>
+              <button type="button" class="emoji-option" data-emoji="⭐">⭐</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Accent Color</label>
+            <div class="color-picker" id="colorPicker">
+              <button type="button" class="color-option selected" data-color="#5b7cfa" style="--option-color: #5b7cfa;"></button>
+              <button type="button" class="color-option" data-color="#c084fc" style="--option-color: #c084fc;"></button>
+              <button type="button" class="color-option" data-color="#34d399" style="--option-color: #34d399;"></button>
+              <button type="button" class="color-option" data-color="#f59e0b" style="--option-color: #f59e0b;"></button>
+              <button type="button" class="color-option" data-color="#f472b6" style="--option-color: #f472b6;"></button>
+              <button type="button" class="color-option" data-color="#60a5fa" style="--option-color: #60a5fa;"></button>
+              <button type="button" class="color-option" data-color="#fbbf24" style="--option-color: #fbbf24;"></button>
+              <button type="button" class="color-option" data-color="#a78bfa" style="--option-color: #a78bfa;"></button>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn" id="cancelProjectBtn">Cancel</button>
+        <button type="button" class="btn btn-primary" id="createProjectBtn">Create Project</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Widget Picker Modal -->
+  <div class="modal-overlay widget-picker-modal" id="widgetPickerModal">
+    <div class="modal" style="max-width: 800px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Add Widget</h3>
+        <button class="modal-close" id="closeWidgetPickerModal">×</button>
+      </div>
+      <div class="modal-body">
+        <!-- Tabs -->
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="pinnedQueriesTab">From Pinned Queries</button>
+          <button class="tab-btn" data-tab="newQuestionTab">Ask a New Question</button>
+        </div>
+
+        <!-- Tab 1: Pinned Queries -->
+        <div class="tab-content active" id="pinnedQueriesTab">
+          <p style="color: var(--text-secondary); margin-bottom: 16px;">
+            Select a pinned query to add to your dashboard
+          </p>
+          <div class="widget-picker-grid" id="widgetPickerGrid">
+            <!-- Pinned queries will be loaded here -->
+          </div>
+          <div id="widgetPickerEmpty" style="display: none; text-align: center; padding: 32px; color: var(--text-muted);">
+            <div style="font-size: 2rem; margin-bottom: 12px;">📌</div>
+            <p>No pinned queries yet</p>
+            <p style="font-size: 0.85rem; margin-top: 8px;">
+              Pin a query from the project home page to add it here
+            </p>
+          </div>
+        </div>
+
+        <!-- Tab 2: Ask New Question -->
+        <div class="tab-content" id="newQuestionTab">
+          <p style="color: var(--text-secondary); margin-bottom: 16px;">
+            Ask a question and add the result directly to your dashboard
+          </p>
+          <div class="query-input-container" style="margin-bottom: 16px;">
+            <textarea
+              class="query-input"
+              id="widgetQueryInput"
+              placeholder="Ask a question about your data..."
+              rows="2"
+            ></textarea>
+            <button class="btn btn-primary query-btn" id="widgetAskBtn">Ask</button>
+          </div>
+
+          <!-- Loading State -->
+          <div class="query-loading" id="widgetQueryLoading" style="display: none;">
+            <div class="spinner"></div>
+            Analyzing your data...
+          </div>
+
+          <!-- Query Result Preview -->
+          <div id="widgetQueryResult" style="display: none;">
+            <div class="chart-container" style="margin-bottom: 16px;">
+              <div class="result-summary" id="widgetResultSummary">
+                <span class="result-summary-left" id="widgetSummaryLeft"></span>
+                <span class="result-summary-right" id="widgetSummaryRight"></span>
+              </div>
+              <div class="chart-wrapper" id="widgetChartWrapper" style="height: 300px;">
+                <!-- Chart preview will be rendered here -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Error State -->
+          <div class="response-card error-card" id="widgetQueryError" style="display: none;">
+            <div class="response-card-header">Error</div>
+            <div class="response-card-body">
+              <div class="error-message" id="widgetErrorMessage"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn" id="cancelWidgetPickerBtn">Cancel</button>
+        <button type="button" class="btn btn-primary" id="addSelectedWidgetBtn" disabled>Add Widget</button>
+        <button type="button" class="btn btn-primary" id="addNewQueryWidgetBtn" style="display: none;">Add to Dashboard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fullscreen Chart Modal -->
+  <div class="modal-overlay fullscreen-modal" id="fullscreenModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="fullscreenChartTitle">Chart</h3>
+        <button class="modal-close" id="closeFullscreenModal">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="fullscreen-chart-container" id="fullscreenChartContainer">
+          <!-- Chart will be rendered here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Widget Confirmation Modal -->
+  <div class="modal-overlay" id="deleteWidgetModal">
+    <div class="modal" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Remove Widget</h3>
+        <button class="modal-close" id="closeDeleteWidgetModal">×</button>
+      </div>
+      <div class="modal-body">
+        <p style="color: var(--text-secondary);">
+          Are you sure you want to remove this widget from the dashboard?
+        </p>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 8px;">
+          The underlying pinned query will not be deleted.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn" id="cancelDeleteWidgetBtn">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteWidgetBtn">Remove</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change Chart Type Modal -->
+  <div class="modal-overlay" id="changeChartTypeModal">
+    <div class="modal" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Change Chart Type</h3>
+        <button class="modal-close" id="closeChangeChartTypeModal">×</button>
+      </div>
+      <div class="modal-body">
+        <p style="color: var(--text-secondary); margin-bottom: 16px;">
+          Select a visualization type for this widget
+        </p>
+        <div class="chart-type-grid">
+          <div class="chart-type-option" data-type="bar_chart">
+            <div class="chart-type-icon">📊</div>
+            <div class="chart-type-label">Bar Chart</div>
+          </div>
+          <div class="chart-type-option" data-type="line_chart">
+            <div class="chart-type-icon">📈</div>
+            <div class="chart-type-label">Line Chart</div>
+          </div>
+          <div class="chart-type-option" data-type="pie_chart">
+            <div class="chart-type-icon">🥧</div>
+            <div class="chart-type-label">Pie Chart</div>
+          </div>
+          <div class="chart-type-option" data-type="area_chart">
+            <div class="chart-type-icon">📉</div>
+            <div class="chart-type-label">Area Chart</div>
+          </div>
+          <div class="chart-type-option" data-type="scatter_plot">
+            <div class="chart-type-icon">⚬</div>
+            <div class="chart-type-label">Scatter Plot</div>
+          </div>
+          <div class="chart-type-option" data-type="single_number">
+            <div class="chart-type-icon">🔢</div>
+            <div class="chart-type-label">Single Number</div>
+          </div>
+          <div class="chart-type-option" data-type="table">
+            <div class="chart-type-icon">📋</div>
+            <div class="chart-type-label">Table</div>
+          </div>
+          <div class="chart-type-option" data-type="heatmap">
+            <div class="chart-type-icon">🔥</div>
+            <div class="chart-type-label">Heatmap</div>
+          </div>
+          <div class="chart-type-option" data-type="grouped_bar_chart">
+            <div class="chart-type-icon">📊</div>
+            <div class="chart-type-label">Grouped Bar</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn" id="cancelChangeChartTypeBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast-container" id="toastContainer"></div>
 
   <script>
     // State
     let user = null;
+    let projects = [];
+    let currentProject = null;
     let dataSourceId = null;
     let tables = [];
     let currentTable = null;
@@ -1381,8 +4487,36 @@
     let pageSize = 25;
     let totalRows = 0;
     let isQuerying = false;
+    let pinnedQueries = [];
+    let selectedEmoji = '📊';
+    let selectedColor = '#5b7cfa';
+
+    // Dashboard State
+    let currentDashboard = null;
+    let dashboardWidgets = [];
+    let dashboardGrid = null;
+    let dashboardEditMode = true;
+    let selectedWidgetQuery = null;
+    let widgetToDelete = null;
+    let widgetToChangeType = null;
+    let widgetChartInstances = {}; // Map of widget ID to ECharts instance
+    let newQueryResult = null; // Result from "Ask New Question" tab
+    let newQueryChartInstance = null; // Chart instance for widget picker preview
+    let saveDashboardDebounced = null; // Debounced save function
 
     // DOM Elements
+    const appSidebar = document.getElementById('appSidebar');
+    const appMain = document.getElementById('appMain');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    const projectList = document.getElementById('projectList');
+    const addProjectBtn = document.getElementById('addProjectBtn');
+    const projectModal = document.getElementById('projectModal');
+    const closeProjectModal = document.getElementById('closeProjectModal');
+    const cancelProjectBtn = document.getElementById('cancelProjectBtn');
+    const createProjectBtn = document.getElementById('createProjectBtn');
+    const projectForm = document.getElementById('projectForm');
     const uploadSection = document.getElementById('uploadSection');
     const dataSection = document.getElementById('dataSection');
     const dropZone = document.getElementById('dropZone');
@@ -1398,11 +4532,62 @@
     const queryLoading = document.getElementById('queryLoading');
     const queryResponse = document.getElementById('queryResponse');
 
+    // Dashboard DOM Elements
+    const dashboardView = document.getElementById('dashboardView');
+    const dashboardBackBtn = document.getElementById('dashboardBackBtn');
+    const dashboardTitleInput = document.getElementById('dashboardTitleInput');
+    const dashboardProjectDot = document.getElementById('dashboardProjectDot');
+    const dashboardProjectName = document.getElementById('dashboardProjectName');
+    const viewModeBtn = document.getElementById('viewModeBtn');
+    const editModeBtn = document.getElementById('editModeBtn');
+    const autoLayoutBtn = document.getElementById('autoLayoutBtn');
+    const addWidgetBtn = document.getElementById('addWidgetBtn');
+    const shareDashboardBtn = document.getElementById('shareDashboardBtn');
+    const dashboardCanvas = document.getElementById('dashboardCanvas');
+    const dashboardEmptyState = document.getElementById('dashboardEmptyState');
+    const emptyAddWidgetBtn = document.getElementById('emptyAddWidgetBtn');
+    const widgetPickerModal = document.getElementById('widgetPickerModal');
+    const widgetPickerGrid = document.getElementById('widgetPickerGrid');
+    const widgetPickerEmpty = document.getElementById('widgetPickerEmpty');
+    const closeWidgetPickerModal = document.getElementById('closeWidgetPickerModal');
+    const cancelWidgetPickerBtn = document.getElementById('cancelWidgetPickerBtn');
+    const addSelectedWidgetBtn = document.getElementById('addSelectedWidgetBtn');
+    const fullscreenModal = document.getElementById('fullscreenModal');
+    const fullscreenChartTitle = document.getElementById('fullscreenChartTitle');
+    const fullscreenChartContainer = document.getElementById('fullscreenChartContainer');
+    const closeFullscreenModal = document.getElementById('closeFullscreenModal');
+    const deleteWidgetModal = document.getElementById('deleteWidgetModal');
+    const closeDeleteWidgetModal = document.getElementById('closeDeleteWidgetModal');
+    const cancelDeleteWidgetBtn = document.getElementById('cancelDeleteWidgetBtn');
+    const confirmDeleteWidgetBtn = document.getElementById('confirmDeleteWidgetBtn');
+    const changeChartTypeModal = document.getElementById('changeChartTypeModal');
+    const closeChangeChartTypeModal = document.getElementById('closeChangeChartTypeModal');
+    const cancelChangeChartTypeBtn = document.getElementById('cancelChangeChartTypeBtn');
+    const dashboardSaveIndicator = document.getElementById('dashboardSaveIndicator');
+    const saveStatus = document.getElementById('saveStatus');
+    const widgetQueryInput = document.getElementById('widgetQueryInput');
+    const widgetAskBtn = document.getElementById('widgetAskBtn');
+    const widgetQueryLoading = document.getElementById('widgetQueryLoading');
+    const widgetQueryResult = document.getElementById('widgetQueryResult');
+    const widgetQueryError = document.getElementById('widgetQueryError');
+    const widgetErrorMessage = document.getElementById('widgetErrorMessage');
+    const widgetChartWrapper = document.getElementById('widgetChartWrapper');
+    const widgetSummaryLeft = document.getElementById('widgetSummaryLeft');
+    const widgetSummaryRight = document.getElementById('widgetSummaryRight');
+    const addNewQueryWidgetBtn = document.getElementById('addNewQueryWidgetBtn');
+    const emptyActionPinned = document.getElementById('emptyActionPinned');
+    const emptyActionNew = document.getElementById('emptyActionNew');
+    const emptyActionAuto = document.getElementById('emptyActionAuto');
+
     // Initialize
     async function init() {
       await loadUserInfo();
-      await loadDataSources();
-      await loadTables();
+      await loadProjects();
+      await loadPinnedQueries();
+      setupSidebarHandlers();
+      setupModalHandlers();
+      setupProjectHomeHandlers();
+      setupDashboardHandlers();
     }
 
     // Toast notifications
@@ -1425,6 +4610,12 @@
           if (user.tenantName) {
             document.getElementById('tenantName').textContent = user.tenantName;
           }
+
+          // Update sidebar user menu
+          document.getElementById('userMenuName').textContent = user.name;
+          document.getElementById('userMenuRole').textContent = user.role || 'Member';
+          const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+          document.getElementById('userAvatar').textContent = initials;
         } else {
           window.location.href = '/login';
         }
@@ -1432,6 +4623,1562 @@
         console.error('Failed to load user info:', err);
         window.location.href = '/login';
       }
+    }
+
+    // Load projects
+    async function loadProjects() {
+      try {
+        const response = await fetch('/api/projects');
+        if (response.ok) {
+          projects = await response.json();
+          renderProjects();
+
+          // Auto-select default or first project
+          if (projects.length > 0) {
+            const defaultProject = projects.find(p => p.is_default) || projects[0];
+            selectProject(defaultProject.id);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load projects:', err);
+        showToast('Failed to load projects', 'error');
+      }
+    }
+
+    // Render projects in sidebar
+    function renderProjects() {
+      projectList.innerHTML = '';
+
+      if (projects.length === 0) {
+        projectList.innerHTML = '<li style="padding: 10px 16px; font-size: 0.85rem; color: var(--text-muted); text-align: center;">No projects yet</li>';
+        return;
+      }
+
+      projects.forEach(project => {
+        const li = document.createElement('li');
+        li.className = 'project-item';
+        li.dataset.projectId = project.id;
+        li.style.setProperty('--project-color', project.color || '#5b7cfa');
+
+        li.innerHTML = `
+          <span class="project-icon">${project.icon || '📊'}</span>
+          <span class="project-name">${escapeHtml(project.name)}</span>
+          <span class="project-dot"></span>
+        `;
+
+        li.addEventListener('click', () => selectProject(project.id));
+        projectList.appendChild(li);
+      });
+    }
+
+    // Load pinned queries for sidebar
+    async function loadPinnedQueries() {
+      try {
+        const response = await fetch('/api/queries/pinned');
+        if (response.ok) {
+          const pinned = await response.json();
+          renderPinnedQueries(pinned);
+        }
+      } catch (err) {
+        console.error('Failed to load pinned queries:', err);
+      }
+    }
+
+    // Render pinned queries in sidebar
+    function renderPinnedQueries(queries) {
+      const pinnedList = document.getElementById('pinnedList');
+
+      if (queries.length === 0) {
+        pinnedList.innerHTML = '<li style="padding: 10px 16px; font-size: 0.85rem; color: var(--text-muted); text-align: center;">No pinned items</li>';
+        return;
+      }
+
+      pinnedList.innerHTML = queries.map(query => {
+        const title = query.pin_title || query.question?.substring(0, 40) || 'Untitled';
+        const vizIcon = getVizIcon(query.visualization_type);
+        return `
+          <li class="pinned-item" data-query-id="${query.id}" data-project-id="${query.project_id}">
+            <span class="pinned-icon">${vizIcon}</span>
+            <span class="pinned-title">${escapeHtml(title)}</span>
+          </li>
+        `;
+      }).join('');
+
+      // Add click handlers to navigate to the query's project
+      pinnedList.querySelectorAll('.pinned-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const projectId = item.dataset.projectId;
+          const queryId = item.dataset.queryId;
+          if (projectId) {
+            selectProject(projectId);
+            // Could add logic to scroll to the query in the timeline
+          }
+        });
+      });
+    }
+
+    // Helper to get visualization icon
+    function getVizIcon(vizType) {
+      const icons = {
+        'bar_chart': '📊',
+        'line_chart': '📈',
+        'pie_chart': '🥧',
+        'scatter_plot': '📉',
+        'area_chart': '📊',
+        'table': '📋',
+        'single_number': '🔢',
+        'grouped_bar_chart': '📊',
+        'heatmap': '🔥'
+      };
+      return icons[vizType] || '📊';
+    }
+
+    // Select a project
+    async function selectProject(projectId) {
+      currentProject = projects.find(p => p.id === projectId);
+      if (!currentProject) return;
+
+      // Close any open dashboard view first
+      if (currentDashboard) {
+        closeDashboard();
+      }
+
+      // Update active state in sidebar
+      document.querySelectorAll('.project-item').forEach(item => {
+        item.classList.toggle('active', item.dataset.projectId === projectId);
+      });
+
+      // Load project home page
+      await loadProjectHome(projectId);
+
+      // Close mobile sidebar if open
+      appSidebar.classList.remove('mobile-open');
+      sidebarOverlay.classList.remove('active');
+    }
+
+    // Load project home page
+    async function loadProjectHome(projectId) {
+      try {
+        // Show project home, hide upload/data sections
+        document.getElementById('projectHome').classList.add('active');
+        document.getElementById('uploadSection').style.display = 'none';
+        document.getElementById('dataSection').classList.remove('active');
+
+        // Set project accent color
+        document.documentElement.style.setProperty('--project-accent', currentProject.color || '#5b7cfa');
+
+        // Update project header
+        document.getElementById('projectIconLarge').textContent = currentProject.icon || '📊';
+        document.getElementById('projectNameEditable').value = currentProject.name;
+        document.getElementById('projectDescriptionEditable').value = currentProject.description || '';
+
+        // Load project stats
+        await loadProjectStats(projectId);
+
+        // Load project data sources
+        await loadProjectDataSources(projectId);
+
+        // Load recent queries
+        await loadRecentQueries(projectId);
+
+        // Load dashboards
+        await loadDashboards(projectId);
+
+        // Load insight summary
+        await loadInsightSummary(projectId);
+
+        // Generate suggested questions
+        await generateSuggestedQuestions();
+
+        // Reset query response area
+        document.getElementById('projectQueryResponse').classList.remove('active');
+        document.getElementById('insightsGrid').innerHTML = '';
+        document.getElementById('insightsLoading').style.display = 'none';
+
+      } catch (err) {
+        console.error('Failed to load project home:', err);
+        showToast('Failed to load project', 'error');
+      }
+    }
+
+    // Load project stats
+    async function loadProjectStats(projectId) {
+      try {
+        const response = await fetch(`/api/projects/${projectId}/summary`);
+        if (response.ok) {
+          const stats = await response.json();
+          document.getElementById('statDataSources').textContent = stats.dataSourceCount || 0;
+          document.getElementById('statQueriesAsked').textContent = stats.queryCount || 0;
+          document.getElementById('statDashboards').textContent = stats.dashboardCount || 0;
+        }
+      } catch (err) {
+        console.error('Failed to load project stats:', err);
+      }
+    }
+
+    // Load project data sources
+    async function loadProjectDataSources(projectId) {
+      try {
+        const response = await fetch(`/api/projects/${projectId}/sources`);
+        if (response.ok) {
+          const sources = await response.json();
+          renderDataSources(sources);
+
+          // Get first data source ID for queries
+          if (sources.length > 0) {
+            dataSourceId = sources[0].tenant_data_source_id;
+          } else {
+            dataSourceId = null;
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load project data sources:', err);
+      }
+    }
+
+    // Render data sources in tab
+    function renderDataSources(sources) {
+      const grid = document.getElementById('sourcesGrid');
+
+      if (sources.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state-card">
+            <div class="empty-state-icon">📁</div>
+            <div class="empty-state-text">No data sources yet. Upload your first file!</div>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = sources.map(source => `
+        <div class="source-card" data-source-id="${source.id}">
+          <div class="source-card-header">
+            <h3>${escapeHtml(source.name || source.original_filename || 'Unnamed')}</h3>
+            <div class="source-card-icon">📄</div>
+          </div>
+          <div class="source-card-meta">
+            <span class="source-card-meta-item">${(source.row_count || 0).toLocaleString()} rows</span>
+            <span class="source-card-meta-item">${(source.column_count || 0)} columns</span>
+            ${source.file_type ? `<span class="source-card-meta-item">${source.file_type.toUpperCase()}</span>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Load recent queries
+    async function loadRecentQueries(projectId) {
+      try {
+        const response = await fetch(`/api/projects/${projectId}/queries?limit=10`);
+        if (response.ok) {
+          const queries = await response.json();
+          renderRecentQueries(queries);
+        }
+      } catch (err) {
+        console.error('Failed to load recent queries:', err);
+      }
+    }
+
+    // Render recent queries timeline
+    function renderRecentQueries(queries) {
+      const timeline = document.getElementById('recentTimeline');
+
+      if (queries.length === 0) {
+        timeline.innerHTML = `
+          <div class="empty-state-card">
+            <div class="empty-state-icon">📝</div>
+            <div class="empty-state-text">No queries yet. Ask your first question above!</div>
+          </div>
+        `;
+        return;
+      }
+
+      timeline.innerHTML = queries.map(query => {
+        const createdAt = new Date(query.created_at);
+        const timeAgo = getTimeAgo(createdAt);
+
+        return `
+          <div class="timeline-item" data-query-id="${query.id}">
+            <div class="timeline-header">
+              <div class="timeline-question">${escapeHtml(query.question)}</div>
+              <div class="timeline-meta">
+                ${query.visualization_type ? `<span class="viz-badge">${query.visualization_type.replace('_', ' ')}</span>` : ''}
+                <span class="timeline-time">${timeAgo}</span>
+              </div>
+            </div>
+            <div class="timeline-preview" id="preview-${query.id}">
+              <!-- Mini chart preview would go here -->
+            </div>
+            <div class="timeline-actions">
+              <button class="timeline-action-btn ${query.is_pinned ? 'pinned' : ''}" data-action="pin">
+                ${query.is_pinned ? '⭐' : '📌'} ${query.is_pinned ? 'Pinned' : 'Pin'}
+              </button>
+              <button class="timeline-action-btn" data-action="view">👁️ View</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Load dashboards
+    async function loadDashboards(projectId) {
+      try {
+        const response = await fetch(`/api/projects/${projectId}/dashboards`);
+        if (response.ok) {
+          const dashboards = await response.json();
+          renderDashboards(dashboards);
+        }
+      } catch (err) {
+        console.error('Failed to load dashboards:', err);
+      }
+    }
+
+    // Render dashboards
+    function renderDashboards(dashboards) {
+      const grid = document.getElementById('dashboardsGrid');
+
+      if (dashboards.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state-card">
+            <div class="empty-state-icon">📊</div>
+            <div class="empty-state-text">No dashboards yet. Create one from pinned queries!</div>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = dashboards.map(dashboard => {
+        const updatedAt = new Date(dashboard.updated_at);
+        return `
+          <div class="dashboard-card" data-dashboard-id="${dashboard.id}">
+            <h3>${escapeHtml(dashboard.name)}</h3>
+            <div class="dashboard-card-meta">
+              ${dashboard.widget_count || 0} widgets • Updated ${getTimeAgo(updatedAt)}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Add click handlers to open dashboards
+      grid.querySelectorAll('.dashboard-card').forEach(card => {
+        card.addEventListener('click', () => {
+          openDashboard(card.dataset.dashboardId);
+        });
+      });
+    }
+
+    // Generate AI-powered suggested questions
+    async function generateSuggestedQuestions() {
+      const container = document.getElementById('suggestedQuestions');
+
+      if (!currentProject) {
+        container.innerHTML = '';
+        return;
+      }
+
+      try {
+        // Show loading state
+        container.innerHTML = '<div class="loading-pills"><div class="spinner" style="width: 16px; height: 16px;"></div> Generating smart questions...</div>';
+
+        const response = await fetch(`/api/projects/${currentProject.id}/suggestions`, {
+          method: 'POST'
+        });
+
+        if (!response.ok) {
+          container.innerHTML = '';
+          return;
+        }
+
+        const data = await response.json();
+        const suggestions = data.suggestions || [];
+
+        if (suggestions.length === 0) {
+          container.innerHTML = '';
+          return;
+        }
+
+        // Render suggestion pills with category styling
+        container.innerHTML = suggestions.map(s => {
+          const complexity = s.complexity || 'simple';
+          const complexityIcon = complexity === 'complex' ? '✨ ' : '';
+          const categoryClass = s.category ? `category-${s.category}` : '';
+
+          return `<button class="suggested-pill ${categoryClass}"
+                    data-question="${escapeHtml(s.question)}"
+                    title="${escapeHtml(s.business_value || '')}">
+                    ${complexityIcon}${escapeHtml(s.question)}
+                  </button>`;
+        }).join('');
+
+        // Add click handlers
+        document.querySelectorAll('.suggested-pill').forEach(pill => {
+          pill.addEventListener('click', () => {
+            const question = pill.dataset.question;
+            document.getElementById('projectQueryInput').value = question;
+            askProjectQuestion();
+          });
+        });
+
+      } catch (err) {
+        console.error('Failed to generate suggested questions:', err);
+        container.innerHTML = '';
+      }
+    }
+
+    // Explain current chart
+    async function explainCurrentChart() {
+      if (!currentQueryId) {
+        showToast('No chart to explain', 'error');
+        return;
+      }
+
+      const explanationBox = document.getElementById('chartExplanation');
+      const explanationText = document.getElementById('chartExplanationText');
+
+      // Show loading state
+      explanationBox.style.display = 'block';
+      explanationText.textContent = 'Analyzing chart and generating executive summary...';
+      explanationText.style.opacity = '0.5';
+
+      try {
+        const response = await fetch(`/api/queries/${currentQueryId}/explain`, {
+          method: 'POST'
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to generate explanation');
+        }
+
+        const data = await response.json();
+
+        // Display explanation
+        explanationText.textContent = data.explanation || 'No explanation available.';
+        explanationText.style.opacity = '1';
+
+      } catch (err) {
+        console.error('Explanation error:', err);
+        explanationText.textContent = 'Failed to generate explanation. Please try again.';
+        explanationText.style.opacity = '1';
+      }
+    }
+
+    // Time ago helper
+    function getTimeAgo(date) {
+      const seconds = Math.floor((new Date() - date) / 1000);
+
+      if (seconds < 60) return 'just now';
+      const minutes = Math.floor(seconds / 60);
+      if (minutes < 60) return `${minutes}m ago`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours}h ago`;
+      const days = Math.floor(hours / 24);
+      if (days < 30) return `${days}d ago`;
+      const months = Math.floor(days / 30);
+      if (months < 12) return `${months}mo ago`;
+      return `${Math.floor(months / 12)}y ago`;
+    }
+
+    // Setup sidebar interaction handlers
+    function setupSidebarHandlers() {
+      // Toggle sidebar collapse
+      sidebarToggle.addEventListener('click', () => {
+        appSidebar.classList.toggle('collapsed');
+        appMain.classList.toggle('sidebar-collapsed');
+      });
+
+      // Mobile hamburger menu
+      hamburgerBtn.addEventListener('click', () => {
+        appSidebar.classList.add('mobile-open');
+        sidebarOverlay.classList.add('active');
+      });
+
+      // Close sidebar overlay
+      sidebarOverlay.addEventListener('click', () => {
+        appSidebar.classList.remove('mobile-open');
+        sidebarOverlay.classList.remove('active');
+      });
+
+      // Add project button
+      addProjectBtn.addEventListener('click', () => {
+        projectModal.classList.add('active');
+      });
+    }
+
+    // Setup modal handlers
+    function setupModalHandlers() {
+      // Close modal
+      closeProjectModal.addEventListener('click', () => {
+        projectModal.classList.remove('active');
+        projectForm.reset();
+        selectedEmoji = '📊';
+        selectedColor = '#5b7cfa';
+        updateModalSelections();
+      });
+
+      cancelProjectBtn.addEventListener('click', () => {
+        projectModal.classList.remove('active');
+        projectForm.reset();
+        selectedEmoji = '📊';
+        selectedColor = '#5b7cfa';
+        updateModalSelections();
+      });
+
+      // Close modal on overlay click
+      projectModal.addEventListener('click', (e) => {
+        if (e.target === projectModal) {
+          projectModal.classList.remove('active');
+          projectForm.reset();
+          selectedEmoji = '📊';
+          selectedColor = '#5b7cfa';
+          updateModalSelections();
+        }
+      });
+
+      // Emoji picker
+      document.querySelectorAll('.emoji-option').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          document.querySelectorAll('.emoji-option').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          selectedEmoji = btn.dataset.emoji;
+        });
+      });
+
+      // Color picker
+      document.querySelectorAll('.color-option').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          document.querySelectorAll('.color-option').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          selectedColor = btn.dataset.color;
+        });
+      });
+
+      // Create project
+      createProjectBtn.addEventListener('click', async () => {
+        const name = document.getElementById('projectName').value.trim();
+        if (!name) {
+          showToast('Please enter a project name', 'error');
+          return;
+        }
+
+        const description = document.getElementById('projectDescription').value.trim();
+
+        try {
+          createProjectBtn.disabled = true;
+          createProjectBtn.textContent = 'Creating...';
+
+          const response = await fetch('/api/projects', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name,
+              description,
+              icon: selectedEmoji,
+              color: selectedColor
+            })
+          });
+
+          if (response.ok) {
+            const newProject = await response.json();
+            showToast('Project created successfully', 'success');
+            projectModal.classList.remove('active');
+            projectForm.reset();
+            selectedEmoji = '📊';
+            selectedColor = '#5b7cfa';
+            updateModalSelections();
+
+            // Reload projects and select new one
+            await loadProjects();
+            selectProject(newProject.id);
+          } else {
+            const error = await response.json();
+            showToast(error.error || 'Failed to create project', 'error');
+          }
+        } catch (err) {
+          console.error('Failed to create project:', err);
+          showToast('Failed to create project', 'error');
+        } finally {
+          createProjectBtn.disabled = false;
+          createProjectBtn.textContent = 'Create Project';
+        }
+      });
+    }
+
+    // Setup project home page handlers
+    function setupProjectHomeHandlers() {
+      // Tab switching
+      document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const targetTab = btn.dataset.tab;
+
+          // Update active tab button
+          document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+
+          // Show target tab content
+          document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+          });
+          document.getElementById(`tab${targetTab.charAt(0).toUpperCase() + targetTab.slice(1)}`).classList.add('active');
+
+          // Load insights when Insights tab is selected
+          if (targetTab === 'insights' && currentProject) {
+            loadProjectInsights(currentProject.id, 'all');
+          }
+        });
+      });
+
+      // Insights filter bar
+      document.querySelectorAll('.insights-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const filter = btn.dataset.filter;
+
+          // Update active filter button
+          document.querySelectorAll('.insights-filter-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+
+          // Reload insights with filter
+          if (currentProject) {
+            loadProjectInsights(currentProject.id, filter);
+          }
+        });
+      });
+
+      // Insight count clicks (jump to Insights tab with filter)
+      document.querySelectorAll('.insight-count').forEach(countEl => {
+        countEl.addEventListener('click', () => {
+          const severity = countEl.dataset.severity;
+
+          // Switch to Insights tab
+          document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+          document.getElementById('insightsTabBtn').classList.add('active');
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+          document.getElementById('tabInsights').classList.add('active');
+
+          // Set filter
+          document.querySelectorAll('.insights-filter-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.filter === severity);
+          });
+
+          // Load filtered insights
+          if (currentProject) {
+            loadProjectInsights(currentProject.id, severity);
+          }
+        });
+      });
+
+      // Project name editing
+      const projectNameInput = document.getElementById('projectNameEditable');
+      if (projectNameInput) {
+        let originalName = '';
+        projectNameInput.addEventListener('focus', () => {
+          originalName = projectNameInput.value;
+        });
+        projectNameInput.addEventListener('blur', async () => {
+          const newName = projectNameInput.value.trim();
+          if (newName && newName !== originalName && currentProject) {
+            try {
+              const response = await fetch(`/api/projects/${currentProject.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newName })
+              });
+              if (response.ok) {
+                currentProject.name = newName;
+                await loadProjects(); // Refresh sidebar
+                showToast('Project name updated', 'success');
+              } else {
+                projectNameInput.value = originalName;
+                showToast('Failed to update project name', 'error');
+              }
+            } catch (err) {
+              console.error('Failed to update project name:', err);
+              projectNameInput.value = originalName;
+              showToast('Failed to update project name', 'error');
+            }
+          }
+        });
+      }
+
+      // Project description editing
+      const projectDescInput = document.getElementById('projectDescriptionEditable');
+      if (projectDescInput) {
+        let originalDesc = '';
+        projectDescInput.addEventListener('focus', () => {
+          originalDesc = projectDescInput.value;
+        });
+        projectDescInput.addEventListener('blur', async () => {
+          const newDesc = projectDescInput.value.trim();
+          if (newDesc !== originalDesc && currentProject) {
+            try {
+              const response = await fetch(`/api/projects/${currentProject.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ description: newDesc })
+              });
+              if (response.ok) {
+                currentProject.description = newDesc;
+                showToast('Project description updated', 'success');
+              } else {
+                projectDescInput.value = originalDesc;
+                showToast('Failed to update description', 'error');
+              }
+            } catch (err) {
+              console.error('Failed to update description:', err);
+              projectDescInput.value = originalDesc;
+              showToast('Failed to update description', 'error');
+            }
+          }
+        });
+      }
+
+      // Project query
+      const projectQueryInput = document.getElementById('projectQueryInput');
+      const projectAskBtn = document.getElementById('projectAskBtn');
+      if (projectAskBtn) {
+        projectAskBtn.addEventListener('click', () => {
+          const parentId = followUpMode ? currentParentQueryId : null;
+          askProjectQuestion(parentId);
+        });
+      }
+      if (projectQueryInput) {
+        projectQueryInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            const parentId = followUpMode ? currentParentQueryId : null;
+            askProjectQuestion(parentId);
+          }
+        });
+        projectQueryInput.addEventListener('input', () => {
+          autoResizeTextarea(projectQueryInput);
+        });
+      }
+
+      // Upload data button
+      const uploadDataBtn = document.getElementById('uploadDataBtn');
+      if (uploadDataBtn) {
+        uploadDataBtn.addEventListener('click', () => {
+          // Trigger file input
+          const fileInput = document.getElementById('fileInput');
+          if (fileInput) fileInput.click();
+        });
+      }
+
+      // New Dashboard button
+      const newDashboardBtn = document.getElementById('newDashboardBtn');
+      if (newDashboardBtn) {
+        newDashboardBtn.addEventListener('click', createNewDashboard);
+      }
+
+      // Explanation toggle
+      const explanationToggle = document.getElementById('explanationToggle');
+      if (explanationToggle) {
+        explanationToggle.addEventListener('click', () => {
+          const content = document.getElementById('explanationContent');
+          const icon = document.getElementById('explanationToggleIcon');
+          content.classList.toggle('collapsed');
+          icon.classList.toggle('expanded');
+        });
+      }
+
+      // Action buttons
+      const pinQueryBtn = document.getElementById('pinQueryBtn');
+      if (pinQueryBtn) {
+        pinQueryBtn.addEventListener('click', () => {
+          showToast('Pin functionality coming soon!', 'info');
+        });
+      }
+
+      const addToDashboardBtn = document.getElementById('addToDashboardBtn');
+      if (addToDashboardBtn) {
+        addToDashboardBtn.addEventListener('click', () => {
+          showToast('Add to Dashboard functionality coming soon!', 'info');
+        });
+      }
+
+      const showSqlBtn = document.getElementById('showSqlBtn');
+      if (showSqlBtn) {
+        showSqlBtn.addEventListener('click', () => {
+          const sqlCode = document.getElementById('projectSqlCode').textContent;
+          if (sqlCode) {
+            alert('SQL:\n\n' + sqlCode);
+          }
+        });
+      }
+
+      const downloadDataBtn = document.getElementById('downloadDataBtn');
+      if (downloadDataBtn) {
+        downloadDataBtn.addEventListener('click', () => {
+          showToast('Download functionality coming soon!', 'info');
+        });
+      }
+
+      const followUpBtn = document.getElementById('followUpBtn');
+      if (followUpBtn) {
+        followUpBtn.addEventListener('click', enterFollowUpMode);
+      }
+
+      // Explain chart button
+      const explainChartBtn = document.getElementById('explainChartBtn');
+      if (explainChartBtn) {
+        explainChartBtn.addEventListener('click', explainCurrentChart);
+      }
+
+      // Chart downloads
+      const projectChartDownloadBtn = document.getElementById('projectChartDownloadBtn');
+      if (projectChartDownloadBtn) {
+        projectChartDownloadBtn.addEventListener('click', () => {
+          if (window.projectChartInstance) {
+            const url = window.projectChartInstance.getDataURL({
+              type: 'png',
+              pixelRatio: 2,
+              backgroundColor: '#0a0a0f'
+            });
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'chart.png';
+            link.click();
+            showToast('Chart downloaded', 'success');
+          }
+        });
+      }
+
+      const projectSqlDownloadBtn = document.getElementById('projectSqlDownloadBtn');
+      if (projectSqlDownloadBtn) {
+        projectSqlDownloadBtn.addEventListener('click', () => {
+          const sql = document.getElementById('projectSqlCode').textContent;
+          if (sql) {
+            const blob = new Blob([sql], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'query.sql';
+            link.click();
+            URL.revokeObjectURL(url);
+            showToast('SQL downloaded', 'success');
+          }
+        });
+      }
+
+      // Event delegation for timeline action buttons
+      const recentTimeline = document.getElementById('recentTimeline');
+      if (recentTimeline) {
+        recentTimeline.addEventListener('click', async (e) => {
+          const actionBtn = e.target.closest('.timeline-action-btn');
+          if (!actionBtn) return;
+
+          const action = actionBtn.dataset.action;
+          const timelineItem = actionBtn.closest('.timeline-item');
+          const queryId = timelineItem?.dataset.queryId;
+
+          if (!queryId) return;
+
+          if (action === 'pin') {
+            // Toggle pin status
+            try {
+              const response = await fetch(`/api/queries/${queryId}/pin`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+              });
+
+              if (response.ok) {
+                const data = await response.json();
+                const isPinned = data.is_pinned;
+
+                // Update button appearance
+                if (isPinned) {
+                  actionBtn.classList.add('pinned');
+                  actionBtn.innerHTML = '⭐ Pinned';
+                } else {
+                  actionBtn.classList.remove('pinned');
+                  actionBtn.innerHTML = '📌 Pin';
+                }
+
+                // Refresh pinned queries in sidebar
+                await loadPinnedQueries();
+
+                showToast(isPinned ? 'Query pinned' : 'Query unpinned', 'success');
+              } else {
+                showToast('Failed to toggle pin', 'error');
+              }
+            } catch (err) {
+              console.error('Failed to toggle pin:', err);
+              showToast('Failed to toggle pin', 'error');
+            }
+          } else if (action === 'view') {
+            // Show query details (could expand inline or open modal)
+            showToast('View functionality coming soon!', 'info');
+          }
+        });
+      }
+    }
+
+    // Track current query ID for follow-ups
+    let currentQueryId = null;
+    let currentParentQueryId = null;
+    let followUpMode = false;
+
+    // Ask a question from project home
+    async function askProjectQuestion(parentQueryId = null) {
+      const question = document.getElementById('projectQueryInput').value.trim();
+      if (!question || isQuerying) return;
+
+      if (!currentProject) {
+        showToast('No project selected', 'error');
+        return;
+      }
+
+      // Store question for follow-up context
+      lastQuestion = question;
+
+      isQuerying = true;
+      document.getElementById('projectAskBtn').disabled = true;
+      document.getElementById('projectQueryLoading').classList.add('active');
+      document.getElementById('projectQueryResponse').classList.remove('active');
+
+      try {
+        const requestBody = { question };
+        if (parentQueryId) {
+          requestBody.parentQueryId = parentQueryId;
+        }
+
+        const response = await fetch(`/api/projects/${currentProject.id}/query`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody)
+        });
+
+        const data = await response.json();
+
+        // Store the query ID for follow-ups
+        if (data.queryId) {
+          currentQueryId = data.queryId;
+        }
+
+        displayProjectQueryResponse(data);
+
+        // Clear follow-up mode after query
+        if (followUpMode) {
+          clearFollowUpMode();
+        }
+
+        // Reload recent queries
+        await loadRecentQueries(currentProject.id);
+        await loadProjectStats(currentProject.id);
+
+      } catch (err) {
+        console.error('Query error:', err);
+        displayProjectQueryResponse({
+          error: true,
+          message: 'Something went wrong. Please try again.'
+        });
+      } finally {
+        isQuerying = false;
+        document.getElementById('projectAskBtn').disabled = false;
+        document.getElementById('projectQueryLoading').classList.remove('active');
+      }
+    }
+
+    // Enter follow-up mode
+    function enterFollowUpMode() {
+      if (!currentQueryId) {
+        showToast('No query to follow up on', 'error');
+        return;
+      }
+
+      followUpMode = true;
+      currentParentQueryId = currentQueryId;
+
+      const queryInput = document.getElementById('projectQueryInput');
+      const askSection = document.querySelector('.ask-section');
+
+      // Store current question for context
+      lastQuestion = queryInput.value || lastQuestion;
+
+      // Add follow-up context chip
+      let contextChip = document.getElementById('followUpContextChip');
+      if (!contextChip) {
+        contextChip = document.createElement('div');
+        contextChip.id = 'followUpContextChip';
+        contextChip.className = 'follow-up-context-chip';
+        askSection.insertBefore(contextChip, queryInput.parentElement);
+      }
+
+      const originalQuestion = lastQuestion || 'previous query';
+      contextChip.innerHTML = `
+        <span class="context-text">Following up on: "${escapeHtml(originalQuestion.substring(0, 80))}${originalQuestion.length > 80 ? '...' : ''}"</span>
+        <button class="context-close" onclick="clearFollowUpMode()">×</button>
+      `;
+      contextChip.style.display = 'flex';
+
+      // Clear input and focus
+      queryInput.value = '';
+      queryInput.placeholder = 'Ask a follow-up question...';
+      queryInput.focus();
+    }
+
+    // Clear follow-up mode
+    function clearFollowUpMode() {
+      followUpMode = false;
+      currentParentQueryId = null;
+
+      const contextChip = document.getElementById('followUpContextChip');
+      if (contextChip) {
+        contextChip.style.display = 'none';
+      }
+
+      const queryInput = document.getElementById('projectQueryInput');
+      queryInput.placeholder = 'Ask a question about your data...';
+    }
+
+    // Store last question for follow-up context
+    let lastQuestion = '';
+
+    // Display project query response
+    function displayProjectQueryResponse(data) {
+      console.log('displayProjectQueryResponse received:', data);
+
+      document.getElementById('projectQueryResponse').classList.add('active');
+
+      // Hide all sections initially
+      document.getElementById('explanationSection').style.display = 'none';
+      document.getElementById('projectChartContainer').style.display = 'none';
+      document.getElementById('projectResultsCard').style.display = 'none';
+      document.getElementById('projectErrorCard').style.display = 'none';
+
+      // Hide chart explanation from previous query
+      const chartExplanation = document.getElementById('chartExplanation');
+      if (chartExplanation) {
+        chartExplanation.style.display = 'none';
+      }
+
+      // Clear previous insights
+      document.getElementById('insightsGrid').innerHTML = '';
+      document.getElementById('insightsLoading').style.display = 'none';
+
+      // Store SQL for download
+      const currentSQL = data.sql || '';
+      document.getElementById('projectSqlCode').textContent = currentSQL;
+
+      if (data.error) {
+        // Show error
+        document.getElementById('projectErrorCard').style.display = 'block';
+        document.getElementById('projectErrorMessage').textContent = data.message;
+        return;
+      }
+
+      // Show explanation if available
+      if (data.explanation) {
+        document.getElementById('explanationSection').style.display = 'block';
+        document.getElementById('explanationText').textContent = data.explanation;
+      }
+
+      // Build chart if we have data
+      if (data.columns && data.rows && data.rows.length > 0) {
+        const vizType = data.visualizationType || data.visualization_type || 'table';
+
+        if (vizType === 'table') {
+          // Show table
+          renderProjectTable(data.columns, data.rows);
+        } else {
+          // Show chart
+          renderProjectChart(data.columns, data.rows, data.columnTypes, vizType);
+        }
+      }
+
+      // If insights are loading, show the shimmer and poll for them
+      if (data.insightsLoading && data.queryId) {
+        document.getElementById('insightsLoading').style.display = 'flex';
+        pollForInsights(data.queryId);
+      }
+    }
+
+    // Poll for insights after a query
+    let insightPollAttempts = 0;
+    const MAX_INSIGHT_POLL_ATTEMPTS = 10;
+
+    async function pollForInsights(queryId) {
+      insightPollAttempts = 0;
+
+      const poll = async () => {
+        try {
+          const response = await fetch(`/api/queries/${queryId}/insights`);
+          if (response.ok) {
+            const insights = await response.json();
+
+            if (insights.length > 0) {
+              // Hide loading, show insights
+              document.getElementById('insightsLoading').style.display = 'none';
+              renderInsightCards(insights);
+
+              // Update insight summary and tab badge
+              if (currentProject) {
+                loadInsightSummary(currentProject.id);
+              }
+              return; // Stop polling
+            }
+          }
+        } catch (err) {
+          console.error('Error polling for insights:', err);
+        }
+
+        insightPollAttempts++;
+
+        // Keep polling until we get insights or hit max attempts
+        if (insightPollAttempts < MAX_INSIGHT_POLL_ATTEMPTS) {
+          setTimeout(poll, 1500); // Poll every 1.5 seconds
+        } else {
+          // Give up, hide loading
+          document.getElementById('insightsLoading').style.display = 'none';
+        }
+      };
+
+      // Start polling after a short delay (give time for insights to generate)
+      setTimeout(poll, 2000);
+    }
+
+    // Render insight cards below chart
+    function renderInsightCards(insights) {
+      const grid = document.getElementById('insightsGrid');
+      grid.innerHTML = '';
+
+      if (!insights || insights.length === 0) {
+        return;
+      }
+
+      const INSIGHT_ICONS = {
+        anomaly: '📉',
+        trend: '📈',
+        opportunity: '💡',
+        warning: '⚠️',
+        correlation: '🔗'
+      };
+
+      insights.forEach((insight, idx) => {
+        const card = document.createElement('div');
+        card.className = `insight-card severity-${insight.severity}`;
+        card.style.animationDelay = `${idx * 0.2}s`;
+
+        const icon = INSIGHT_ICONS[insight.insight_type] || '💡';
+        const evidence = insight.data_evidence || {};
+        const evidenceHtml = Object.entries(evidence)
+          .filter(([k, v]) => v !== null && v !== undefined)
+          .map(([k, v]) => `
+            <span class="insight-evidence-tag">
+              <span class="label">${escapeHtml(k)}:</span>
+              <span class="value">${escapeHtml(String(v))}</span>
+            </span>
+          `).join('');
+
+        card.innerHTML = `
+          <button class="insight-dismiss" data-insight-id="${insight.id}" title="Dismiss">×</button>
+          <div class="insight-card-content">
+            <div class="insight-header">
+              <span class="insight-icon">${icon}</span>
+              <span class="insight-title">${escapeHtml(insight.title)}</span>
+            </div>
+            <p class="insight-description">${escapeHtml(insight.description || '')}</p>
+            ${evidenceHtml ? `<div class="insight-evidence">${evidenceHtml}</div>` : ''}
+          </div>
+        `;
+
+        // Dismiss button handler
+        const dismissBtn = card.querySelector('.insight-dismiss');
+        dismissBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          await dismissInsight(insight.id, card);
+        });
+
+        grid.appendChild(card);
+      });
+    }
+
+    // Dismiss an insight
+    async function dismissInsight(insightId, cardElement) {
+      try {
+        const response = await fetch(`/api/insights/${insightId}/dismiss`, {
+          method: 'PUT'
+        });
+
+        if (response.ok) {
+          // Animate out
+          cardElement.style.opacity = '0';
+          cardElement.style.transform = 'translateY(-10px)';
+          setTimeout(() => cardElement.remove(), 300);
+
+          // Update summary
+          if (currentProject) {
+            loadInsightSummary(currentProject.id);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to dismiss insight:', err);
+        showToast('Failed to dismiss insight', 'error');
+      }
+    }
+
+    // Load insight summary for project header
+    async function loadInsightSummary(projectId) {
+      try {
+        const response = await fetch(`/api/projects/${projectId}/insights/summary`);
+        if (!response.ok) return;
+
+        const summary = await response.json();
+
+        const strip = document.getElementById('insightSummaryStrip');
+        const badge = document.getElementById('insightsTabBadge');
+
+        if (summary.total === 0) {
+          strip.style.display = 'none';
+          badge.style.display = 'none';
+          return;
+        }
+
+        strip.style.display = 'flex';
+
+        // Update counts
+        updateInsightCount('critical', summary.critical);
+        updateInsightCount('warning', summary.warning);
+        updateInsightCount('opportunity', summary.opportunity);
+        updateInsightCount('info', summary.info);
+
+        // Add pulse effect if critical
+        strip.classList.toggle('has-critical', summary.critical > 0);
+
+        // Update tab badge
+        const urgentCount = summary.critical + summary.warning;
+        if (urgentCount > 0) {
+          badge.style.display = 'inline-flex';
+          badge.textContent = urgentCount;
+          badge.className = summary.critical > 0 ? 'tab-badge' : 'tab-badge warning';
+        } else {
+          badge.style.display = 'none';
+        }
+
+      } catch (err) {
+        console.error('Failed to load insight summary:', err);
+      }
+    }
+
+    function updateInsightCount(severity, count) {
+      const el = document.getElementById(`insightCount${severity.charAt(0).toUpperCase() + severity.slice(1)}`);
+      const numEl = document.getElementById(`${severity}CountNum`);
+      if (el && numEl) {
+        if (count > 0) {
+          el.style.display = 'flex';
+          numEl.textContent = count;
+        } else {
+          el.style.display = 'none';
+        }
+      }
+    }
+
+    // Load all insights for the Insights tab
+    async function loadProjectInsights(projectId, filter = 'all') {
+      try {
+        let url = `/api/projects/${projectId}/insights?dismissed=false`;
+        if (filter !== 'all') {
+          url += `&severity=${filter}`;
+        }
+
+        const response = await fetch(url);
+        if (!response.ok) return;
+
+        const insights = await response.json();
+        renderInsightsList(insights);
+
+      } catch (err) {
+        console.error('Failed to load project insights:', err);
+      }
+    }
+
+    // Render insights in the Insights tab
+    function renderInsightsList(insights) {
+      const list = document.getElementById('insightsList');
+
+      if (!insights || insights.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state-card">
+            <div class="empty-state-icon">💡</div>
+            <div class="empty-state-text">No insights match your filter. Try a different filter or ask more questions!</div>
+          </div>
+        `;
+        return;
+      }
+
+      const INSIGHT_ICONS = {
+        anomaly: '📉',
+        trend: '📈',
+        opportunity: '💡',
+        warning: '⚠️',
+        correlation: '🔗'
+      };
+
+      list.innerHTML = insights.map(insight => {
+        const icon = INSIGHT_ICONS[insight.insight_type] || '💡';
+        const timeAgo = formatTimeAgo(new Date(insight.created_at));
+
+        return `
+          <div class="insight-list-card severity-${insight.severity}" data-insight-id="${insight.id}">
+            <div class="insight-header">
+              <span class="insight-icon">${icon}</span>
+              <span class="insight-title">${escapeHtml(insight.title)}</span>
+            </div>
+            <p class="insight-description">${escapeHtml(insight.description || '')}</p>
+            <div class="insight-list-meta">
+              <span>${timeAgo}</span>
+              ${insight.question ? `<a href="#" onclick="jumpToQuery('${insight.query_id}'); return false;">View query</a>` : ''}
+              <a href="#" onclick="dismissInsightFromList('${insight.id}', this); return false;">Dismiss</a>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Jump to a specific query (could scroll to it or re-run it)
+    function jumpToQuery(queryId) {
+      // For now, just show a toast - full implementation would restore the query view
+      showToast('Query navigation coming soon', 'info');
+    }
+
+    // Dismiss from the list view
+    async function dismissInsightFromList(insightId, linkEl) {
+      try {
+        const response = await fetch(`/api/insights/${insightId}/dismiss`, {
+          method: 'PUT'
+        });
+
+        if (response.ok) {
+          // Remove card from list
+          const card = linkEl.closest('.insight-list-card');
+          if (card) {
+            card.style.opacity = '0';
+            card.style.transform = 'translateX(-20px)';
+            setTimeout(() => card.remove(), 300);
+          }
+
+          // Update summary
+          if (currentProject) {
+            loadInsightSummary(currentProject.id);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to dismiss insight:', err);
+        showToast('Failed to dismiss insight', 'error');
+      }
+    }
+
+    // Format time ago
+    function formatTimeAgo(date) {
+      const now = new Date();
+      const diff = now - date;
+      const minutes = Math.floor(diff / 60000);
+      const hours = Math.floor(diff / 3600000);
+      const days = Math.floor(diff / 86400000);
+
+      if (minutes < 1) return 'Just now';
+      if (minutes < 60) return `${minutes}m ago`;
+      if (hours < 24) return `${hours}h ago`;
+      if (days < 7) return `${days}d ago`;
+      return date.toLocaleDateString();
+    }
+
+    // Render project query table
+    function renderProjectTable(columns, rows) {
+      document.getElementById('projectResultsCard').style.display = 'block';
+      document.getElementById('projectResultsInfo').textContent = `${rows.length} rows`;
+
+      const thead = document.getElementById('projectResultsHead');
+      thead.innerHTML = `<tr>${columns.map(col => `<th>${escapeHtml(col)}</th>`).join('')}</tr>`;
+
+      const tbody = document.getElementById('projectResultsBody');
+      tbody.innerHTML = rows.map(row =>
+        `<tr>${columns.map(col => `<td title="${escapeHtml(String(row[col] ?? ''))}">${escapeHtml(String(row[col] ?? ''))}</td>`).join('')}</tr>`
+      ).join('');
+    }
+
+    // Render project query chart
+    function renderProjectChart(columns, rows, columnTypes, vizType) {
+      document.getElementById('projectChartContainer').style.display = 'block';
+
+      // Update summary
+      document.getElementById('projectSummaryLeft').textContent = `${rows.length} rows • ${columns.length} columns`;
+      document.getElementById('projectSummaryRight').textContent = `${vizType.replace('_', ' ')}`;
+
+      // Build chart using existing visualization functions
+      const chartWrapper = document.getElementById('projectChartWrapper');
+      chartWrapper.innerHTML = '';
+
+      const analysis = analyzeColumns(columns, rows, columnTypes);
+      const chartConfig = buildVisualization(vizType, analysis, columns, rows);
+
+      if (!chartConfig) {
+        renderProjectTable(columns, rows);
+        return;
+      }
+
+      if (chartConfig.type === 'single_number') {
+        chartWrapper.innerHTML = `
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 40px;">
+            <div style="font-size: 3.5rem; font-weight: 700; color: var(--accent); font-family: var(--font-display); margin-bottom: 16px;">
+              ${formatChartNumber(chartConfig.value, 'single_number', chartConfig.label)}
+            </div>
+            <div style="font-size: 1.1rem; color: var(--text-secondary);">
+              ${escapeHtml(chartConfig.label)}
+            </div>
+          </div>
+        `;
+      } else {
+        // Regular ECharts visualization
+        if (window.projectChartInstance) {
+          window.projectChartInstance.dispose();
+        }
+
+        window.projectChartInstance = echarts.init(chartWrapper, 'feather-dark');
+        window.projectChartInstance.setOption(chartConfig);
+
+        // Add click handler for drill-down
+        window.projectChartInstance.off('click'); // Remove previous handlers
+        window.projectChartInstance.on('click', (params) => {
+          handleChartClick(params, vizType, columns, rows);
+        });
+
+        // Resize on window resize
+        window.addEventListener('resize', () => {
+          if (window.projectChartInstance) {
+            window.projectChartInstance.resize();
+          }
+        });
+      }
+    }
+
+    // Handle chart element click for drill-down
+    function handleChartClick(params, vizType, columns, rows) {
+      console.log('Chart clicked:', params);
+
+      // Generate contextual drill-down question
+      let drillDownQuestion = '';
+
+      if (vizType === 'bar_chart' || vizType === 'grouped_bar_chart') {
+        // Clicked on a bar - drill into that category
+        const category = params.name || params.axisValue;
+        if (category) {
+          drillDownQuestion = `Tell me more about ${category}`;
+        }
+      } else if (vizType === 'pie_chart') {
+        // Clicked on a pie slice
+        const category = params.name;
+        if (category) {
+          drillDownQuestion = `Break down ${category} in more detail`;
+        }
+      } else if (vizType === 'line_chart' || vizType === 'area_chart') {
+        // Clicked on a time series point
+        const timePoint = params.name || params.axisValue;
+        if (timePoint) {
+          drillDownQuestion = `What happened in ${timePoint}?`;
+        }
+      } else if (vizType === 'scatter_plot') {
+        // Clicked on a scatter point
+        if (params.data && params.data.length >= 2) {
+          drillDownQuestion = `Tell me more about data points around ${params.data[0]}, ${params.data[1]}`;
+        }
+      } else {
+        // Generic drill-down
+        const category = params.name || params.axisValue;
+        if (category) {
+          drillDownQuestion = `Analyze ${category} in more detail`;
+        }
+      }
+
+      if (!drillDownQuestion) {
+        return;
+      }
+
+      // Show drill-down popover
+      showDrillDownPopover(params, drillDownQuestion);
+    }
+
+    // Show drill-down popover near click
+    function showDrillDownPopover(params, question) {
+      // Remove existing popover
+      const existingPopover = document.getElementById('drillDownPopover');
+      if (existingPopover) {
+        existingPopover.remove();
+      }
+
+      // Create popover
+      const popover = document.createElement('div');
+      popover.id = 'drillDownPopover';
+      popover.className = 'drill-down-popover';
+      popover.innerHTML = `
+        <div class="popover-content">
+          <p class="popover-question">${escapeHtml(question)}</p>
+          <button class="popover-ask-btn" onclick="executeDrillDown('${escapeHtml(question)}')">
+            Ask this →
+          </button>
+        </div>
+      `;
+
+      document.body.appendChild(popover);
+
+      // Position near the click (use event coordinates if available)
+      const chartWrapper = document.getElementById('projectChartWrapper');
+      const rect = chartWrapper.getBoundingClientRect();
+      const top = rect.top + 100;
+      const left = rect.left + rect.width / 2 - 150;
+
+      popover.style.top = `${top}px`;
+      popover.style.left = `${left}px`;
+      popover.style.display = 'block';
+
+      // Auto-dismiss after 10 seconds
+      setTimeout(() => {
+        if (popover.parentNode) {
+          popover.style.opacity = '0';
+          setTimeout(() => popover.remove(), 300);
+        }
+      }, 10000);
+
+      // Dismiss on outside click
+      setTimeout(() => {
+        document.addEventListener('click', function dismissPopover(e) {
+          if (!popover.contains(e.target)) {
+            popover.style.opacity = '0';
+            setTimeout(() => popover.remove(), 300);
+            document.removeEventListener('click', dismissPopover);
+          }
+        }, true);
+      }, 100);
+    }
+
+    // Execute drill-down query
+    function executeDrillDown(question) {
+      const popover = document.getElementById('drillDownPopover');
+      if (popover) {
+        popover.remove();
+      }
+
+      // Enter follow-up mode and fill in the question
+      if (currentQueryId) {
+        currentParentQueryId = currentQueryId;
+        document.getElementById('projectQueryInput').value = question;
+        askProjectQuestion(currentParentQueryId);
+      } else {
+        // No parent query, just ask directly
+        document.getElementById('projectQueryInput').value = question;
+        askProjectQuestion();
+      }
+    }
+
+    // Update modal selections
+    function updateModalSelections() {
+      document.querySelectorAll('.emoji-option').forEach(btn => {
+        btn.classList.toggle('selected', btn.dataset.emoji === selectedEmoji);
+      });
+      document.querySelectorAll('.color-option').forEach(btn => {
+        btn.classList.toggle('selected', btn.dataset.color === selectedColor);
+      });
     }
 
     // Load data sources
@@ -1696,8 +6443,14 @@
 
     // File upload handling
     function handleFile(file) {
-      if (!dataSourceId) {
-        showToast('No data source available', 'error');
+      // Use project-based upload if we have a current project, otherwise fall back to legacy
+      let uploadUrl;
+      if (currentProject) {
+        uploadUrl = `/api/projects/${currentProject.id}/upload`;
+      } else if (dataSourceId) {
+        uploadUrl = `/api/datasources/${dataSourceId}/upload`;
+      } else {
+        showToast('No project selected', 'error');
         return;
       }
 
@@ -1723,9 +6476,19 @@
 
         if (xhr.status === 200) {
           const result = JSON.parse(xhr.responseText);
-          showToast(`Imported ${result.imported} rows into "${result.table}"`, 'success');
-          await loadTables();
-          selectTable(result.table);
+          showToast(`Uploaded ${file.name} successfully`, 'success');
+
+          // Reload project data sources if using project upload
+          if (currentProject) {
+            await loadProjectDataSources(currentProject.id);
+            await loadProjectStats(currentProject.id);
+            await generateSuggestedQuestions();
+          } else {
+            await loadTables();
+            if (result.table) {
+              selectTable(result.table);
+            }
+          }
         } else {
           try {
             const error = JSON.parse(xhr.responseText);
@@ -1741,7 +6504,7 @@
         showToast('Upload failed. Please try again.', 'error');
       });
 
-      xhr.open('POST', `/api/datasources/${dataSourceId}/upload`);
+      xhr.open('POST', uploadUrl);
       xhr.send(formData);
     }
 
@@ -2757,6 +7520,1326 @@
     // Chart action button listeners
     document.getElementById('chartDownloadBtn').addEventListener('click', downloadChart);
     document.getElementById('sqlDownloadBtn').addEventListener('click', downloadSQL);
+
+    // ============================================
+    // DASHBOARD BUILDER SYSTEM
+    // GridStack.js integration with ECharts
+    // ============================================
+
+    // Setup Dashboard Event Handlers
+    function setupDashboardHandlers() {
+      // Back button
+      dashboardBackBtn.addEventListener('click', closeDashboard);
+
+      // Mode toggle
+      viewModeBtn.addEventListener('click', () => setDashboardMode(false));
+      editModeBtn.addEventListener('click', () => setDashboardMode(true));
+
+      // Add widget buttons
+      addWidgetBtn.addEventListener('click', openWidgetPicker);
+      emptyAddWidgetBtn.addEventListener('click', openWidgetPicker);
+
+      // Auto-layout button
+      autoLayoutBtn.addEventListener('click', autoLayoutDashboard);
+
+      // Share button (UI only for now)
+      shareDashboardBtn.addEventListener('click', () => {
+        showToast('Share functionality coming soon!', 'info');
+      });
+
+      // Dashboard title blur - save on change
+      dashboardTitleInput.addEventListener('blur', saveDashboardTitle);
+      dashboardTitleInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          dashboardTitleInput.blur();
+        }
+      });
+
+      // Widget picker modal
+      closeWidgetPickerModal.addEventListener('click', closeWidgetPickerModalFn);
+      cancelWidgetPickerBtn.addEventListener('click', closeWidgetPickerModalFn);
+      addSelectedWidgetBtn.addEventListener('click', addSelectedWidget);
+      widgetPickerModal.addEventListener('click', (e) => {
+        if (e.target === widgetPickerModal) closeWidgetPickerModalFn();
+      });
+
+      // Fullscreen modal
+      closeFullscreenModal.addEventListener('click', closeFullscreenModalFn);
+      fullscreenModal.addEventListener('click', (e) => {
+        if (e.target === fullscreenModal) closeFullscreenModalFn();
+      });
+
+      // Delete widget modal
+      closeDeleteWidgetModal.addEventListener('click', closeDeleteWidgetModalFn);
+      cancelDeleteWidgetBtn.addEventListener('click', closeDeleteWidgetModalFn);
+      confirmDeleteWidgetBtn.addEventListener('click', confirmDeleteWidget);
+      deleteWidgetModal.addEventListener('click', (e) => {
+        if (e.target === deleteWidgetModal) closeDeleteWidgetModalFn();
+      });
+
+      // Change chart type modal
+      closeChangeChartTypeModal.addEventListener('click', closeChangeChartTypeModalFn);
+      cancelChangeChartTypeBtn.addEventListener('click', closeChangeChartTypeModalFn);
+      changeChartTypeModal.addEventListener('click', (e) => {
+        if (e.target === changeChartTypeModal) closeChangeChartTypeModalFn();
+      });
+
+      // Widget picker tabs
+      document.querySelectorAll('.widget-picker-modal .tab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const tabId = btn.dataset.tab;
+          switchWidgetPickerTab(tabId);
+        });
+      });
+
+      // Widget picker: Ask new question
+      widgetAskBtn.addEventListener('click', askNewQuestionInPicker);
+      widgetQueryInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          askNewQuestionInPicker();
+        }
+      });
+      addNewQueryWidgetBtn.addEventListener('click', addNewQueryWidget);
+
+      // Empty state action cards
+      emptyActionPinned.addEventListener('click', () => {
+        openWidgetPicker();
+        switchWidgetPickerTab('pinnedQueriesTab');
+      });
+      emptyActionNew.addEventListener('click', () => {
+        openWidgetPicker();
+        switchWidgetPickerTab('newQuestionTab');
+      });
+      emptyActionAuto.addEventListener('click', () => {
+        showToast('Auto-generate coming in Phase 11!', 'info');
+      });
+
+      // Initialize debounced save
+      saveDashboardDebounced = debounce(saveDashboardLayout, 1000);
+    }
+
+    // Create New Dashboard
+    async function createNewDashboard() {
+      if (!currentProject) {
+        showToast('Please select a project first', 'error');
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/projects/${currentProject.id}/dashboards`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: 'Untitled Dashboard',
+            description: ''
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          showToast('Dashboard created', 'success');
+          // Open the newly created dashboard
+          openDashboard(data.dashboard.id);
+        } else {
+          throw new Error('Failed to create dashboard');
+        }
+      } catch (err) {
+        console.error('Error creating dashboard:', err);
+        showToast('Failed to create dashboard', 'error');
+      }
+    }
+
+    // Open Dashboard
+    async function openDashboard(dashboardId) {
+      try {
+        // Fetch dashboard details
+        const dashboardRes = await fetch(`/api/dashboards/${dashboardId}`);
+        if (!dashboardRes.ok) throw new Error('Failed to load dashboard');
+        currentDashboard = await dashboardRes.json();
+
+        // Fetch widgets
+        const widgetsRes = await fetch(`/api/dashboards/${dashboardId}/widgets`);
+        if (!widgetsRes.ok) throw new Error('Failed to load widgets');
+        dashboardWidgets = await widgetsRes.json();
+
+        // Update UI
+        dashboardTitleInput.value = currentDashboard.name || 'Untitled Dashboard';
+        dashboardProjectName.textContent = currentDashboard.project_name || 'Project';
+        dashboardProjectDot.style.background = currentDashboard.project_color || 'var(--accent)';
+
+        // Set dashboard accent color CSS variable
+        dashboardCanvas.style.setProperty('--dashboard-accent', currentDashboard.project_color || 'var(--accent)');
+        dashboardCanvas.style.setProperty('--dashboard-accent-glow', `${currentDashboard.project_color || 'var(--accent)'}33`);
+
+        // Hide project home, show dashboard view
+        document.getElementById('projectHome').classList.remove('active');
+        uploadSection.style.display = 'none';
+        dataSection.classList.remove('active');
+        dashboardView.classList.add('active');
+
+        // Initialize GridStack
+        initializeDashboardGrid();
+
+        // Render widgets
+        renderDashboardWidgets();
+
+        // Set to edit mode by default
+        setDashboardMode(true);
+
+      } catch (err) {
+        console.error('Error opening dashboard:', err);
+        showToast('Failed to open dashboard', 'error');
+      }
+    }
+
+    // Close Dashboard
+    function closeDashboard() {
+      // Dispose all chart instances
+      Object.values(widgetChartInstances).forEach(instance => {
+        if (instance) instance.dispose();
+      });
+      widgetChartInstances = {};
+
+      // Destroy GridStack
+      if (dashboardGrid) {
+        dashboardGrid.destroy(false);
+        dashboardGrid = null;
+      }
+
+      // Clear state
+      currentDashboard = null;
+      dashboardWidgets = [];
+
+      // Hide dashboard view, show project home
+      dashboardView.classList.remove('active');
+      document.getElementById('projectHome').classList.add('active');
+
+      // Reload project data to refresh dashboards list
+      if (currentProject) {
+        loadProjectDashboards(currentProject.id);
+      }
+    }
+
+    // Initialize GridStack Grid
+    function initializeDashboardGrid() {
+      const gridEl = document.getElementById('dashboardGrid');
+
+      // Clear existing grid
+      if (dashboardGrid) {
+        dashboardGrid.destroy(false);
+      }
+      gridEl.innerHTML = '';
+
+      // Initialize GridStack
+      dashboardGrid = GridStack.init({
+        column: 12,
+        cellHeight: 80,
+        margin: 12,
+        float: false,
+        animate: true,
+        draggable: {
+          handle: '.widget-drag-handle'
+        },
+        resizable: {
+          handles: 'se'
+        },
+        minRow: 1
+      }, gridEl);
+
+      // Listen for resize and change events
+      dashboardGrid.on('resizestop', (event, el) => {
+        const widgetId = el.getAttribute('gs-id');
+        resizeWidgetChart(widgetId);
+        saveWidgetPosition(widgetId);
+      });
+
+      dashboardGrid.on('dragstop', (event, el) => {
+        const widgetId = el.getAttribute('gs-id');
+        saveWidgetPosition(widgetId);
+      });
+    }
+
+    // Render Dashboard Widgets
+    function renderDashboardWidgets() {
+      if (!dashboardGrid) return;
+
+      // Show/hide empty state
+      if (dashboardWidgets.length === 0) {
+        dashboardEmptyState.style.display = 'flex';
+        return;
+      }
+      dashboardEmptyState.style.display = 'none';
+
+      // Add widgets to grid
+      dashboardWidgets.forEach(widget => {
+        addWidgetToGrid(widget);
+      });
+    }
+
+    // Add Widget to Grid
+    function addWidgetToGrid(widget) {
+      const position = widget.position || { x: 0, y: 0, w: 4, h: 3 };
+
+      // Determine default size based on widget type
+      if (!widget.position) {
+        if (widget.widget_type === 'single_number') {
+          position.w = 3;
+          position.h = 2;
+        } else if (widget.widget_type === 'table') {
+          position.w = 6;
+          position.h = 4;
+        } else {
+          position.w = 4;
+          position.h = 3;
+        }
+      }
+
+      // Create widget content
+      const widgetContent = createWidgetContent(widget);
+
+      // Add to GridStack
+      dashboardGrid.addWidget({
+        id: widget.id,
+        x: position.x,
+        y: position.y,
+        w: position.w,
+        h: position.h,
+        minW: widget.widget_type === 'single_number' ? 2 : 3,
+        minH: widget.widget_type === 'single_number' ? 1 : 2,
+        content: widgetContent
+      });
+
+      // Render chart after widget is added to DOM
+      setTimeout(() => {
+        renderWidgetChart(widget);
+        // Load insights for this widget
+        if (widget.query_id) {
+          loadWidgetInsights(widget.id, widget.query_id);
+        }
+      }, 100);
+    }
+
+    // Create Widget HTML Content
+    function createWidgetContent(widget) {
+      const title = widget.pin_title || widget.question || 'Untitled';
+      const truncatedTitle = title.length > 60 ? title.substring(0, 60) + '...' : title;
+
+      return `
+        <div class="widget-header">
+          <div class="widget-header-left">
+            <div class="widget-drag-handle" title="Drag to reposition">⋮⋮</div>
+            <div class="widget-title" title="${escapeHtml(title)}">${escapeHtml(truncatedTitle)}</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="widget-insights-indicator" id="widgetInsights-${widget.id}" style="display: none;" data-query-id="${widget.query_id}">
+              <span class="indicator-dot info"></span>
+              <span class="indicator-count">0</span>
+            </div>
+            <div style="position: relative;">
+              <button class="widget-menu-btn" data-widget-id="${widget.id}" title="Widget options">⋯</button>
+              <div class="widget-menu" id="widgetMenu-${widget.id}">
+                <div class="widget-menu-item" data-action="fullscreen" data-widget-id="${widget.id}">
+                  🔍 View Full
+                </div>
+                <div class="widget-menu-item" data-action="edit" data-widget-id="${widget.id}">
+                  ✏️ Edit Question
+                </div>
+                <div class="widget-menu-item" data-action="change-type" data-widget-id="${widget.id}">
+                  📊 Change Chart Type
+                </div>
+                <div class="widget-menu-divider"></div>
+                <div class="widget-menu-item danger" data-action="remove" data-widget-id="${widget.id}">
+                  🗑️ Remove from Dashboard
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="widget-content">
+          <div class="widget-chart" id="widgetChart-${widget.id}"></div>
+        </div>
+        <div class="widget-insights-panel" id="widgetInsightsPanel-${widget.id}" style="display: none;">
+          <!-- Insights will be loaded here -->
+        </div>
+      `;
+    }
+
+    // Load insights for a widget
+    async function loadWidgetInsights(widgetId, queryId) {
+      try {
+        const response = await fetch(`/api/queries/${queryId}/insights`);
+        if (!response.ok) return;
+
+        const insights = await response.json();
+        const indicator = document.getElementById(`widgetInsights-${widgetId}`);
+
+        if (!insights || insights.length === 0 || !indicator) {
+          return;
+        }
+
+        // Determine highest severity
+        const severityOrder = ['critical', 'warning', 'opportunity', 'info'];
+        let highestSeverity = 'info';
+        for (const s of severityOrder) {
+          if (insights.some(i => i.severity === s)) {
+            highestSeverity = s;
+            break;
+          }
+        }
+
+        // Update indicator
+        indicator.style.display = 'flex';
+        indicator.querySelector('.indicator-dot').className = `indicator-dot ${highestSeverity}`;
+        indicator.querySelector('.indicator-count').textContent = `${insights.length} insights`;
+
+        // Store insights data for the panel
+        indicator.dataset.insights = JSON.stringify(insights);
+
+        // Click handler to show panel
+        indicator.addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleWidgetInsightsPanel(widgetId, insights);
+        });
+
+      } catch (err) {
+        console.error('Failed to load widget insights:', err);
+      }
+    }
+
+    // Toggle widget insights panel
+    function toggleWidgetInsightsPanel(widgetId, insights) {
+      const panel = document.getElementById(`widgetInsightsPanel-${widgetId}`);
+      if (!panel) return;
+
+      if (panel.style.display === 'none') {
+        // Show panel
+        panel.style.display = 'block';
+        panel.innerHTML = renderWidgetInsightsContent(insights);
+      } else {
+        // Hide panel
+        panel.style.display = 'none';
+      }
+    }
+
+    // Render widget insights content
+    function renderWidgetInsightsContent(insights) {
+      const INSIGHT_ICONS = {
+        anomaly: '📉',
+        trend: '📈',
+        opportunity: '💡',
+        warning: '⚠️',
+        correlation: '🔗'
+      };
+
+      return `
+        <div style="padding: 12px; background: rgba(0,0,0,0.3); border-top: 1px solid var(--border); max-height: 200px; overflow-y: auto;">
+          ${insights.map(insight => `
+            <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
+              <div style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 4px;">
+                <span>${INSIGHT_ICONS[insight.insight_type] || '💡'}</span>
+                <span style="font-size: 0.85rem; font-weight: 500;">${escapeHtml(insight.title)}</span>
+              </div>
+              <p style="font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-left: 24px; line-height: 1.4;">
+                ${escapeHtml(insight.description || '')}
+              </p>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    // Render Widget Chart
+    function renderWidgetChart(widget) {
+      const chartContainer = document.getElementById(`widgetChart-${widget.id}`);
+      if (!chartContainer) return;
+
+      // Get result data from the widget's result_summary
+      const resultSummary = widget.result_summary;
+      if (!resultSummary || !resultSummary.rows || resultSummary.rows.length === 0) {
+        chartContainer.innerHTML = `
+          <div class="chart-empty-state">
+            <div class="chart-empty-title">No data available</div>
+            <div class="chart-empty-subtitle">Run the query again to load data</div>
+          </div>
+        `;
+        return;
+      }
+
+      const { columns, columnTypes, rows } = resultSummary;
+      const vizType = widget.widget_type || widget.visualization_type || 'bar_chart';
+
+      // Build chart config using existing function
+      const config = buildChartConfig(vizType, columns, columnTypes || [], rows);
+
+      if (!config || typeof echarts === 'undefined') {
+        // Render as table
+        renderWidgetTable(chartContainer, columns, rows);
+        return;
+      }
+
+      if (config.type === 'single_number') {
+        // Render single number
+        renderWidgetSingleNumber(chartContainer, config.value, config.label);
+        return;
+      }
+
+      // Initialize ECharts
+      try {
+        // Dispose existing instance
+        if (widgetChartInstances[widget.id]) {
+          widgetChartInstances[widget.id].dispose();
+        }
+
+        const instance = echarts.init(chartContainer, 'feather-dark');
+        instance.setOption(config);
+        widgetChartInstances[widget.id] = instance;
+      } catch (err) {
+        console.error('Error rendering widget chart:', err);
+        renderWidgetTable(chartContainer, columns, rows);
+      }
+    }
+
+    // Render Widget as Table
+    function renderWidgetTable(container, columns, rows) {
+      const displayRows = rows.slice(0, 10);
+      container.innerHTML = `
+        <div class="enhanced-table-container" style="height: 100%; overflow: auto;">
+          <table class="enhanced-table" style="font-size: 11px;">
+            <thead>
+              <tr>${columns.map(col => `<th>${escapeHtml(col)}</th>`).join('')}</tr>
+            </thead>
+            <tbody>
+              ${displayRows.map(row =>
+                `<tr>${columns.map(col => `<td>${escapeHtml(String(row[col] ?? ''))}</td>`).join('')}</tr>`
+              ).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    // Render Widget Single Number
+    function renderWidgetSingleNumber(container, value, label) {
+      const formattedLabel = (label || '').replace(/_/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2');
+      const formattedValue = typeof value === 'number' ? formatChartNumber(value, 'tooltip', label) : String(value);
+
+      container.innerHTML = `
+        <div class="single-number-display" style="height: 100%;">
+          <div class="single-number-value" style="font-size: 36px;">${escapeHtml(formattedValue)}</div>
+          <div class="single-number-label" style="font-size: 11px;">${escapeHtml(formattedLabel)}</div>
+        </div>
+      `;
+    }
+
+    // Resize Widget Chart (called after resize)
+    function resizeWidgetChart(widgetId) {
+      const instance = widgetChartInstances[widgetId];
+      if (instance) {
+        setTimeout(() => {
+          instance.resize();
+        }, 50);
+      }
+    }
+
+    // Save Widget Position
+    async function saveWidgetPosition(widgetId) {
+      const el = document.querySelector(`[gs-id="${widgetId}"]`);
+      if (!el) return;
+
+      const position = {
+        x: parseInt(el.getAttribute('gs-x')) || 0,
+        y: parseInt(el.getAttribute('gs-y')) || 0,
+        w: parseInt(el.getAttribute('gs-w')) || 4,
+        h: parseInt(el.getAttribute('gs-h')) || 3
+      };
+
+      // Update widget position in local state
+      const widget = dashboardWidgets.find(w => w.id === widgetId);
+      if (widget) {
+        widget.position = position;
+      }
+
+      // Trigger debounced save
+      showSavingIndicator('saving');
+      if (saveDashboardDebounced) {
+        saveDashboardDebounced();
+      }
+
+      try {
+        await fetch(`/api/widgets/${widgetId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ position })
+        });
+      } catch (err) {
+        console.error('Failed to save widget position:', err);
+      }
+    }
+
+    // Save Dashboard Layout (debounced)
+    async function saveDashboardLayout() {
+      if (!currentDashboard) return;
+
+      try {
+        // Collect all widget positions
+        const layout = dashboardWidgets.map(w => ({
+          id: w.id,
+          position: w.position || { x: 0, y: 0, w: 4, h: 3 }
+        }));
+
+        await fetch(`/api/dashboards/${currentDashboard.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ layout: JSON.stringify(layout) })
+        });
+
+        showSavingIndicator('saved');
+      } catch (err) {
+        console.error('Failed to save dashboard layout:', err);
+        showSavingIndicator('error');
+      }
+    }
+
+    // Show Saving Indicator
+    function showSavingIndicator(status) {
+      dashboardSaveIndicator.style.display = 'flex';
+      saveStatus.classList.remove('saving', 'saved');
+
+      if (status === 'saving') {
+        saveStatus.textContent = 'Saving...';
+        saveStatus.classList.add('saving');
+      } else if (status === 'saved') {
+        saveStatus.textContent = 'Saved ✓';
+        saveStatus.classList.add('saved');
+        // Hide after 2 seconds
+        setTimeout(() => {
+          dashboardSaveIndicator.style.display = 'none';
+        }, 2000);
+      } else if (status === 'error') {
+        saveStatus.textContent = 'Save failed';
+        saveStatus.style.color = 'var(--error)';
+        setTimeout(() => {
+          dashboardSaveIndicator.style.display = 'none';
+        }, 3000);
+      }
+    }
+
+    // Set Dashboard Mode (edit/view)
+    function setDashboardMode(isEdit) {
+      dashboardEditMode = isEdit;
+
+      // Update toggle buttons
+      editModeBtn.classList.toggle('active', isEdit);
+      viewModeBtn.classList.toggle('active', !isEdit);
+
+      // Update canvas class
+      dashboardCanvas.classList.toggle('edit-mode', isEdit);
+
+      // Enable/disable GridStack
+      if (dashboardGrid) {
+        if (isEdit) {
+          dashboardGrid.enableMove(true);
+          dashboardGrid.enableResize(true);
+        } else {
+          dashboardGrid.enableMove(false);
+          dashboardGrid.enableResize(false);
+        }
+      }
+    }
+
+    // Auto-Layout Dashboard
+    function autoLayoutDashboard() {
+      if (!dashboardGrid || dashboardWidgets.length === 0) return;
+
+      // Sort widgets by type: single_numbers first, then charts, then tables
+      const sorted = [...dashboardWidgets].sort((a, b) => {
+        const typeOrder = { single_number: 0, bar_chart: 1, line_chart: 1, pie_chart: 1, area_chart: 1, scatter_plot: 1, grouped_bar_chart: 1, heatmap: 1, table: 2 };
+        const aOrder = typeOrder[a.widget_type] ?? 1;
+        const bOrder = typeOrder[b.widget_type] ?? 1;
+        return aOrder - bOrder;
+      });
+
+      // Remove all widgets
+      dashboardGrid.removeAll(false);
+
+      // Re-add with new positions
+      let x = 0;
+      let y = 0;
+      sorted.forEach(widget => {
+        let w, h;
+        if (widget.widget_type === 'single_number') {
+          w = 3;
+          h = 2;
+        } else if (widget.widget_type === 'table') {
+          w = 6;
+          h = 4;
+        } else {
+          w = 4;
+          h = 3;
+        }
+
+        // Wrap to next row if needed
+        if (x + w > 12) {
+          x = 0;
+          y += h;
+        }
+
+        widget.position = { x, y, w, h };
+        addWidgetToGrid(widget);
+        saveWidgetPosition(widget.id);
+
+        x += w;
+      });
+
+      showToast('Dashboard layout optimized', 'success');
+    }
+
+    // Save Dashboard Title
+    async function saveDashboardTitle() {
+      if (!currentDashboard) return;
+
+      const newName = dashboardTitleInput.value.trim() || 'Untitled Dashboard';
+      if (newName === currentDashboard.name) return;
+
+      try {
+        await fetch(`/api/dashboards/${currentDashboard.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: newName })
+        });
+        currentDashboard.name = newName;
+      } catch (err) {
+        console.error('Failed to save dashboard title:', err);
+        showToast('Failed to save title', 'error');
+      }
+    }
+
+    // Open Widget Picker Modal
+    async function openWidgetPicker() {
+      selectedWidgetQuery = null;
+      addSelectedWidgetBtn.disabled = true;
+
+      // Load pinned queries
+      try {
+        const res = await fetch('/api/queries/pinned');
+        if (res.ok) {
+          pinnedQueries = await res.json();
+        }
+      } catch (err) {
+        console.error('Failed to load pinned queries:', err);
+      }
+
+      // Render picker grid
+      if (pinnedQueries.length === 0) {
+        widgetPickerGrid.innerHTML = '';
+        widgetPickerEmpty.style.display = 'block';
+      } else {
+        widgetPickerEmpty.style.display = 'none';
+        widgetPickerGrid.innerHTML = pinnedQueries.map(q => `
+          <div class="widget-picker-item" data-query-id="${q.id}">
+            <div class="widget-picker-icon">${getVizIcon(q.visualization_type)}</div>
+            <div class="widget-picker-title">${escapeHtml(q.pin_title || q.question?.substring(0, 40) || 'Query')}</div>
+            <div class="widget-picker-desc">${escapeHtml(q.visualization_type?.replace(/_/g, ' ') || 'Chart')}</div>
+          </div>
+        `).join('');
+
+        // Add click handlers
+        widgetPickerGrid.querySelectorAll('.widget-picker-item').forEach(item => {
+          item.addEventListener('click', () => {
+            widgetPickerGrid.querySelectorAll('.widget-picker-item').forEach(i => i.classList.remove('selected'));
+            item.classList.add('selected');
+            selectedWidgetQuery = pinnedQueries.find(q => q.id === item.dataset.queryId);
+            addSelectedWidgetBtn.disabled = false;
+          });
+        });
+      }
+
+      widgetPickerModal.classList.add('active');
+    }
+
+    // Get Visualization Icon
+    function getVizIcon(vizType) {
+      const icons = {
+        bar_chart: '📊',
+        line_chart: '📈',
+        pie_chart: '🥧',
+        area_chart: '📉',
+        scatter_plot: '⚬',
+        single_number: '🔢',
+        table: '📋',
+        heatmap: '🔥',
+        grouped_bar_chart: '📊'
+      };
+      return icons[vizType] || '📊';
+    }
+
+    // Close Widget Picker Modal
+    function closeWidgetPickerModalFn() {
+      widgetPickerModal.classList.remove('active');
+      selectedWidgetQuery = null;
+      newQueryResult = null;
+      if (newQueryChartInstance) {
+        newQueryChartInstance.dispose();
+        newQueryChartInstance = null;
+      }
+      // Reset to first tab
+      switchWidgetPickerTab('pinnedQueriesTab');
+      // Clear new question input
+      widgetQueryInput.value = '';
+      widgetQueryResult.style.display = 'none';
+      widgetQueryError.style.display = 'none';
+      addNewQueryWidgetBtn.style.display = 'none';
+    }
+
+    // Switch Widget Picker Tab
+    function switchWidgetPickerTab(tabId) {
+      // Update tab buttons
+      document.querySelectorAll('.widget-picker-modal .tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabId);
+      });
+
+      // Update tab content
+      document.querySelectorAll('.widget-picker-modal .tab-content').forEach(content => {
+        content.classList.toggle('active', content.id === tabId);
+      });
+
+      // Update footer buttons
+      if (tabId === 'pinnedQueriesTab') {
+        addSelectedWidgetBtn.style.display = 'inline-block';
+        addNewQueryWidgetBtn.style.display = 'none';
+      } else {
+        addSelectedWidgetBtn.style.display = 'none';
+        addNewQueryWidgetBtn.style.display = newQueryResult ? 'inline-block' : 'none';
+      }
+    }
+
+    // Ask New Question in Picker
+    async function askNewQuestionInPicker() {
+      const question = widgetQueryInput.value.trim();
+      if (!question || !currentProject) {
+        showToast('Please enter a question', 'error');
+        return;
+      }
+
+      widgetQueryLoading.style.display = 'flex';
+      widgetQueryResult.style.display = 'none';
+      widgetQueryError.style.display = 'none';
+      addNewQueryWidgetBtn.style.display = 'none';
+
+      try {
+        const res = await fetch(`/api/projects/${currentProject.id}/query`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question })
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || 'Query failed');
+        }
+
+        const data = await res.json();
+        newQueryResult = data;
+
+        widgetQueryLoading.style.display = 'none';
+        widgetQueryResult.style.display = 'block';
+        addNewQueryWidgetBtn.style.display = 'inline-block';
+
+        // Update summary
+        const rowCount = data.result_summary?.rows?.length || 0;
+        widgetSummaryLeft.textContent = `${rowCount} row${rowCount !== 1 ? 's' : ''} returned`;
+        widgetSummaryRight.textContent = data.execution_time_ms ? `${data.execution_time_ms}ms` : '';
+
+        // Render chart preview
+        renderNewQueryChart(data);
+
+      } catch (err) {
+        console.error('Query error:', err);
+        widgetQueryLoading.style.display = 'none';
+        widgetQueryError.style.display = 'block';
+        widgetErrorMessage.textContent = err.message || 'Failed to execute query';
+      }
+    }
+
+    // Render New Query Chart in Picker
+    function renderNewQueryChart(data) {
+      if (newQueryChartInstance) {
+        newQueryChartInstance.dispose();
+        newQueryChartInstance = null;
+      }
+
+      const { columns, columnTypes, rows } = data.result_summary;
+      const vizType = data.visualization_type || 'bar_chart';
+
+      const config = buildChartConfig(vizType, columns, columnTypes || [], rows);
+
+      if (!config || typeof echarts === 'undefined') {
+        widgetChartWrapper.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted);">Unable to render chart preview</div>';
+        return;
+      }
+
+      if (config.type === 'single_number') {
+        widgetChartWrapper.innerHTML = `
+          <div class="single-number-display" style="height: 100%;">
+            <div class="single-number-value">${formatChartNumber(config.value, 'tooltip', config.label)}</div>
+            <div class="single-number-label">${escapeHtml(config.label || '')}</div>
+          </div>
+        `;
+        return;
+      }
+
+      try {
+        newQueryChartInstance = echarts.init(widgetChartWrapper, 'feather-dark');
+        newQueryChartInstance.setOption(config);
+      } catch (err) {
+        console.error('Error rendering chart:', err);
+        widgetChartWrapper.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted);">Unable to render chart preview</div>';
+      }
+    }
+
+    // Add New Query Widget to Dashboard
+    async function addNewQueryWidget() {
+      if (!newQueryResult || !currentDashboard) return;
+
+      try {
+        // The query was already saved, so we need to create a widget from it
+        const res = await fetch(`/api/dashboards/${currentDashboard.id}/widgets`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            queryId: newQueryResult.id,
+            widgetType: newQueryResult.visualization_type || 'bar_chart',
+            position: null
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const widget = data.widget;
+
+          // Add result summary
+          widget.question = newQueryResult.question;
+          widget.pin_title = newQueryResult.pin_title;
+          widget.visualization_type = newQueryResult.visualization_type;
+          widget.result_summary = newQueryResult.result_summary;
+
+          dashboardWidgets.push(widget);
+          addWidgetToGrid(widget);
+          dashboardEmptyState.style.display = 'none';
+
+          showToast('Widget added', 'success');
+          closeWidgetPickerModalFn();
+        } else {
+          throw new Error('Failed to add widget');
+        }
+      } catch (err) {
+        console.error('Error adding widget:', err);
+        showToast('Failed to add widget', 'error');
+      }
+    }
+
+    // Add Selected Widget
+    async function addSelectedWidget() {
+      if (!selectedWidgetQuery || !currentDashboard) return;
+
+      try {
+        const res = await fetch(`/api/dashboards/${currentDashboard.id}/widgets`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            queryId: selectedWidgetQuery.id,
+            widgetType: selectedWidgetQuery.visualization_type || 'bar_chart',
+            position: null // Let auto-position work
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const widget = data.widget;
+
+          // Add result summary from the pinned query
+          widget.question = selectedWidgetQuery.question;
+          widget.pin_title = selectedWidgetQuery.pin_title;
+          widget.visualization_type = selectedWidgetQuery.visualization_type;
+          widget.result_summary = selectedWidgetQuery.result_summary;
+
+          dashboardWidgets.push(widget);
+          addWidgetToGrid(widget);
+          dashboardEmptyState.style.display = 'none';
+
+          showToast('Widget added', 'success');
+        } else {
+          throw new Error('Failed to add widget');
+        }
+      } catch (err) {
+        console.error('Error adding widget:', err);
+        showToast('Failed to add widget', 'error');
+      }
+
+      closeWidgetPickerModalFn();
+    }
+
+    // Close Fullscreen Modal
+    function closeFullscreenModalFn() {
+      fullscreenModal.classList.remove('active');
+      fullscreenChartContainer.innerHTML = '';
+    }
+
+    // Open Fullscreen Chart
+    function openFullscreenChart(widget) {
+      fullscreenChartTitle.textContent = widget.pin_title || widget.question || 'Chart';
+
+      fullscreenModal.classList.add('active');
+
+      // Render chart in fullscreen container
+      setTimeout(() => {
+        const resultSummary = widget.result_summary;
+        if (!resultSummary || !resultSummary.rows) return;
+
+        const { columns, columnTypes, rows } = resultSummary;
+        const vizType = widget.widget_type || widget.visualization_type || 'bar_chart';
+        const config = buildChartConfig(vizType, columns, columnTypes || [], rows);
+
+        if (!config || config.type === 'single_number') {
+          fullscreenChartContainer.innerHTML = `
+            <div class="single-number-display" style="height: 100%;">
+              <div class="single-number-value">${formatChartNumber(config?.value, 'tooltip', config?.label)}</div>
+              <div class="single-number-label">${escapeHtml(config?.label || '')}</div>
+            </div>
+          `;
+          return;
+        }
+
+        const instance = echarts.init(fullscreenChartContainer, 'feather-dark');
+        instance.setOption(config);
+      }, 100);
+    }
+
+    // Close Delete Widget Modal
+    function closeDeleteWidgetModalFn() {
+      deleteWidgetModal.classList.remove('active');
+      widgetToDelete = null;
+    }
+
+    // Confirm Delete Widget
+    async function confirmDeleteWidget() {
+      if (!widgetToDelete) return;
+
+      try {
+        const res = await fetch(`/api/widgets/${widgetToDelete}`, {
+          method: 'DELETE'
+        });
+
+        if (res.ok) {
+          // Remove from GridStack
+          const el = document.querySelector(`[gs-id="${widgetToDelete}"]`);
+          if (el && dashboardGrid) {
+            dashboardGrid.removeWidget(el);
+          }
+
+          // Dispose chart instance
+          if (widgetChartInstances[widgetToDelete]) {
+            widgetChartInstances[widgetToDelete].dispose();
+            delete widgetChartInstances[widgetToDelete];
+          }
+
+          // Remove from array
+          dashboardWidgets = dashboardWidgets.filter(w => w.id !== widgetToDelete);
+
+          // Show empty state if no widgets left
+          if (dashboardWidgets.length === 0) {
+            dashboardEmptyState.style.display = 'flex';
+          }
+
+          showToast('Widget removed', 'success');
+        } else {
+          throw new Error('Failed to delete widget');
+        }
+      } catch (err) {
+        console.error('Error deleting widget:', err);
+        showToast('Failed to remove widget', 'error');
+      }
+
+      closeDeleteWidgetModalFn();
+    }
+
+    // Edit Widget Question
+    function editWidgetQuestion(widget) {
+      // For now, just show a prompt. In a full implementation, this could open a modal
+      // with the query editor where the user can modify the question and regenerate
+      const newQuestion = prompt('Edit your question:', widget.question || '');
+      if (newQuestion && newQuestion.trim() && newQuestion !== widget.question) {
+        showToast('Regenerating widget with new question...', 'info');
+        // Here you would call the query API again and update the widget
+        // For Phase 6, we'll just show a placeholder message
+        setTimeout(() => {
+          showToast('This will regenerate the widget in a future phase!', 'info');
+        }, 1000);
+      }
+    }
+
+    // Open Change Chart Type Modal
+    function openChangeChartTypeModal(widgetId) {
+      widgetToChangeType = widgetId;
+      const widget = dashboardWidgets.find(w => w.id === widgetId);
+      if (!widget) return;
+
+      // Highlight current type
+      document.querySelectorAll('.chart-type-option').forEach(opt => {
+        opt.classList.toggle('selected', opt.dataset.type === widget.widget_type);
+      });
+
+      changeChartTypeModal.classList.add('active');
+
+      // Add click handlers to chart type options
+      document.querySelectorAll('.chart-type-option').forEach(opt => {
+        opt.onclick = () => {
+          const newType = opt.dataset.type;
+          changeWidgetChartType(widgetId, newType);
+        };
+      });
+    }
+
+    // Close Change Chart Type Modal
+    function closeChangeChartTypeModalFn() {
+      changeChartTypeModal.classList.remove('active');
+      widgetToChangeType = null;
+    }
+
+    // Change Widget Chart Type
+    async function changeWidgetChartType(widgetId, newType) {
+      const widget = dashboardWidgets.find(w => w.id === widgetId);
+      if (!widget) return;
+
+      try {
+        // Update locally
+        widget.widget_type = newType;
+
+        // Update in backend
+        await fetch(`/api/widgets/${widgetId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            config_overrides: JSON.stringify({ widget_type: newType })
+          })
+        });
+
+        // Re-render the widget
+        renderWidgetChart(widget);
+
+        showToast(`Chart type changed to ${newType.replace(/_/g, ' ')}`, 'success');
+        closeChangeChartTypeModalFn();
+      } catch (err) {
+        console.error('Failed to change chart type:', err);
+        showToast('Failed to change chart type', 'error');
+      }
+    }
+
+    // Widget Menu Handler (delegated event)
+    document.addEventListener('click', (e) => {
+      // Close all open menus first
+      document.querySelectorAll('.widget-menu.active').forEach(menu => {
+        if (!menu.contains(e.target) && !e.target.classList.contains('widget-menu-btn')) {
+          menu.classList.remove('active');
+        }
+      });
+
+      // Toggle menu on button click
+      if (e.target.classList.contains('widget-menu-btn')) {
+        const widgetId = e.target.dataset.widgetId;
+        const menu = document.getElementById(`widgetMenu-${widgetId}`);
+        if (menu) {
+          menu.classList.toggle('active');
+        }
+        return;
+      }
+
+      // Handle menu item clicks
+      if (e.target.classList.contains('widget-menu-item')) {
+        const action = e.target.dataset.action;
+        const widgetId = e.target.dataset.widgetId;
+        const widget = dashboardWidgets.find(w => w.id === widgetId);
+
+        // Close menu
+        const menu = document.getElementById(`widgetMenu-${widgetId}`);
+        if (menu) menu.classList.remove('active');
+
+        switch (action) {
+          case 'fullscreen':
+            if (widget) openFullscreenChart(widget);
+            break;
+          case 'edit':
+            if (widget) editWidgetQuestion(widget);
+            break;
+          case 'change-type':
+            if (widget) openChangeChartTypeModal(widgetId);
+            break;
+          case 'remove':
+            widgetToDelete = widgetId;
+            deleteWidgetModal.classList.add('active');
+            break;
+        }
+      }
+    });
+
+    // Load Project Dashboards (for dashboard tab)
+    async function loadProjectDashboards(projectId) {
+      try {
+        const res = await fetch(`/api/projects/${projectId}/dashboards`);
+        if (res.ok) {
+          const dashboards = await res.json();
+          renderProjectDashboards(dashboards);
+        }
+      } catch (err) {
+        console.error('Failed to load dashboards:', err);
+      }
+    }
+
+    // Render Project Dashboards in Tab
+    function renderProjectDashboards(dashboards) {
+      const grid = document.getElementById('dashboardsGrid');
+      if (!grid) return;
+
+      if (dashboards.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state-card">
+            <div class="empty-state-icon">📊</div>
+            <div class="empty-state-text">No dashboards yet. Create one from pinned queries!</div>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = dashboards.map(d => {
+        const widgetCount = d.widget_count || 0;
+        const layout = d.layout ? JSON.parse(d.layout) : [];
+
+        return `
+          <div class="source-card dashboard-card" data-dashboard-id="${d.id}">
+            <!-- Dashboard Preview Thumbnail -->
+            <div class="dashboard-thumbnail">
+              ${generateDashboardThumbnail(layout)}
+            </div>
+
+            <div class="source-card-header">
+              <div>
+                <div class="source-name">${escapeHtml(d.name)}</div>
+                <div class="source-meta">
+                  ${widgetCount} widget${widgetCount !== 1 ? 's' : ''}
+                  ${d.is_pinned ? ' • 📌 Pinned' : ''}
+                </div>
+              </div>
+            </div>
+
+            <!-- Dashboard Actions -->
+            <div class="dashboard-card-actions" onclick="event.stopPropagation()">
+              <button class="dashboard-mini-action" onclick="duplicateDashboard('${d.id}')" title="Duplicate">
+                📋
+              </button>
+              <button class="dashboard-mini-action" onclick="togglePinDashboard('${d.id}', ${d.is_pinned ? 'true' : 'false'})" title="${d.is_pinned ? 'Unpin' : 'Pin'}">
+                ${d.is_pinned ? '📌' : '📍'}
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Add click handlers to open dashboard
+      grid.querySelectorAll('.dashboard-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+          // Don't open if clicking on action buttons
+          if (!e.target.closest('.dashboard-card-actions')) {
+            openDashboard(card.dataset.dashboardId);
+          }
+        });
+      });
+    }
+
+    // Generate Dashboard Thumbnail (grid visualization)
+    function generateDashboardThumbnail(layout) {
+      if (!layout || layout.length === 0) {
+        return '<div class="dashboard-thumbnail-empty">Empty Dashboard</div>';
+      }
+
+      // Create a mini grid representation
+      const colors = ['#5b7cfa', '#a78bfa', '#34d399', '#f59e0b', '#f472b6', '#60a5fa'];
+      const widgets = layout.slice(0, 6); // Show max 6 widgets in thumbnail
+
+      const widgetBoxes = widgets.map((w, idx) => {
+        const pos = w.position || { x: 0, y: 0, w: 4, h: 3 };
+        const color = colors[idx % colors.length];
+
+        // Scale down for thumbnail (12 col grid -> 100px width, 80px cell height -> smaller)
+        const left = (pos.x / 12) * 100;
+        const top = (pos.y * 20); // Scaled down
+        const width = (pos.w / 12) * 100;
+        const height = Math.min(pos.h * 20, 60); // Cap height
+
+        return `
+          <div class="dashboard-thumbnail-widget" style="
+            position: absolute;
+            left: ${left}%;
+            top: ${top}px;
+            width: ${width}%;
+            height: ${height}px;
+            background: ${color}33;
+            border: 1px solid ${color};
+            border-radius: 4px;
+          "></div>
+        `;
+      }).join('');
+
+      return `
+        <div style="position: relative; width: 100%; height: 120px; background: var(--bg-secondary); border-radius: 8px; overflow: hidden;">
+          ${widgetBoxes}
+        </div>
+      `;
+    }
+
+    // Duplicate Dashboard
+    async function duplicateDashboard(dashboardId) {
+      try {
+        const res = await fetch(`/api/dashboards/${dashboardId}/duplicate`, {
+          method: 'POST'
+        });
+
+        if (res.ok) {
+          showToast('Dashboard duplicated', 'success');
+          if (currentProject) {
+            loadProjectDashboards(currentProject.id);
+          }
+        } else {
+          throw new Error('Failed to duplicate dashboard');
+        }
+      } catch (err) {
+        console.error('Error duplicating dashboard:', err);
+        showToast('Failed to duplicate dashboard', 'error');
+      }
+    }
+
+    // Toggle Pin Dashboard
+    async function togglePinDashboard(dashboardId, isPinned) {
+      try {
+        const res = await fetch(`/api/dashboards/${dashboardId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ is_pinned: isPinned ? 0 : 1 })
+        });
+
+        if (res.ok) {
+          showToast(isPinned ? 'Dashboard unpinned' : 'Dashboard pinned', 'success');
+          if (currentProject) {
+            loadProjectDashboards(currentProject.id);
+          }
+        } else {
+          throw new Error('Failed to toggle pin');
+        }
+      } catch (err) {
+        console.error('Error toggling pin:', err);
+        showToast('Failed to update dashboard', 'error');
+      }
+    }
 
     // Initialize app
     init();
