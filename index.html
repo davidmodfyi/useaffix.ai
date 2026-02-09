@@ -614,12 +614,14 @@
 
     /* ─── HERO TEXT ROTATOR ─── */
     .text-rotator {
-      display: inline-block;
+      display: block;
       position: relative;
       color: var(--amber);
+      text-align: center;
     }
     .text-rotator-inner {
-      display: inline-block;
+      display: inline-flex;
+      justify-content: center;
       position: relative;
       height: 1.15em;
       overflow: hidden;
@@ -629,20 +631,21 @@
       display: block;
       position: absolute;
       top: 0;
-      left: 0;
-      width: max-content;
+      left: 50%;
+      transform: translateX(-50%) translateY(100%);
+      white-space: nowrap;
       opacity: 0;
-      transform: translateY(100%);
       transition: transform 0.6s cubic-bezier(0.68, -0.15, 0.265, 1.15), opacity 0.4s ease;
     }
     .text-rotator-item.active {
       position: relative;
+      left: 0;
+      transform: translateX(0) translateY(0);
       opacity: 1;
-      transform: translateY(0);
     }
     .text-rotator-item.exiting {
       opacity: 0;
-      transform: translateY(-100%);
+      transform: translateX(-50%) translateY(-100%);
     }
 
     /* ─── SECTION SHARED STYLES ─── */
@@ -1853,7 +1856,7 @@
         <span class="dot"></span>
         Now in Public Beta — Built for Legacy ERP
       </div>
-      <h1>Your <span class="text-rotator"><span class="text-rotator-inner" id="systemRotator"><span class="text-rotator-item active">IBM AS400 / iSeries</span><span class="text-rotator-item">IBM Mainframe</span><span class="text-rotator-item">SAP R/3 / ECC</span><span class="text-rotator-item">JD Edwards</span><span class="text-rotator-item">Infor</span><span class="text-rotator-item">Epicor</span></span></span> Has 30 Years of <span class="highlight">Answers.</span><br>Start Asking Questions.</h1>
+      <h1>Your<br><span class="text-rotator"><span class="text-rotator-inner" id="systemRotator"><span class="text-rotator-item active">IBM AS400 / iSeries</span><span class="text-rotator-item">IBM Mainframe</span><span class="text-rotator-item">SAP R/3 / ECC</span><span class="text-rotator-item">JD Edwards</span><span class="text-rotator-item">Infor</span><span class="text-rotator-item">Epicor</span></span></span><br>Has 30 Years of <span class="highlight-teal">Answers.</span><br>Start Asking Questions.</h1>
       <p class="hero-sub">
         AI-powered business intelligence for legacy ERP systems. Ask in English — or don't ask at all. Affix works in the background to find the insights you never thought to look for. <strong>No migration required.</strong>
       </p>
