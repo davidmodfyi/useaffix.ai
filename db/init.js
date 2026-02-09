@@ -340,6 +340,10 @@ try {
   if (!hasIsPublic) {
     db.exec(`ALTER TABLE dashboards ADD COLUMN is_public INTEGER DEFAULT 0`);
   }
+  const hasAutoGenerationPrompt = dashboardColumns.some(col => col.name === 'auto_generation_prompt');
+  if (!hasAutoGenerationPrompt) {
+    db.exec(`ALTER TABLE dashboards ADD COLUMN auto_generation_prompt TEXT`);
+  }
 } catch (err) {
   // Table might not exist yet, that's fine
 }
@@ -365,5 +369,16 @@ db.exec(`
 
 db.exec(`CREATE INDEX IF NOT EXISTS idx_invite_tokens_token ON invite_tokens(token)`);
 db.exec(`CREATE INDEX IF NOT EXISTS idx_invite_tokens_tenant ON invite_tokens(tenant_id)`);
+
+// Add project template tracking column if missing
+try {
+  const projectColumns = db.prepare(`PRAGMA table_info(projects)`).all();
+  const hasTemplateId = projectColumns.some(col => col.name === 'template_id');
+  if (!hasTemplateId) {
+    db.exec(`ALTER TABLE projects ADD COLUMN template_id TEXT`);
+  }
+} catch (err) {
+  // Table might not exist yet, that's fine
+}
 
 module.exports = db;

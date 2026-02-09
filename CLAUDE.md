@@ -598,6 +598,10 @@ CREATE INDEX idx_background_jobs_status ON background_jobs(status);
 | GET | `/api/projects/:id/queries` | ✓ | List query history for project (paginated) |
 | GET | `/api/projects/:id/dashboards` | ✓ | List dashboards in project |
 | POST | `/api/projects/:id/dashboards` | ✓ | Create new dashboard in project |
+| GET | `/api/projects/:id/dashboard-suggestions` | ✓ | Get AI-suggested dashboard prompts |
+| POST | `/api/projects/:id/generate-dashboard` | ✓ | Auto-generate dashboard from description |
+| POST | `/api/projects/from-template` | ✓ owner/admin | Create project from template |
+| POST | `/api/projects/:id/column-mappings` | ✓ | Suggest column mappings for template |
 
 ### Data Sources (Legacy endpoints - still supported)
 | Method | Endpoint | Auth | Description |
@@ -625,6 +629,7 @@ CREATE INDEX idx_background_jobs_status ON background_jobs(status);
 | PUT | `/api/dashboards/:id` | ✓ | Update dashboard name/description/layout |
 | DELETE | `/api/dashboards/:id` | ✓ | Delete a dashboard |
 | POST | `/api/dashboards/:id/widgets` | ✓ | Add a widget to dashboard (from pinned query) |
+| POST | `/api/dashboards/:id/execute-widget` | ✓ | Execute widget question and add to dashboard |
 
 ### Dashboard Widgets
 | Method | Endpoint | Auth | Description |
@@ -668,6 +673,12 @@ CREATE INDEX idx_background_jobs_status ON background_jobs(status);
 | PUT | `/api/dashboards/:id/share` | ✓ | Toggle public sharing, get share URLs |
 | GET | `/public/dashboards/:shareToken` | — | View public dashboard (no auth) |
 | GET | `/embed/dashboards/:shareToken` | — | Embed dashboard (minimal chrome, no auth) |
+
+### Project Templates
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/templates` | ✓ | Get all available project templates |
+| GET | `/api/templates/:id` | ✓ | Get specific template details |
 
 ### Settings
 | Method | Endpoint | Auth | Description |
@@ -846,6 +857,129 @@ contentSecurityPolicy: {
 - Parameterized queries for user input
 - Column/table validation against schema
 - Blocked dangerous SQL keywords in NL query
+
+---
+
+## AI-Generated Dashboards
+
+The platform includes an AI-powered dashboard generation system that can create complete dashboards from natural language descriptions.
+
+### How It Works
+
+1. **User describes dashboard**: Users provide a text description of what they want (e.g., "A sales overview showing revenue trends and top products")
+2. **AI generates specification**: Claude analyzes the data schema and creates a dashboard spec with 4-8 widgets
+3. **Automatic execution**: Each widget's question is executed through the NL query pipeline
+4. **Layout assignment**: Widgets are automatically positioned in a balanced grid layout
+5. **Insight generation**: AI insights are generated for each widget
+
+### Dashboard Generation Flow
+
+```javascript
+// User clicks "Auto-Generate Dashboard"
+// → Modal opens with suggested prompts
+// → User enters description or selects suggestion
+// → Backend generates spec with widget questions
+// → Each widget is executed sequentially
+// → Dashboard is created and populated
+```
+
+### Widget Placement Algorithm
+
+The system uses a smart grid layout algorithm:
+- Grid is 12 columns wide
+- Widget sizes: `small` (3 cols), `medium` (6 cols), `large` (6 cols), `full_width` (12 cols)
+- Position hints guide placement: `top_left`, `top_center`, `top_right`, etc.
+- KPI widgets (single_number) are typically small and placed at top
+- Charts are medium to large
+- Layout aims for visual balance
+
+### Dashboard Regeneration
+
+Dashboards created via auto-generation can be regenerated:
+- Original prompt is stored in `dashboards.auto_generation_prompt`
+- "Regenerate" button appears for auto-generated dashboards
+- User can modify the prompt and regenerate with new widgets
+- New widgets are added alongside existing ones (not replaced)
+
+---
+
+## Project Templates
+
+The platform includes pre-configured templates for common use cases:
+
+### Available Templates
+
+1. **Sales Analytics** (`sales-analytics`)
+   - Icon: 📊, Color: #5b7cfa
+   - Dashboard: Revenue KPIs, top products, trends, regional breakdown
+   - Expected columns: revenue, date, customer, product, region
+
+2. **Inventory Management** (`inventory-management`)
+   - Icon: 📦, Color: #34d399
+   - Dashboard: Stock levels, low stock alerts, turnover rates
+   - Expected columns: stock, product, cost, supplier, category
+
+3. **Customer Intelligence** (`customer-intelligence`)
+   - Icon: 👥, Color: #c084fc
+   - Dashboard: Customer LTV, segmentation, retention metrics
+   - Expected columns: customer, value, segment, status
+
+4. **Financial Overview** (`financial-overview`)
+   - Icon: 💰, Color: #f59e0b
+   - Dashboard: Revenue vs expenses, profit margins, budget tracking
+   - Expected columns: revenue, expenses, category, date
+
+5. **Marketing Performance** (`marketing-performance`)
+   - Icon: 📈, Color: #f472b6
+   - Dashboard: Campaign ROI, conversion funnel, channel comparison
+   - Expected columns: campaign, channel, spend, conversions
+
+6. **Blank Project** (`blank`)
+   - Icon: 🔧, Color: #8888a0
+   - No pre-configured dashboard or suggestions
+
+### Template Features
+
+- **Suggested questions**: Each template includes 6-8 suggested NL questions
+- **Default dashboard prompt**: Templates can auto-generate a starter dashboard
+- **Column mapping**: Smart column name matching to template expectations
+- **Auto-generation offer**: After creating project from template, user is prompted to auto-generate the default dashboard
+
+### Template Data Structure
+
+Templates are defined in `lib/projectTemplates.js`:
+
+```javascript
+{
+  id: 'sales-analytics',
+  name: 'Sales Analytics',
+  icon: '📊',
+  description: 'Track revenue, customers, and product performance',
+  color: '#5b7cfa',
+  defaultDashboardPrompt: 'Create a sales overview dashboard...',
+  suggestedQuestions: [ ... ],
+  expectedColumns: {
+    revenue: ['revenue', 'sales', 'amount', ...],
+    date: ['date', 'order_date', ...],
+    ...
+  }
+}
+```
+
+---
+
+## Files Added in Phase 11
+
+- `lib/dashboardGenerator.js` - AI dashboard generation logic
+- `lib/projectTemplates.js` - Project template definitions
+
+### Database Schema Changes
+
+**dashboards table:**
+- Added `auto_generation_prompt TEXT` - Stores original prompt for regeneration
+
+**projects table:**
+- Added `template_id TEXT` - References which template was used
 
 ---
 

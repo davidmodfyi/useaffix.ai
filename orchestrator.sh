@@ -20,6 +20,7 @@ CURRENT_PHASE_FILE="$STATE_DIR/current-phase.txt"
 MAX_RETRIES=2                              # Retries per phase on test failure
 WAIT_FOR_TESTS=true                        # Wait for test-watcher between phases
 TEST_TIMEOUT=300                           # Seconds to wait for tests
+PHASE_TIMEOUT=2700                         # 45 min max per phase (kill if exceeded)
 PERMISSION_MODE="acceptEdits"              # acceptEdits or acceptAll
 
 # --- Parse Arguments ---------------------------------------------------------
@@ -34,6 +35,7 @@ while [[ $# -gt 0 ]]; do
         --skip-tests) SKIP_TESTS=true; WAIT_FOR_TESTS=false; shift ;;
         --model) MODEL="$2"; shift 2 ;;
         --accept-all) PERMISSION_MODE="bypassPermissions"; shift ;;
+        --timeout) PHASE_TIMEOUT="$2"; shift 2 ;;
         *) echo "Unknown option: $1"; exit 1 ;;
     esac
 done
@@ -266,25 +268,46 @@ for phase_num in $(seq "$START_PHASE" "$END_PHASE"); do
         log "  Launching claude -p (model=$MODEL, permission=$PERMISSION_MODE)..."
 
         local_output="$STATE_DIR/phase-${phase_num}-output.json"
+        prompt_file="$STATE_DIR/phase-${phase_num}-prompt.txt"
+        echo "$prompt" > "$prompt_file"
 
         set +e
-        claude -p "$prompt" \
+        # Pipe prompt via stdin to avoid shell escaping issues
+        # Tee stderr to both log file and terminal so progress is visible
+        # Timeout kills the process if it exceeds PHASE_TIMEOUT
+        cat "$prompt_file" | timeout "$PHASE_TIMEOUT" claude -p \
             --model "$MODEL" \
-            --output-format json \
+            --output-format stream-json \
             --permission-mode "$PERMISSION_MODE" \
             --verbose \
-            > "$local_output" 2>> "$LOG_FILE"
+            > "$local_output" 2> >(tee -a "$LOG_FILE" >&2)
         exit_code=$?
         set -e
 
-        if [[ $exit_code -ne 0 ]]; then
+        if [[ $exit_code -eq 124 ]]; then
+            log "  ⏱️  Phase $phase_num timed out after ${PHASE_TIMEOUT}s — committing partial work"
+        elif [[ $exit_code -ne 0 ]]; then
             log "  ⚠️  Claude exited with code $exit_code"
         fi
 
         # Extract session ID for potential resuming
         session_id="none"
         if [[ -f "$local_output" ]]; then
-            session_id=$(python3 -c "import json; print(json.load(open('$local_output')).get('session_id', 'none'))" 2>/dev/null || echo "none")
+            session_id=$(python3 -c "
+import json
+for line in open('$local_output'):
+    line = line.strip()
+    if not line: continue
+    try:
+        d = json.loads(line)
+        sid = d.get('session_id')
+        if sid and sid != 'none':
+            print(sid)
+            break
+    except: continue
+else:
+    print('none')
+" 2>/dev/null || echo "none")
             echo "{\"session_id\": \"$session_id\", \"phase\": $phase_num}" > "$SESSIONS_DIR/phase-${phase_num}.json"
             log "  Session ID: $session_id"
         fi

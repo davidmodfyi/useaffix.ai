@@ -33,6 +33,8 @@ const { askQuestion } = require('./lib/nlquery');
 const { generateInsights } = require('./lib/insights');
 const { trackApiUsage, getCurrentUsage, setMonthlyBudget } = require('./lib/api-usage');
 const backgroundAnalysis = require('./lib/backgroundAnalysis');
+const { generateDashboardSpec, generateSuggestedPrompts, assignGridPositions } = require('./lib/dashboardGenerator');
+const { getAllTemplates, getTemplateById, suggestColumnMappings } = require('./lib/projectTemplates');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -1798,6 +1800,344 @@ app.put('/api/dashboards/:id/share', requireAuth, requireTenant, requireRole('ow
       embedUrl: shareToken ? `${req.protocol}://${req.get('host')}/embed/dashboards/${shareToken}` : null
     });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================
+// Dashboard Generation API Routes
+// ============================================
+
+// Generate suggested dashboard prompts for a project
+app.get('/api/projects/:id/dashboard-suggestions', requireAuth, requireTenant, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+
+    // Verify project belongs to tenant
+    const project = db.prepare('SELECT * FROM projects WHERE id = ? AND tenant_id = ?').get(projectId, req.tenantId);
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    // Get the tenant's data source
+    const dsRecord = db.prepare(`
+      SELECT * FROM tenant_data_sources
+      WHERE tenant_id = ? AND is_default = 1
+    `).get(req.tenantId);
+
+    if (!dsRecord) {
+      return res.status(404).json({ error: 'No data source found' });
+    }
+
+    const ds = await tenantManager.getDataSourceInstance(dsRecord.id, req.tenantId);
+    const schemaContext = await ds.gatherSchemaContext();
+
+    const prompts = await generateSuggestedPrompts(schemaContext);
+
+    res.json({
+      success: true,
+      prompts
+    });
+
+  } catch (err) {
+    console.error('Dashboard suggestions error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Auto-generate a dashboard from description
+app.post('/api/projects/:id/generate-dashboard', requireAuth, requireTenant, requireRole('owner', 'admin', 'member'), async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const { description } = req.body;
+
+    if (!description || description.trim().length === 0) {
+      return res.status(400).json({ error: 'Description is required' });
+    }
+
+    // Verify project belongs to tenant
+    const project = db.prepare('SELECT * FROM projects WHERE id = ? AND tenant_id = ?').get(projectId, req.tenantId);
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    // Get the tenant's data source
+    const dsRecord = db.prepare(`
+      SELECT * FROM tenant_data_sources
+      WHERE tenant_id = ? AND is_default = 1
+    `).get(req.tenantId);
+
+    if (!dsRecord) {
+      return res.status(404).json({ error: 'No data source found. Please upload data first.' });
+    }
+
+    const ds = await tenantManager.getDataSourceInstance(dsRecord.id, req.tenantId);
+    const schemaContext = await ds.gatherSchemaContext();
+
+    // Generate the dashboard specification
+    const { spec, tokensUsed } = await generateDashboardSpec(description, schemaContext, req.tenantId);
+
+    // Create the dashboard
+    const { v4: uuidv4 } = require('uuid');
+    const dashboardId = uuidv4();
+
+    db.prepare(`
+      INSERT INTO dashboards (id, project_id, tenant_id, name, description, auto_generation_prompt)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(
+      dashboardId,
+      projectId,
+      req.tenantId,
+      spec.dashboard_name,
+      spec.dashboard_description || null,
+      description
+    );
+
+    // Process each widget - assign positions first
+    const widgetsWithPositions = assignGridPositions(spec.widgets);
+
+    res.json({
+      success: true,
+      dashboardId,
+      dashboard: {
+        id: dashboardId,
+        name: spec.dashboard_name,
+        description: spec.dashboard_description,
+        auto_generation_prompt: description
+      },
+      widgets: widgetsWithPositions,
+      tokensUsed
+    });
+
+  } catch (err) {
+    console.error('Dashboard generation error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Execute a widget's question and add it to dashboard
+app.post('/api/dashboards/:id/execute-widget', requireAuth, requireTenant, requireRole('owner', 'admin', 'member'), async (req, res) => {
+  try {
+    const dashboardId = req.params.id;
+    const { question, suggestedViz, position } = req.body;
+
+    // Verify dashboard belongs to tenant
+    const dashboard = db.prepare(`
+      SELECT d.*, p.id as project_id
+      FROM dashboards d
+      JOIN projects p ON d.project_id = p.id
+      WHERE d.id = ? AND d.tenant_id = ?
+    `).get(dashboardId, req.tenantId);
+
+    if (!dashboard) {
+      return res.status(404).json({ error: 'Dashboard not found' });
+    }
+
+    // Get the tenant's data source
+    const dsRecord = db.prepare(`
+      SELECT * FROM tenant_data_sources
+      WHERE tenant_id = ? AND is_default = 1
+    `).get(req.tenantId);
+
+    if (!dsRecord) {
+      return res.status(404).json({ error: 'No data source found' });
+    }
+
+    const ds = await tenantManager.getDataSourceInstance(dsRecord.id, req.tenantId);
+
+    // Execute the question through the NL query pipeline
+    const result = await askQuestion(question, ds, req.tenantId);
+
+    if (!result.success) {
+      throw new Error(result.error || 'Query execution failed');
+    }
+
+    // Save the query
+    const { v4: uuidv4 } = require('uuid');
+    const queryId = uuidv4();
+
+    db.prepare(`
+      INSERT INTO queries (
+        id, project_id, tenant_id, question, sql_generated,
+        explanation, assumptions, visualization_type, visualization_config,
+        result_summary, execution_time_ms, status, source
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      queryId,
+      dashboard.project_id,
+      req.tenantId,
+      question,
+      result.sql,
+      result.explanation,
+      result.assumptions,
+      result.visualizationType,
+      result.chartConfig ? JSON.stringify(result.chartConfig) : null,
+      JSON.stringify({
+        rowCount: result.data?.length || 0,
+        columns: result.columns || [],
+        preview: result.data?.slice(0, 5) || []
+      }),
+      result.executionTime || 0,
+      'success',
+      'dashboard_generation'
+    );
+
+    // Generate insights for this query
+    try {
+      await generateInsights(queryId, req.tenantId, dashboard.project_id, result.data, result.columns, question);
+    } catch (insightErr) {
+      console.error('Insight generation failed:', insightErr);
+      // Don't fail the whole request if insights fail
+    }
+
+    // Add widget to dashboard
+    const widgetId = uuidv4();
+
+    db.prepare(`
+      INSERT INTO dashboard_widgets (id, dashboard_id, query_id, widget_type, position)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(
+      widgetId,
+      dashboardId,
+      queryId,
+      result.visualizationType === 'single_number' ? 'single_number' : 'chart',
+      JSON.stringify(position)
+    );
+
+    res.json({
+      success: true,
+      query: {
+        id: queryId,
+        question,
+        visualizationType: result.visualizationType,
+        data: result.data,
+        columns: result.columns,
+        chartConfig: result.chartConfig
+      },
+      widget: {
+        id: widgetId,
+        position
+      }
+    });
+
+  } catch (err) {
+    console.error('Widget execution error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================
+// Project Templates API Routes
+// ============================================
+
+// Get all available project templates
+app.get('/api/templates', requireAuth, (req, res) => {
+  try {
+    const templates = getAllTemplates();
+    res.json({ success: true, templates });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get a specific template
+app.get('/api/templates/:id', requireAuth, (req, res) => {
+  try {
+    const template = getTemplateById(req.params.id);
+    if (!template) {
+      return res.status(404).json({ error: 'Template not found' });
+    }
+    res.json({ success: true, template });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Create project from template
+app.post('/api/projects/from-template', requireAuth, requireTenant, requireRole('owner', 'admin'), async (req, res) => {
+  try {
+    const { templateId, projectName } = req.body;
+
+    const template = getTemplateById(templateId);
+    if (!template) {
+      return res.status(400).json({ error: 'Invalid template ID' });
+    }
+
+    const { v4: uuidv4 } = require('uuid');
+    const projectId = uuidv4();
+
+    db.prepare(`
+      INSERT INTO projects (id, tenant_id, name, description, icon, color, template_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      projectId,
+      req.tenantId,
+      projectName || template.name,
+      template.description,
+      template.icon,
+      template.color,
+      template.id
+    );
+
+    const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(projectId);
+
+    res.json({
+      success: true,
+      project,
+      template
+    });
+
+  } catch (err) {
+    console.error('Template project creation error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Suggest column mappings for a template
+app.post('/api/projects/:id/column-mappings', requireAuth, requireTenant, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+
+    // Verify project belongs to tenant
+    const project = db.prepare('SELECT * FROM projects WHERE id = ? AND tenant_id = ?').get(projectId, req.tenantId);
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    if (!project.template_id) {
+      return res.status(400).json({ error: 'Project was not created from a template' });
+    }
+
+    // Get actual columns from data source
+    const dsRecord = db.prepare(`
+      SELECT * FROM tenant_data_sources
+      WHERE tenant_id = ? AND is_default = 1
+    `).get(req.tenantId);
+
+    if (!dsRecord) {
+      return res.status(404).json({ error: 'No data source found' });
+    }
+
+    const ds = await tenantManager.getDataSourceInstance(dsRecord.id, req.tenantId);
+    const tables = await ds.getTables();
+
+    // Get columns from first table (assuming single-table upload for now)
+    let allColumns = [];
+    if (tables.length > 0) {
+      const columns = await ds.getColumns(tables[0]);
+      allColumns = columns.map(c => c.name);
+    }
+
+    const mappings = suggestColumnMappings(project.template_id, allColumns);
+
+    res.json({
+      success: true,
+      mappings,
+      availableColumns: allColumns
+    });
+
+  } catch (err) {
+    console.error('Column mapping error:', err);
     res.status(500).json({ error: err.message });
   }
 });

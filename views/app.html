@@ -2269,6 +2269,26 @@
       to { transform: rotate(360deg); }
     }
 
+    /* Suggested Prompt Buttons */
+    .suggested-prompt-btn {
+      width: 100%;
+      text-align: left;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: var(--text-primary);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .suggested-prompt-btn:hover {
+      background: var(--bg-hover);
+      border-color: var(--accent);
+      transform: translateX(4px);
+    }
+
     /* Toast Notifications */
     .toast-container {
       position: fixed;
@@ -3921,6 +3941,47 @@
       color: var(--text-muted);
     }
 
+    /* Template Cards */
+    .template-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+    }
+
+    .template-card:hover {
+      border-color: var(--accent);
+      background: var(--bg-hover);
+      transform: translateY(-2px);
+    }
+
+    .template-card.selected {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    .template-card-icon {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .template-card-name {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .template-card-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
     /* Chart Type Selector */
     .chart-type-grid {
       display: grid;
@@ -4378,8 +4439,11 @@
 
         <!-- Tab: Dashboards -->
         <div class="tab-content" id="tabDashboards">
-          <div style="margin-bottom: 16px;">
+          <div style="margin-bottom: 16px; display: flex; gap: 12px;">
             <button class="btn btn-primary" id="newDashboardBtn">+ New Dashboard</button>
+            <button class="btn btn-secondary" id="generateDashboardBtn" style="background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end)); color: white; border: none;">
+              ✨ Auto-Generate
+            </button>
           </div>
           <div class="dashboards-grid" id="dashboardsGrid">
             <div class="empty-state-card">
@@ -4445,6 +4509,9 @@
             </button>
             <button class="dashboard-action-btn primary" id="addWidgetBtn">
               + Add Widget
+            </button>
+            <button class="dashboard-action-btn" id="regenerateDashboardBtn" title="Regenerate dashboard" style="display: none;">
+              ✨ Regenerate
             </button>
             <button class="dashboard-action-btn" id="shareDashboardBtn" title="Share dashboard">
               🔗 Share
@@ -4647,6 +4714,24 @@
       </section>
     </div>
   </main>
+
+  <!-- Template Selection Modal -->
+  <div class="modal-overlay" id="templateModal">
+    <div class="modal" style="max-width: 900px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Choose a Template</h3>
+        <button class="modal-close" id="closeTemplateModal">×</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 24px;">
+          Start with a template optimized for your use case, or create a blank project.
+        </p>
+        <div id="templatesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px;">
+          <!-- Will be populated dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Project Creation Modal -->
   <div class="modal-overlay" id="projectModal">
@@ -4854,6 +4939,66 @@
           </div>
           <button class="btn btn-sm" id="copyEmbedCodeBtn">Copy Embed Code</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auto-Generate Dashboard Modal -->
+  <div class="modal-overlay" id="generateDashboardModal">
+    <div class="modal" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 class="modal-title">✨ Auto-Generate Dashboard</h3>
+        <button class="modal-close" id="closeGenerateModal">×</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px;">
+          Describe the dashboard you want and AI will create it for you with relevant charts and insights.
+        </p>
+
+        <!-- Description Input -->
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px;">
+            What kind of dashboard do you want?
+          </label>
+          <textarea id="dashboardDescription"
+                    placeholder="e.g., A sales overview showing top products, revenue trends, and regional performance"
+                    rows="3"
+                    style="width: 100%; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 12px; color: var(--text-primary); font-size: 14px; resize: vertical; font-family: var(--font-body);"></textarea>
+        </div>
+
+        <!-- Suggested Prompts -->
+        <div id="suggestedPromptsSection" style="margin-bottom: 20px;">
+          <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary);">
+            Or choose a suggestion:
+          </label>
+          <div id="suggestedPromptsList" style="display: flex; flex-direction: column; gap: 8px;">
+            <!-- Will be populated dynamically -->
+          </div>
+        </div>
+
+        <!-- Progress Indicator -->
+        <div id="generationProgress" style="display: none; margin-top: 20px;">
+          <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 16px;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+              <div class="spinner"></div>
+              <div>
+                <div style="font-size: 14px; font-weight: 600; margin-bottom: 4px;" id="generationStatusText">
+                  Building your dashboard...
+                </div>
+                <div style="font-size: 12px; color: var(--text-secondary);" id="generationSubtext">
+                  This may take a minute
+                </div>
+              </div>
+            </div>
+            <div style="background: var(--bg-primary); border-radius: 4px; height: 6px; overflow: hidden;">
+              <div id="generationProgressBar" style="background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end)); height: 100%; width: 0%; transition: width 0.3s;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" id="generateModalFooter">
+        <button class="btn btn-secondary" id="cancelGenerateBtn">Cancel</button>
+        <button class="btn btn-primary" id="confirmGenerateBtn">Generate Dashboard</button>
       </div>
     </div>
   </div>
@@ -5321,6 +5466,18 @@
         document.getElementById('insightsGrid').innerHTML = '';
         document.getElementById('insightsLoading').style.display = 'none';
 
+        // Check for pending dashboard generation
+        if (window.pendingDashboardGeneration && window.pendingDashboardGeneration.projectId === projectId) {
+          const { prompt } = window.pendingDashboardGeneration;
+          delete window.pendingDashboardGeneration;
+
+          // Small delay to let UI settle
+          setTimeout(() => {
+            dashboardDescription.value = prompt;
+            openGenerateDashboardModal();
+          }, 500);
+        }
+
       } catch (err) {
         console.error('Failed to load project home:', err);
         showToast('Failed to load project', 'error');
@@ -5625,7 +5782,7 @@
 
       // Add project button
       addProjectBtn.addEventListener('click', () => {
-        projectModal.classList.add('active');
+        openTemplateSelectionModal();
       });
     }
 
@@ -5637,6 +5794,7 @@
         projectForm.reset();
         selectedEmoji = '📊';
         selectedColor = '#5b7cfa';
+        selectedTemplate = null;
         updateModalSelections();
       });
 
@@ -5645,6 +5803,7 @@
         projectForm.reset();
         selectedEmoji = '📊';
         selectedColor = '#5b7cfa';
+        selectedTemplate = null;
         updateModalSelections();
       });
 
@@ -5655,6 +5814,7 @@
           projectForm.reset();
           selectedEmoji = '📊';
           selectedColor = '#5b7cfa';
+          selectedTemplate = null;
           updateModalSelections();
         }
       });
@@ -5693,24 +5853,50 @@
           createProjectBtn.disabled = true;
           createProjectBtn.textContent = 'Creating...';
 
-          const response = await fetch('/api/projects', {
+          const endpoint = selectedTemplate && selectedTemplate.id !== 'blank'
+            ? '/api/projects/from-template'
+            : '/api/projects';
+
+          const payload = selectedTemplate && selectedTemplate.id !== 'blank'
+            ? {
+                templateId: selectedTemplate.id,
+                projectName: name
+              }
+            : {
+                name,
+                description,
+                icon: selectedEmoji,
+                color: selectedColor
+              };
+
+          const response = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name,
-              description,
-              icon: selectedEmoji,
-              color: selectedColor
-            })
+            body: JSON.stringify(payload)
           });
 
           if (response.ok) {
-            const newProject = await response.json();
+            const result = await response.json();
+            const newProject = result.project || result;
+
+            // If project was created from template with default dashboard, offer to generate it
+            if (selectedTemplate && selectedTemplate.id !== 'blank' && selectedTemplate.defaultDashboardPrompt) {
+              const shouldGenerate = confirm(`Would you like to auto-generate the ${selectedTemplate.name} dashboard?`);
+              if (shouldGenerate) {
+                // Store for later - we'll generate after project loads
+                window.pendingDashboardGeneration = {
+                  projectId: newProject.id,
+                  prompt: selectedTemplate.defaultDashboardPrompt
+                };
+              }
+            }
+
             showToast('Project created successfully', 'success');
             projectModal.classList.remove('active');
             projectForm.reset();
             selectedEmoji = '📊';
             selectedColor = '#5b7cfa';
+            selectedTemplate = null;
             updateModalSelections();
 
             // Reload projects and select new one
@@ -5894,6 +6080,12 @@
       const newDashboardBtn = document.getElementById('newDashboardBtn');
       if (newDashboardBtn) {
         newDashboardBtn.addEventListener('click', createNewDashboard);
+      }
+
+      // Generate Dashboard button
+      const generateDashboardBtn = document.getElementById('generateDashboardBtn');
+      if (generateDashboardBtn) {
+        generateDashboardBtn.addEventListener('click', openGenerateDashboardModal);
       }
 
       // Explanation toggle
@@ -8073,6 +8265,12 @@
         openShareModal();
       });
 
+      // Regenerate button
+      const regenerateDashboardBtn = document.getElementById('regenerateDashboardBtn');
+      regenerateDashboardBtn.addEventListener('click', () => {
+        openRegenerateDashboardModal();
+      });
+
       // Dashboard title blur - save on change
       dashboardTitleInput.addEventListener('blur', saveDashboardTitle);
       dashboardTitleInput.addEventListener('keydown', (e) => {
@@ -8138,7 +8336,7 @@
         switchWidgetPickerTab('newQuestionTab');
       });
       emptyActionAuto.addEventListener('click', () => {
-        showToast('Auto-generate coming in Phase 11!', 'info');
+        openGenerateDashboardModal();
       });
 
       // Initialize debounced save
@@ -8197,6 +8395,14 @@
         // Set dashboard accent color CSS variable
         dashboardCanvas.style.setProperty('--dashboard-accent', currentDashboard.project_color || 'var(--accent)');
         dashboardCanvas.style.setProperty('--dashboard-accent-glow', `${currentDashboard.project_color || 'var(--accent)'}33`);
+
+        // Show regenerate button if dashboard was auto-generated
+        const regenerateBtn = document.getElementById('regenerateDashboardBtn');
+        if (currentDashboard.auto_generation_prompt) {
+          regenerateBtn.style.display = 'inline-flex';
+        } else {
+          regenerateBtn.style.display = 'none';
+        }
 
         // Hide project home, show dashboard view
         document.getElementById('projectHome').classList.remove('active');
@@ -9989,6 +10195,286 @@
       document.execCommand('copy');
       showToast('Embed code copied to clipboard!', 'success');
     });
+
+    // ============================================
+    // Auto-Generate Dashboard Modal
+    // ============================================
+
+    const generateDashboardModal = document.getElementById('generateDashboardModal');
+    const closeGenerateModal = document.getElementById('closeGenerateModal');
+    const cancelGenerateBtn = document.getElementById('cancelGenerateBtn');
+    const confirmGenerateBtn = document.getElementById('confirmGenerateBtn');
+    const dashboardDescription = document.getElementById('dashboardDescription');
+    const suggestedPromptsList = document.getElementById('suggestedPromptsList');
+    const generationProgress = document.getElementById('generationProgress');
+    const generationStatusText = document.getElementById('generationStatusText');
+    const generationSubtext = document.getElementById('generationSubtext');
+    const generationProgressBar = document.getElementById('generationProgressBar');
+    const generateModalFooter = document.getElementById('generateModalFooter');
+
+    let suggestedPrompts = [];
+
+    async function openGenerateDashboardModal() {
+      if (!currentProject) {
+        showToast('Please select a project first', 'error');
+        return;
+      }
+
+      // Reset form
+      dashboardDescription.value = '';
+      generationProgress.style.display = 'none';
+      generateModalFooter.style.display = 'flex';
+
+      // Load suggested prompts
+      try {
+        const res = await fetch(`/api/projects/${currentProject.id}/dashboard-suggestions`);
+        if (res.ok) {
+          const data = await res.json();
+          suggestedPrompts = data.prompts || [];
+          renderSuggestedPrompts();
+        }
+      } catch (err) {
+        console.error('Failed to load suggestions:', err);
+        suggestedPrompts = [
+          "A comprehensive overview showing key metrics and trends",
+          "Performance analysis with comparisons over time",
+          "Detailed breakdown by category with top performers"
+        ];
+        renderSuggestedPrompts();
+      }
+
+      generateDashboardModal.classList.add('active');
+    }
+
+    function renderSuggestedPrompts() {
+      suggestedPromptsList.innerHTML = suggestedPrompts.map(prompt => `
+        <button class="suggested-prompt-btn" data-prompt="${prompt.replace(/"/g, '&quot;')}">
+          ${prompt}
+        </button>
+      `).join('');
+
+      // Add click handlers
+      document.querySelectorAll('.suggested-prompt-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          dashboardDescription.value = btn.dataset.prompt;
+        });
+      });
+    }
+
+    function closeGenerateDashboardModal() {
+      generateDashboardModal.classList.remove('active');
+    }
+
+    closeGenerateModal.addEventListener('click', closeGenerateDashboardModal);
+    cancelGenerateBtn.addEventListener('click', closeGenerateDashboardModal);
+
+    confirmGenerateBtn.addEventListener('click', async () => {
+      const description = dashboardDescription.value.trim();
+
+      if (!description) {
+        showToast('Please describe the dashboard you want', 'error');
+        return;
+      }
+
+      // Show progress
+      generateModalFooter.style.display = 'none';
+      generationProgress.style.display = 'block';
+      generationProgressBar.style.width = '10%';
+      generationStatusText.textContent = 'Generating dashboard specification...';
+      generationSubtext.textContent = 'AI is designing your dashboard';
+
+      try {
+        // Step 1: Generate dashboard spec
+        const genRes = await fetch(`/api/projects/${currentProject.id}/generate-dashboard`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ description })
+        });
+
+        if (!genRes.ok) {
+          const data = await genRes.json();
+          throw new Error(data.error || 'Failed to generate dashboard');
+        }
+
+        const genData = await genRes.json();
+        const { dashboardId, widgets } = genData;
+
+        generationProgressBar.style.width = '20%';
+        generationStatusText.textContent = `Building ${widgets.length} widgets...`;
+
+        // Step 2: Execute each widget
+        let completedWidgets = 0;
+        for (const widget of widgets) {
+          generationSubtext.textContent = `Widget ${completedWidgets + 1}/${widgets.length}: ${widget.question.substring(0, 50)}...`;
+
+          try {
+            const widgetRes = await fetch(`/api/dashboards/${dashboardId}/execute-widget`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                question: widget.question,
+                suggestedViz: widget.suggested_viz,
+                position: widget.position
+              })
+            });
+
+            if (widgetRes.ok) {
+              completedWidgets++;
+              const progress = 20 + (completedWidgets / widgets.length) * 75;
+              generationProgressBar.style.width = `${progress}%`;
+            } else {
+              console.error('Widget execution failed:', await widgetRes.text());
+            }
+          } catch (widgetErr) {
+            console.error('Widget error:', widgetErr);
+          }
+        }
+
+        generationProgressBar.style.width = '100%';
+        generationStatusText.textContent = 'Dashboard created!';
+        generationSubtext.textContent = `Successfully created ${completedWidgets} of ${widgets.length} widgets`;
+
+        // Wait a moment then close and load dashboard
+        setTimeout(async () => {
+          closeGenerateDashboardModal();
+          showToast(`Dashboard created with ${completedWidgets} widgets!`, 'success');
+
+          // Reload dashboards list and open the new one
+          await loadDashboards();
+          const newDashboard = allDashboards.find(d => d.id === dashboardId);
+          if (newDashboard) {
+            await openDashboard(newDashboard);
+          }
+        }, 1500);
+
+      } catch (err) {
+        console.error('Dashboard generation error:', err);
+        generationProgress.style.display = 'none';
+        generateModalFooter.style.display = 'flex';
+        showToast(err.message || 'Failed to generate dashboard', 'error');
+      }
+    });
+
+    // ============================================
+    // Project Templates
+    // ============================================
+
+    const templateModal = document.getElementById('templateModal');
+    const closeTemplateModal = document.getElementById('closeTemplateModal');
+    const templatesGrid = document.getElementById('templatesGrid');
+
+    let availableTemplates = [];
+    let selectedTemplate = null;
+
+    async function openTemplateSelectionModal() {
+      try {
+        // Fetch templates
+        const res = await fetch('/api/templates');
+        if (!res.ok) throw new Error('Failed to load templates');
+
+        const data = await res.json();
+        availableTemplates = data.templates || [];
+
+        // Render templates
+        renderTemplates();
+
+        templateModal.classList.add('active');
+      } catch (err) {
+        console.error('Template loading error:', err);
+        showToast('Failed to load templates', 'error');
+        // Fall back to opening project modal directly
+        projectModal.classList.add('active');
+      }
+    }
+
+    function renderTemplates() {
+      templatesGrid.innerHTML = availableTemplates.map(template => `
+        <div class="template-card" data-template-id="${template.id}">
+          <span class="template-card-icon">${template.icon}</span>
+          <div class="template-card-name">${template.name}</div>
+          <div class="template-card-desc">${template.description}</div>
+        </div>
+      `).join('');
+
+      // Add click handlers
+      document.querySelectorAll('.template-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const templateId = card.dataset.templateId;
+          selectTemplate(templateId);
+        });
+      });
+    }
+
+    function selectTemplate(templateId) {
+      selectedTemplate = availableTemplates.find(t => t.id === templateId);
+
+      if (!selectedTemplate) {
+        console.error('Template not found:', templateId);
+        return;
+      }
+
+      // Close template modal
+      templateModal.classList.remove('active');
+
+      // If blank template, just open project modal
+      if (selectedTemplate.id === 'blank') {
+        projectModal.classList.add('active');
+        return;
+      }
+
+      // Pre-fill project modal with template data
+      document.getElementById('projectName').value = selectedTemplate.name;
+      document.getElementById('projectDescription').value = selectedTemplate.description;
+      selectedEmoji = selectedTemplate.icon;
+      selectedColor = selectedTemplate.color;
+      updateModalSelections();
+
+      // Open project modal
+      projectModal.classList.add('active');
+    }
+
+    closeTemplateModal.addEventListener('click', () => {
+      templateModal.classList.remove('active');
+    });
+
+    // Open regenerate modal with current dashboard's prompt pre-filled
+    function openRegenerateDashboardModal() {
+      if (!currentDashboard || !currentDashboard.auto_generation_prompt) {
+        showToast('This dashboard was not auto-generated', 'error');
+        return;
+      }
+
+      // Pre-fill with existing prompt
+      dashboardDescription.value = currentDashboard.auto_generation_prompt;
+      generationProgress.style.display = 'none';
+      generateModalFooter.style.display = 'flex';
+
+      // Load suggested prompts
+      fetch(`/api/projects/${currentProject.id}/dashboard-suggestions`)
+        .then(res => res.json())
+        .then(data => {
+          suggestedPrompts = data.prompts || [];
+          renderSuggestedPrompts();
+        })
+        .catch(err => {
+          console.error('Failed to load suggestions:', err);
+        });
+
+      // Update modal title to indicate regeneration
+      document.querySelector('#generateDashboardModal .modal-title').textContent = '✨ Regenerate Dashboard';
+      confirmGenerateBtn.textContent = 'Regenerate Dashboard';
+
+      generateDashboardModal.classList.add('active');
+
+      // Reset modal on close
+      const resetModal = () => {
+        document.querySelector('#generateDashboardModal .modal-title').textContent = '✨ Auto-Generate Dashboard';
+        confirmGenerateBtn.textContent = 'Generate Dashboard';
+      };
+
+      closeGenerateModal.addEventListener('click', resetModal, { once: true });
+      cancelGenerateBtn.addEventListener('click', resetModal, { once: true });
+    }
 
     // Initialize app
     init();
