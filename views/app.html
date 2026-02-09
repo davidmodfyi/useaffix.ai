@@ -9605,28 +9605,47 @@
 
     // Auto-Layout Dashboard
     function autoLayoutDashboard() {
-      if (!dashboardGrid || dashboardWidgets.length === 0) return;
+      if (!dashboardGrid) return;
 
-      // Sort widgets by type: single_numbers first, then charts, then tables
-      const sorted = [...dashboardWidgets].sort((a, b) => {
-        const typeOrder = { single_number: 0, bar_chart: 1, line_chart: 1, pie_chart: 1, area_chart: 1, scatter_plot: 1, grouped_bar_chart: 1, heatmap: 1, table: 2 };
+      // Get actual widgets currently in the grid (not stale array)
+      const gridItems = dashboardGrid.getGridItems();
+      if (gridItems.length === 0) {
+        showToast('No widgets to layout', 'info');
+        return;
+      }
+
+      // Build list of current widgets with their types from DOM
+      const currentWidgets = gridItems.map(el => {
+        const widgetId = el.getAttribute('gs-id');
+        const widget = dashboardWidgets.find(w => w.id === widgetId);
+        return {
+          el,
+          id: widgetId,
+          widget_type: widget?.widget_type || 'bar_chart'
+        };
+      });
+
+      // Sort by type: single_numbers first, then charts, then tables
+      const typeOrder = { single_number: 0, bar_chart: 1, line_chart: 1, pie_chart: 1, area_chart: 1, scatter_plot: 1, grouped_bar_chart: 1, heatmap: 1, table: 2 };
+      currentWidgets.sort((a, b) => {
         const aOrder = typeOrder[a.widget_type] ?? 1;
         const bOrder = typeOrder[b.widget_type] ?? 1;
         return aOrder - bOrder;
       });
 
-      // Remove all widgets
-      dashboardGrid.removeAll(false);
+      // Batch update positions
+      dashboardGrid.batchUpdate();
 
-      // Re-add with new positions
       let x = 0;
       let y = 0;
-      sorted.forEach(widget => {
+      let rowHeight = 0;
+
+      currentWidgets.forEach(({ el, id, widget_type }) => {
         let w, h;
-        if (widget.widget_type === 'single_number') {
+        if (widget_type === 'single_number') {
           w = 3;
           h = 2;
-        } else if (widget.widget_type === 'table') {
+        } else if (widget_type === 'table') {
           w = 6;
           h = 4;
         } else {
@@ -9637,15 +9656,27 @@
         // Wrap to next row if needed
         if (x + w > 12) {
           x = 0;
-          y += h;
+          y += rowHeight;
+          rowHeight = 0;
         }
 
-        widget.position = { x, y, w, h };
-        addWidgetToGrid(widget);
-        saveWidgetPosition(widget.id);
+        // Update position in grid
+        dashboardGrid.update(el, { x, y, w, h });
 
+        // Update local widget data
+        const widget = dashboardWidgets.find(wi => wi.id === id);
+        if (widget) {
+          widget.position = { x, y, w, h };
+        }
+
+        // Save to server
+        saveWidgetPosition(id);
+
+        rowHeight = Math.max(rowHeight, h);
         x += w;
       });
+
+      dashboardGrid.batchUpdate(false);
 
       showToast('Dashboard layout optimized', 'success');
     }
