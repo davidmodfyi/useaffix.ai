@@ -187,8 +187,18 @@ wait_for_test_results() {
 commit_phase() {
     local phase_num=$1
 
-    # Stage everything except .agent-state internals we don't want
-    git add -A 2>/dev/null || true
+    # Stage all changes, but handle errors (e.g. nested .git repos)
+    local add_output
+    if ! add_output=$(git add -A 2>&1); then
+        log "  ⚠️  git add -A had errors:"
+        log "  $add_output"
+        # Try adding files individually, skipping problematic ones
+        log "  Falling back to adding tracked + new files individually..."
+        git add -u 2>/dev/null || true
+        git ls-files --others --exclude-standard | while read -r f; do
+            git add "$f" 2>/dev/null || log "  Skipped: $f"
+        done
+    fi
 
     # Check if there are changes to commit
     if git diff --cached --quiet 2>/dev/null; then
@@ -196,10 +206,20 @@ commit_phase() {
         return
     fi
 
-    git commit -m "[phase-${phase_num}] Automated pipeline - phase ${phase_num} of ${TOTAL_PHASES}" \
-        --no-verify 2>/dev/null || true
+    if git commit -m "[phase-${phase_num}] Automated pipeline - phase ${phase_num} of ${TOTAL_PHASES}" \
+        --no-verify 2>&1; then
+        log "  ✅ Committed changes for phase $phase_num"
+    else
+        log "  ❌ git commit failed for phase $phase_num"
+        return
+    fi
 
-    log "  Committed changes for phase $phase_num"
+    # Push to remote
+    if git push 2>&1; then
+        log "  ✅ Pushed to remote"
+    else
+        log "  ⚠️  git push failed (will retry at end of pipeline)"
+    fi
 }
 
 # --- Helper: Record phase result ---------------------------------------------
