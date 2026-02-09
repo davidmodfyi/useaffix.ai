@@ -6980,12 +6980,29 @@
             <p class="insight-description">${escapeHtml(insight.description || '')}</p>
             <div class="insight-list-meta">
               <span>${timeAgo}</span>
-              ${insight.question ? `<a href="#" onclick="jumpToQuery('${insight.query_id}'); return false;">View query</a>` : ''}
-              <a href="#" onclick="dismissInsightFromList('${insight.id}', this); return false;">Dismiss</a>
+              ${insight.question ? `<a href="#" class="insight-view-query" data-query-id="${insight.query_id}">View query</a>` : ''}
+              <a href="#" class="insight-dismiss-link" data-insight-id="${insight.id}">Dismiss</a>
             </div>
           </div>
         `;
       }).join('');
+
+      // Add event listeners for the dynamically created links
+      list.querySelectorAll('.insight-view-query').forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const queryId = link.dataset.queryId;
+          jumpToQuery(queryId);
+        });
+      });
+
+      list.querySelectorAll('.insight-dismiss-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const insightId = link.dataset.insightId;
+          dismissInsightFromList(insightId, link);
+        });
+      });
     }
 
     // Jump to a specific query (could scroll to it or re-run it)
