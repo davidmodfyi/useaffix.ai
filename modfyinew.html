@@ -1,1884 +1,1410 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MOD.fyi — AI Solutions Architects</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --navy: #0B1D3A;
-            --navy-mid: #132B52;
-            --blue: #2563EB;
-            --blue-light: #3B82F6;
-            --blue-pale: #EFF6FF;
-            --blue-wash: #F0F6FF;
-            --accent: #06B6D4;
-            --white: #FFFFFF;
-            --gray-50: #F9FAFB;
-            --gray-100: #F3F4F6;
-            --gray-200: #E5E7EB;
-            --gray-300: #D1D5DB;
-            --gray-400: #9CA3AF;
-            --gray-500: #6B7280;
-            --gray-600: #4B5563;
-            --gray-700: #374151;
-            --gray-800: #1F2937;
-            --text-primary: #0F172A;
-            --text-secondary: #475569;
-            --radius: 12px;
-            --radius-lg: 20px;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
-            --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
-            --shadow-lg: 0 12px 40px rgba(0,0,0,0.1);
-        }
-
-        *, *::before, *::after {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            font-family: 'DM Sans', sans-serif;
-            color: var(--text-primary);
-            background: var(--white);
-            line-height: 1.6;
-            overflow-x: hidden;
-        }
-
-        /* ───── NAV ───── */
-        nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            background: rgba(255,255,255,0.92);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-            transition: box-shadow 0.3s;
-        }
-
-        nav.scrolled {
-            box-shadow: 0 2px 20px rgba(0,0,0,0.06);
-        }
-
-        .nav-inner {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 0 40px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            height: 72px;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            text-decoration: none;
-            color: var(--navy);
-        }
-
-        .logo-mark {
-            width: 38px;
-            height: 38px;
-            background: var(--navy);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 700;
-            font-size: 16px;
-            letter-spacing: -0.5px;
-        }
-
-        .logo-text {
-            font-family: 'Instrument Serif', serif;
-            font-size: 22px;
-            font-weight: 400;
-            color: var(--navy);
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 36px;
-            list-style: none;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            color: var(--text-secondary);
-            font-size: 15px;
-            font-weight: 500;
-            transition: color 0.2s;
-        }
-
-        .nav-links a:hover {
-            color: var(--navy);
-        }
-
-        .nav-cta {
-            background: var(--navy);
-            color: var(--white) !important;
-            padding: 10px 24px;
-            border-radius: 8px;
-            font-weight: 600 !important;
-            transition: background 0.2s, transform 0.2s !important;
-        }
-
-        .nav-cta:hover {
-            background: var(--navy-mid) !important;
-            transform: translateY(-1px);
-        }
-
-        .mobile-toggle {
-            display: none;
-            background: none;
-            border: none;
-            cursor: pointer;
-            width: 32px;
-            height: 32px;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .mobile-toggle span {
-            display: block;
-            width: 22px;
-            height: 2px;
-            background: var(--navy);
-            border-radius: 2px;
-            transition: 0.3s;
-        }
-
-        /* ───── HERO ───── */
-        .hero {
-            position: relative;
-            padding: 160px 40px 100px;
-            overflow: hidden;
-            background: linear-gradient(165deg, var(--white) 0%, var(--blue-wash) 50%, var(--white) 100%);
-        }
-
-        .hero-bg-shape {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.15;
-            pointer-events: none;
-        }
-
-        .hero-bg-shape.shape-1 {
-            width: 600px;
-            height: 600px;
-            background: var(--blue);
-            top: -200px;
-            right: -100px;
-        }
-
-        .hero-bg-shape.shape-2 {
-            width: 400px;
-            height: 400px;
-            background: var(--accent);
-            bottom: -100px;
-            left: -100px;
-        }
-
-        .hero-bg-grid {
-            position: absolute;
-            inset: 0;
-            background-image:
-                linear-gradient(rgba(37, 99, 235, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(37, 99, 235, 0.03) 1px, transparent 1px);
-            background-size: 60px 60px;
-            pointer-events: none;
-        }
-
-        .hero-inner {
-            max-width: 1280px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 80px;
-            align-items: center;
-            position: relative;
-            z-index: 1;
-        }
-
-        .hero-content {
-            animation: fadeUp 0.8s ease-out;
-        }
-
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 16px;
-            background: var(--white);
-            border: 1px solid var(--gray-200);
-            border-radius: 100px;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--blue);
-            margin-bottom: 28px;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .hero-badge-dot {
-            width: 7px;
-            height: 7px;
-            background: var(--blue);
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        .hero h1 {
-            font-family: 'Instrument Serif', serif;
-            font-size: clamp(40px, 5vw, 60px);
-            font-weight: 400;
-            line-height: 1.12;
-            color: var(--navy);
-            margin-bottom: 24px;
-            letter-spacing: -0.5px;
-        }
-
-        .hero h1 em {
-            font-style: italic;
-            color: var(--blue);
-        }
-
-        .hero-desc {
-            font-size: 18px;
-            color: var(--text-secondary);
-            line-height: 1.7;
-            margin-bottom: 40px;
-            max-width: 520px;
-        }
-
-        .hero-buttons {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-
-        .btn-primary {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 14px 32px;
-            background: var(--blue);
-            color: var(--white);
-            text-decoration: none;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 15px;
-            transition: all 0.25s;
-            border: none;
-            cursor: pointer;
-        }
-
-        .btn-primary:hover {
-            background: #1D4ED8;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(37, 99, 235, 0.3);
-        }
-
-        .btn-primary svg {
-            transition: transform 0.2s;
-        }
-
-        .btn-primary:hover svg {
-            transform: translateX(3px);
-        }
-
-        .btn-secondary {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 14px 32px;
-            background: transparent;
-            color: var(--navy);
-            text-decoration: none;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 15px;
-            border: 1.5px solid var(--gray-300);
-            transition: all 0.25s;
-            cursor: pointer;
-        }
-
-        .btn-secondary:hover {
-            border-color: var(--navy);
-            background: var(--gray-50);
-            transform: translateY(-2px);
-        }
-
-        .hero-visual {
-            position: relative;
-            animation: fadeUp 0.8s ease-out 0.2s both;
-        }
-
-        .hero-card {
-            background: var(--white);
-            border-radius: var(--radius-lg);
-            padding: 40px;
-            box-shadow: var(--shadow-lg), 0 0 0 1px rgba(0,0,0,0.03);
-            position: relative;
-        }
-
-        .hero-card-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 28px;
-        }
-
-        .hero-card-icon {
-            width: 44px;
-            height: 44px;
-            background: linear-gradient(135deg, var(--blue), var(--accent));
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .hero-card-label {
-            font-weight: 600;
-            font-size: 15px;
-            color: var(--navy);
-        }
-
-        .hero-card-sublabel {
-            font-size: 13px;
-            color: var(--gray-400);
-        }
-
-        .hero-stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .hero-stat {
-            background: var(--gray-50);
-            border-radius: var(--radius);
-            padding: 20px;
-            text-align: center;
-        }
-
-        .hero-stat-value {
-            font-size: 32px;
-            font-weight: 700;
-            color: var(--navy);
-            line-height: 1;
-            margin-bottom: 4px;
-        }
-
-        .hero-stat-value.blue {
-            color: var(--blue);
-        }
-
-        .hero-stat-label {
-            font-size: 13px;
-            color: var(--gray-500);
-            font-weight: 500;
-        }
-
-        .hero-floating-badge {
-            position: absolute;
-            bottom: -16px;
-            right: -16px;
-            background: var(--navy);
-            color: var(--white);
-            padding: 12px 20px;
-            border-radius: var(--radius);
-            font-size: 13px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: var(--shadow-lg);
-            animation: float 4s ease-in-out infinite;
-        }
-
-        .hero-floating-badge .check {
-            width: 20px;
-            height: 20px;
-            background: var(--blue);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-        }
-
-        /* ───── PARTNERS BAR ───── */
-        .partners-bar {
-            padding: 48px 40px;
-            border-top: 1px solid var(--gray-100);
-            border-bottom: 1px solid var(--gray-100);
-            background: var(--white);
-        }
-
-        .partners-inner {
-            max-width: 1280px;
-            margin: 0 auto;
-            text-align: center;
-        }
-
-        .partners-label {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--gray-400);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 28px;
-        }
-
-        .partners-logos {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 48px;
-            flex-wrap: wrap;
-            opacity: 0.45;
-        }
-
-        .partner-logo {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--gray-700);
-            letter-spacing: -0.3px;
-            white-space: nowrap;
-        }
-
-        /* ───── ABOUT STRIP ───── */
-        .about-strip {
-            padding: 80px 40px;
-            background: var(--white);
-        }
-
-        .about-inner {
-            max-width: 900px;
-            margin: 0 auto;
-            text-align: center;
-        }
-
-        .about-inner h2 {
-            font-family: 'Instrument Serif', serif;
-            font-size: clamp(28px, 3vw, 38px);
-            font-weight: 400;
-            color: var(--navy);
-            margin-bottom: 20px;
-            line-height: 1.25;
-        }
-
-        .about-inner p {
-            font-size: 17px;
-            color: var(--text-secondary);
-            line-height: 1.8;
-            max-width: 720px;
-            margin: 0 auto;
-        }
-
-        /* ───── SECTIONS COMMON ───── */
-        section {
-            padding: 100px 40px;
-        }
-
-        .section-inner {
-            max-width: 1280px;
-            margin: 0 auto;
-        }
-
-        .section-label {
-            display: inline-block;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--blue);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 16px;
-        }
-
-        .section-title {
-            font-family: 'Instrument Serif', serif;
-            font-size: clamp(32px, 4vw, 48px);
-            font-weight: 400;
-            color: var(--navy);
-            margin-bottom: 20px;
-            line-height: 1.2;
-        }
-
-        .section-desc {
-            font-size: 17px;
-            color: var(--text-secondary);
-            line-height: 1.7;
-            max-width: 600px;
-        }
-
-        .section-header {
-            margin-bottom: 60px;
-        }
-
-        .section-header.center {
-            text-align: center;
-        }
-
-        .section-header.center .section-desc {
-            margin: 0 auto;
-        }
-
-        /* ───── SERVICES ───── */
-        .services {
-            background: var(--gray-50);
-        }
-
-        .services-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
-        }
-
-        .service-card {
-            background: var(--white);
-            border-radius: var(--radius-lg);
-            padding: 36px;
-            border: 1px solid var(--gray-100);
-            transition: all 0.35s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .service-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--blue), var(--accent));
-            opacity: 0;
-            transition: opacity 0.35s;
-        }
-
-        .service-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-lg);
-            border-color: transparent;
-        }
-
-        .service-card:hover::before {
-            opacity: 1;
-        }
-
-        .service-icon {
-            width: 52px;
-            height: 52px;
-            background: var(--blue-pale);
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-            font-size: 22px;
-            transition: background 0.3s;
-        }
-
-        .service-card:hover .service-icon {
-            background: linear-gradient(135deg, var(--blue), var(--accent));
-        }
-
-        .service-card:hover .service-icon svg {
-            stroke: white;
-        }
-
-        .service-card h3 {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--navy);
-            margin-bottom: 10px;
-        }
-
-        .service-card p {
-            font-size: 15px;
-            color: var(--text-secondary);
-            line-height: 1.65;
-        }
-
-        .service-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            margin-top: 16px;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--blue);
-            text-decoration: none;
-            transition: gap 0.2s;
-        }
-
-        .service-link:hover {
-            gap: 10px;
-        }
-
-        /* ───── PROCESS ───── */
-        .process {
-            background: var(--white);
-        }
-
-        .process-steps {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 0;
-            position: relative;
-        }
-
-        .process-steps::before {
-            content: '';
-            position: absolute;
-            top: 32px;
-            left: 10%;
-            right: 10%;
-            height: 2px;
-            background: linear-gradient(90deg, var(--blue), var(--accent));
-            opacity: 0.2;
-        }
-
-        .process-step {
-            text-align: center;
-            padding: 0 16px;
-            position: relative;
-        }
-
-        .step-number {
-            width: 64px;
-            height: 64px;
-            background: var(--white);
-            border: 2px solid var(--blue);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--blue);
-            margin: 0 auto 20px;
-            position: relative;
-            z-index: 1;
-            transition: all 0.3s;
-        }
-
-        .process-step:hover .step-number {
-            background: var(--blue);
-            color: var(--white);
-            transform: scale(1.1);
-        }
-
-        .process-step h3 {
-            font-size: 17px;
-            font-weight: 600;
-            color: var(--navy);
-            margin-bottom: 8px;
-        }
-
-        .process-step p {
-            font-size: 14px;
-            color: var(--text-secondary);
-            line-height: 1.6;
-        }
-
-        /* ───── WHY US ───── */
-        .why-us {
-            background: var(--navy);
-            color: var(--white);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .why-us-bg {
-            position: absolute;
-            inset: 0;
-            background-image:
-                radial-gradient(circle at 20% 50%, rgba(37, 99, 235, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
-            pointer-events: none;
-        }
-
-        .why-us .section-inner {
-            position: relative;
-            z-index: 1;
-        }
-
-        .why-us .section-label {
-            color: var(--accent);
-        }
-
-        .why-us .section-title {
-            color: var(--white);
-        }
-
-        .why-us .section-desc {
-            color: rgba(255,255,255,0.65);
-        }
-
-        .why-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-        }
-
-        .why-card {
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: var(--radius-lg);
-            padding: 36px;
-            transition: all 0.3s;
-            backdrop-filter: blur(10px);
-        }
-
-        .why-card:hover {
-            background: rgba(255,255,255,0.1);
-            border-color: rgba(255,255,255,0.2);
-            transform: translateY(-3px);
-        }
-
-        .why-card-icon {
-            width: 48px;
-            height: 48px;
-            background: rgba(37, 99, 235, 0.2);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 18px;
-        }
-
-        .why-card h3 {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        .why-card p {
-            font-size: 15px;
-            color: rgba(255,255,255,0.6);
-            line-height: 1.65;
-        }
-
-        /* ───── TESTIMONIALS ───── */
-        .testimonials {
-            background: var(--gray-50);
-        }
-
-        .testimonials-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
-        }
-
-        .testimonial-card {
-            background: var(--white);
-            border-radius: var(--radius-lg);
-            padding: 36px;
-            border: 1px solid var(--gray-100);
-            display: flex;
-            flex-direction: column;
-            transition: all 0.3s;
-        }
-
-        .testimonial-card:hover {
-            transform: translateY(-3px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .testimonial-stars {
-            display: flex;
-            gap: 2px;
-            margin-bottom: 16px;
-        }
-
-        .testimonial-stars svg {
-            width: 16px;
-            height: 16px;
-            fill: #F59E0B;
-        }
-
-        .testimonial-quote {
-            font-size: 15px;
-            color: var(--text-secondary);
-            line-height: 1.7;
-            flex: 1;
-            margin-bottom: 24px;
-            font-style: italic;
-        }
-
-        .testimonial-author {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding-top: 20px;
-            border-top: 1px solid var(--gray-100);
-        }
-
-        .testimonial-avatar {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--blue), var(--accent));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--white);
-            font-weight: 700;
-            font-size: 15px;
-        }
-
-        .testimonial-name {
-            font-weight: 600;
-            font-size: 15px;
-            color: var(--navy);
-        }
-
-        .testimonial-role {
-            font-size: 13px;
-            color: var(--gray-400);
-        }
-
-        .testimonial-metric {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            margin-top: 12px;
-            padding: 6px 14px;
-            background: var(--blue-pale);
-            border-radius: 100px;
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--blue);
-        }
-
-        /* ───── CLIENTS ───── */
-        .clients {
-            padding: 72px 40px;
-            background: var(--white);
-        }
-
-        .clients-inner {
-            max-width: 1280px;
-            margin: 0 auto;
-        }
-
-        .clients-label {
-            text-align: center;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--gray-400);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 32px;
-        }
-
-        .clients-logos {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 40px;
-            flex-wrap: wrap;
-            opacity: 0.35;
-        }
-
-        .client-logo {
-            font-size: 15px;
-            font-weight: 700;
-            color: var(--gray-700);
-            letter-spacing: -0.2px;
-            white-space: nowrap;
-        }
-
-        /* ───── CTA ───── */
-        .cta-section {
-            padding: 0 40px 100px;
-            background: var(--white);
-        }
-
-        .cta-card {
-            max-width: 1280px;
-            margin: 0 auto;
-            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
-            border-radius: 28px;
-            padding: 80px 60px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .cta-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -20%;
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(37, 99, 235, 0.25) 0%, transparent 70%);
-            pointer-events: none;
-        }
-
-        .cta-card::after {
-            content: '';
-            position: absolute;
-            bottom: -30%;
-            left: -10%;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(6, 182, 212, 0.15) 0%, transparent 70%);
-            pointer-events: none;
-        }
-
-        .cta-card > * {
-            position: relative;
-            z-index: 1;
-        }
-
-        .cta-card h2 {
-            font-family: 'Instrument Serif', serif;
-            font-size: clamp(32px, 4vw, 46px);
-            font-weight: 400;
-            color: var(--white);
-            margin-bottom: 16px;
-            line-height: 1.2;
-        }
-
-        .cta-card p {
-            font-size: 17px;
-            color: rgba(255,255,255,0.6);
-            margin-bottom: 36px;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-            line-height: 1.6;
-        }
-
-        .cta-card .btn-primary {
-            background: var(--white);
-            color: var(--navy);
-        }
-
-        .cta-card .btn-primary:hover {
-            background: var(--gray-100);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-        }
-
-        .cta-note {
-            font-size: 13px;
-            color: rgba(255,255,255,0.4);
-            margin-top: 16px;
-        }
-
-        /* ───── CONTACT ───── */
-        .contact {
-            background: var(--gray-50);
-        }
-
-        .contact-grid {
-            display: grid;
-            grid-template-columns: 1fr 1.2fr;
-            gap: 60px;
-            align-items: start;
-        }
-
-        .contact-info h2 {
-            font-family: 'Instrument Serif', serif;
-            font-size: 36px;
-            font-weight: 400;
-            color: var(--navy);
-            margin-bottom: 16px;
-        }
-
-        .contact-info > p {
-            font-size: 16px;
-            color: var(--text-secondary);
-            line-height: 1.7;
-            margin-bottom: 36px;
-        }
-
-        .contact-details {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .contact-detail {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-
-        .contact-detail-icon {
-            width: 44px;
-            height: 44px;
-            background: var(--blue-pale);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .contact-detail-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--gray-400);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .contact-detail-value {
-            font-size: 15px;
-            color: var(--navy);
-            font-weight: 500;
-        }
-
-        .contact-form-card {
-            background: var(--white);
-            border-radius: var(--radius-lg);
-            padding: 40px;
-            box-shadow: var(--shadow-md);
-            border: 1px solid var(--gray-100);
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--navy);
-            margin-bottom: 6px;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px 16px;
-            background: var(--gray-50);
-            border: 1.5px solid var(--gray-200);
-            border-radius: 10px;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 15px;
-            color: var(--text-primary);
-            transition: border-color 0.2s, box-shadow 0.2s;
-            outline: none;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            border-color: var(--blue);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-            background: var(--white);
-        }
-
-        .form-group textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-
-        .form-submit {
-            width: 100%;
-            padding: 14px;
-            background: var(--blue);
-            color: var(--white);
-            border: none;
-            border-radius: 10px;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.25s;
-        }
-
-        .form-submit:hover {
-            background: #1D4ED8;
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
-        }
-
-        /* ───── FOOTER ───── */
-        footer {
-            background: var(--navy);
-            color: var(--white);
-            padding: 64px 40px 32px;
-        }
-
-        .footer-inner {
-            max-width: 1280px;
-            margin: 0 auto;
-        }
-
-        .footer-grid {
-            display: grid;
-            grid-template-columns: 1.5fr 1fr 1fr 1fr;
-            gap: 48px;
-            margin-bottom: 48px;
-        }
-
-        .footer-brand .logo-mark {
-            background: rgba(255,255,255,0.1);
-        }
-
-        .footer-brand .logo-text {
-            color: var(--white);
-        }
-
-        .footer-brand-desc {
-            font-size: 14px;
-            color: rgba(255,255,255,0.5);
-            line-height: 1.7;
-            margin-top: 16px;
-            max-width: 280px;
-        }
-
-        .footer-col h4 {
-            font-size: 13px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            color: rgba(255,255,255,0.4);
-            margin-bottom: 20px;
-        }
-
-        .footer-col ul {
-            list-style: none;
-        }
-
-        .footer-col ul li {
-            margin-bottom: 12px;
-        }
-
-        .footer-col ul a {
-            text-decoration: none;
-            color: rgba(255,255,255,0.6);
-            font-size: 14px;
-            transition: color 0.2s;
-        }
-
-        .footer-col ul a:hover {
-            color: var(--white);
-        }
-
-        .footer-bottom {
-            border-top: 1px solid rgba(255,255,255,0.08);
-            padding-top: 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .footer-copy {
-            font-size: 13px;
-            color: rgba(255,255,255,0.35);
-        }
-
-        .footer-legal {
-            display: flex;
-            gap: 24px;
-        }
-
-        .footer-legal a {
-            font-size: 13px;
-            color: rgba(255,255,255,0.35);
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-
-        .footer-legal a:hover {
-            color: rgba(255,255,255,0.6);
-        }
-
-        /* ───── ANIMATIONS ───── */
-        @keyframes fadeUp {
-            from {
-                opacity: 0;
-                transform: translateY(24px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
-        }
-
-        .fade-in {
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-        }
-
-        .fade-in.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* ───── RESPONSIVE ───── */
-        @media (max-width: 1024px) {
-            .hero-inner {
-                grid-template-columns: 1fr;
-                gap: 48px;
-            }
-
-            .services-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .process-steps {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 32px;
-            }
-
-            .process-steps::before {
-                display: none;
-            }
-
-            .process-step:nth-child(4),
-            .process-step:nth-child(5) {
-                grid-column: auto;
-            }
-
-            .testimonials-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .footer-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-
-            .contact-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            section {
-                padding: 72px 24px;
-            }
-
-            .nav-inner {
-                padding: 0 24px;
-            }
-
-            .hero {
-                padding: 120px 24px 64px;
-            }
-
-            .nav-links {
-                display: none;
-                position: absolute;
-                top: 72px;
-                left: 0;
-                right: 0;
-                background: var(--white);
-                flex-direction: column;
-                padding: 24px;
-                gap: 16px;
-                border-bottom: 1px solid var(--gray-200);
-                box-shadow: var(--shadow-md);
-            }
-
-            .nav-links.open {
-                display: flex;
-            }
-
-            .mobile-toggle {
-                display: flex;
-            }
-
-            .services-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .process-steps {
-                grid-template-columns: 1fr;
-                gap: 24px;
-            }
-
-            .why-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .testimonials-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .hero-buttons {
-                flex-direction: column;
-            }
-
-            .btn-primary, .btn-secondary {
-                justify-content: center;
-            }
-
-            .footer-grid {
-                grid-template-columns: 1fr;
-                gap: 32px;
-            }
-
-            .footer-bottom {
-                flex-direction: column;
-                gap: 16px;
-                text-align: center;
-            }
-
-            .cta-card {
-                padding: 48px 28px;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-
-            .partners-logos, .clients-logos {
-                gap: 28px;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MOD.fyi — B2B Intelligence, Engineered</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0a0e1a;
+  --navy-light: #111827;
+  --navy-mid: #1a2236;
+  --slate: #334155;
+  --steel: #94a3b8;
+  --silver: #cbd5e1;
+  --cloud: #e2e8f0;
+  --white: #f8fafc;
+  --pure: #ffffff;
+  --cyan: #06d6a0;
+  --cyan-dim: rgba(6, 214, 160, 0.15);
+  --cyan-glow: rgba(6, 214, 160, 0.3);
+  --blue: #3b82f6;
+  --blue-dim: rgba(59, 130, 246, 0.12);
+  --coral: #f97316;
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-body: 'DM Sans', -apple-system, sans-serif;
+  --max-w: 1200px;
+  --section-pad: clamp(80px, 10vw, 140px);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+body {
+  font-family: var(--font-body);
+  background: var(--navy);
+  color: var(--silver);
+  font-size: 16px;
+  line-height: 1.65;
+  overflow-x: hidden;
+}
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; display: block; }
+
+/* ---- NAV ---- */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(10, 14, 26, 0.8);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  transition: background 0.3s;
+}
+.nav-inner {
+  max-width: var(--max-w); margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 32px;
+}
+.nav-logo {
+  font-family: var(--font-body);
+  font-size: 1.25rem; font-weight: 700; color: var(--pure);
+  letter-spacing: -0.02em;
+}
+.nav-logo span { color: var(--cyan); }
+.nav-links { display: flex; gap: 32px; align-items: center; }
+.nav-links a {
+  font-size: 0.875rem; font-weight: 500; color: var(--steel);
+  transition: color 0.2s; letter-spacing: 0.01em;
+}
+.nav-links a:hover { color: var(--pure); }
+.nav-cta {
+  background: var(--cyan) !important; color: var(--navy) !important;
+  padding: 10px 24px !important; border-radius: 8px;
+  font-weight: 600 !important; font-size: 0.875rem !important;
+  transition: transform 0.2s, box-shadow 0.2s !important;
+}
+.nav-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px var(--cyan-glow);
+}
+.mobile-toggle { display: none; background: none; border: none; cursor: pointer; padding: 8px; }
+.mobile-toggle span { display: block; width: 22px; height: 2px; background: var(--silver); margin: 5px 0; transition: 0.3s; }
+
+/* ---- HERO ---- */
+.hero {
+  padding: calc(var(--section-pad) + 80px) 32px var(--section-pad);
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -200px; right: -300px;
+  width: 900px; height: 900px;
+  background: radial-gradient(circle, var(--cyan-dim) 0%, transparent 70%);
+  pointer-events: none;
+  animation: heroGlow 8s ease-in-out infinite alternate;
+}
+.hero::after {
+  content: '';
+  position: absolute; bottom: -100px; left: -200px;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, var(--blue-dim) 0%, transparent 70%);
+  pointer-events: none;
+}
+@keyframes heroGlow {
+  0% { opacity: 0.4; transform: translate(0, 0); }
+  100% { opacity: 0.7; transform: translate(-40px, 30px); }
+}
+.hero-inner {
+  max-width: var(--max-w); margin: 0 auto;
+  position: relative; z-index: 2;
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--navy-mid); border: 1px solid rgba(6, 214, 160, 0.2);
+  border-radius: 100px; padding: 6px 16px 6px 8px;
+  font-size: 0.8rem; color: var(--cyan); font-weight: 500;
+  margin-bottom: 32px;
+  animation: fadeUp 0.6s ease-out;
+}
+.hero-badge .dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--cyan);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
+}
+.hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2.8rem, 6vw, 5rem);
+  line-height: 1.08; color: var(--pure);
+  max-width: 820px; margin-bottom: 28px;
+  font-weight: 400; letter-spacing: -0.02em;
+  animation: fadeUp 0.6s ease-out 0.1s both;
+}
+.hero h1 em {
+  font-style: italic; color: var(--cyan);
+  background: linear-gradient(135deg, var(--cyan) 0%, #3b82f6 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-sub {
+  font-size: 1.15rem; line-height: 1.7; max-width: 600px;
+  margin-bottom: 40px; color: var(--steel);
+  animation: fadeUp 0.6s ease-out 0.2s both;
+}
+.hero-actions {
+  display: flex; gap: 16px; flex-wrap: wrap;
+  animation: fadeUp 0.6s ease-out 0.3s both;
+}
+.btn-primary {
+  background: var(--cyan); color: var(--navy);
+  padding: 14px 32px; border-radius: 10px;
+  font-weight: 600; font-size: 0.95rem;
+  display: inline-flex; align-items: center; gap: 8px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: none; cursor: pointer; font-family: var(--font-body);
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px var(--cyan-glow);
+}
+.btn-secondary {
+  background: transparent; color: var(--silver);
+  padding: 14px 32px; border-radius: 10px;
+  font-weight: 500; font-size: 0.95rem;
+  border: 1px solid rgba(255,255,255,0.12);
+  transition: border-color 0.2s, color 0.2s;
+  font-family: var(--font-body); cursor: pointer;
+}
+.btn-secondary:hover { border-color: var(--cyan); color: var(--pure); }
+.hero-stats {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 1px; background: rgba(255,255,255,0.05);
+  border-radius: 16px; margin-top: 72px;
+  overflow: hidden;
+  animation: fadeUp 0.6s ease-out 0.4s both;
+}
+.hero-stat {
+  background: var(--navy-light); padding: 32px;
+  text-align: center;
+}
+.hero-stat .num {
+  font-family: var(--font-display);
+  font-size: 2.2rem; color: var(--pure); display: block;
+  margin-bottom: 4px;
+}
+.hero-stat .label { font-size: 0.8rem; color: var(--steel); text-transform: uppercase; letter-spacing: 0.08em; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- LOGOS ---- */
+.logos-section {
+  padding: 48px 32px 64px;
+  border-top: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.logos-inner {
+  max-width: var(--max-w); margin: 0 auto; text-align: center;
+}
+.logos-label {
+  font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--slate); margin-bottom: 32px; font-weight: 500;
+}
+.logos-row {
+  display: flex; justify-content: center; align-items: center;
+  gap: 48px; flex-wrap: wrap; opacity: 0.5;
+}
+.logos-row span {
+  font-size: 1rem; font-weight: 600; color: var(--steel);
+  letter-spacing: 0.02em; white-space: nowrap;
+}
+
+/* ---- SECTION COMMON ---- */
+.section { padding: var(--section-pad) 32px; }
+.section-inner { max-width: var(--max-w); margin: 0 auto; }
+.section-label {
+  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--cyan); font-weight: 600; margin-bottom: 16px;
+}
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  color: var(--pure); line-height: 1.15;
+  max-width: 700px; margin-bottom: 20px;
+  font-weight: 400;
+}
+.section-title em {
+  font-style: italic;
+  background: linear-gradient(135deg, var(--cyan) 0%, #3b82f6 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.section-desc {
+  font-size: 1.05rem; color: var(--steel); max-width: 600px;
+  line-height: 1.7; margin-bottom: 48px;
+}
+
+/* ---- INTRO / VALUE PROP ---- */
+.intro-section { background: var(--navy-light); }
+.intro-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 80px; align-items: center;
+}
+.intro-visual {
+  background: var(--navy-mid);
+  border-radius: 20px; padding: 48px;
+  border: 1px solid rgba(255,255,255,0.06);
+  position: relative;
+  overflow: hidden;
+}
+.intro-visual::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--cyan), var(--blue));
+}
+.intro-code {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.82rem; line-height: 2;
+  color: var(--steel);
+}
+.intro-code .keyword { color: var(--cyan); }
+.intro-code .string { color: var(--coral); }
+.intro-code .comment { color: var(--slate); }
+.intro-code .fn { color: var(--blue); }
+
+/* ---- SOLUTIONS TABS ---- */
+.solutions-section { background: var(--navy); }
+.tabs-row {
+  display: flex; gap: 4px; margin-bottom: 48px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
+.tab-btn {
+  padding: 14px 24px; font-size: 0.9rem; font-weight: 500;
+  color: var(--steel); background: none; border: none;
+  cursor: pointer; white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s; font-family: var(--font-body);
+}
+.tab-btn.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+.tab-btn:hover:not(.active) { color: var(--silver); }
+.tab-panel { display: none; }
+.tab-panel.active { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
+.tab-content h3 {
+  font-family: var(--font-display);
+  font-size: 1.8rem; color: var(--pure); margin-bottom: 16px;
+  font-weight: 400;
+}
+.tab-content p { color: var(--steel); margin-bottom: 24px; line-height: 1.75; }
+.tab-features {
+  list-style: none; display: flex; flex-direction: column; gap: 12px;
+  margin-bottom: 28px;
+}
+.tab-features li {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 0.92rem; color: var(--silver);
+}
+.tab-features li::before {
+  content: '✓'; color: var(--cyan); font-weight: 700;
+  flex-shrink: 0; margin-top: 1px;
+}
+.tab-card {
+  background: var(--navy-mid);
+  border-radius: 20px; padding: 48px;
+  border: 1px solid rgba(255,255,255,0.06);
+  position: relative;
+}
+.tab-card-icon {
+  width: 56px; height: 56px; border-radius: 14px;
+  background: var(--cyan-dim); display: flex;
+  align-items: center; justify-content: center;
+  font-size: 1.5rem; margin-bottom: 24px;
+}
+.tab-card-stat {
+  font-family: var(--font-display);
+  font-size: 3rem; color: var(--pure); display: block;
+  margin-bottom: 4px;
+}
+.tab-card-stat-label { font-size: 0.85rem; color: var(--steel); }
+.tab-card-stack {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px;
+}
+.tag {
+  background: rgba(255,255,255,0.06); border-radius: 6px;
+  padding: 5px 12px; font-size: 0.78rem; color: var(--silver);
+  font-weight: 500;
+}
+
+/* ---- APPROACH ---- */
+.approach-section { background: var(--navy-light); }
+.approach-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px;
+  background: rgba(255,255,255,0.04); border-radius: 20px;
+  overflow: hidden;
+}
+.approach-step {
+  background: var(--navy-mid); padding: 36px 28px;
+  position: relative; transition: background 0.3s;
+}
+.approach-step:hover { background: rgba(26, 34, 54, 0.9); }
+.approach-num {
+  font-family: var(--font-display);
+  font-size: 2.5rem; color: var(--cyan); display: block;
+  margin-bottom: 16px; opacity: 0.6;
+}
+.approach-step h4 {
+  font-size: 1rem; font-weight: 600; color: var(--pure);
+  margin-bottom: 10px;
+}
+.approach-step p { font-size: 0.85rem; color: var(--steel); line-height: 1.6; }
+
+/* ---- COMPARISON ---- */
+.comparison-section { background: var(--navy); }
+.comparison-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+.comparison-col {
+  border-radius: 20px; padding: 48px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.comparison-col.without { background: var(--navy-mid); }
+.comparison-col.with {
+  background: linear-gradient(135deg, rgba(6,214,160,0.08) 0%, rgba(59,130,246,0.06) 100%);
+  border-color: rgba(6, 214, 160, 0.2);
+}
+.comparison-col h3 {
+  font-family: var(--font-display);
+  font-size: 1.5rem; color: var(--pure); margin-bottom: 32px;
+  font-weight: 400;
+}
+.comparison-col.without h3 { color: var(--steel); }
+.comparison-items { display: flex; flex-direction: column; gap: 20px; }
+.comparison-item {
+  display: flex; align-items: flex-start; gap: 14px;
+  font-size: 0.95rem; line-height: 1.55;
+}
+.comparison-item .icon {
+  width: 28px; height: 28px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 0.8rem; margin-top: 1px;
+}
+.without .comparison-item .icon {
+  background: rgba(255,255,255,0.05); color: var(--slate);
+}
+.with .comparison-item .icon {
+  background: var(--cyan-dim); color: var(--cyan);
+}
+.with .comparison-item { color: var(--silver); }
+.without .comparison-item { color: var(--slate); }
+.comparison-item strong { color: var(--pure); font-weight: 600; }
+.with .comparison-item strong { color: var(--cyan); }
+
+/* ---- TESTIMONIALS ---- */
+.testimonials-section { background: var(--navy-light); }
+.testimonials-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+}
+.testimonial-card {
+  background: var(--navy-mid); border-radius: 20px; padding: 36px;
+  border: 1px solid rgba(255,255,255,0.06);
+  display: flex; flex-direction: column;
+  transition: border-color 0.3s;
+}
+.testimonial-card:hover { border-color: rgba(6,214,160,0.2); }
+.testimonial-quote {
+  font-size: 0.95rem; line-height: 1.7; color: var(--silver);
+  margin-bottom: 28px; flex: 1;
+  font-style: italic;
+}
+.testimonial-author {
+  display: flex; align-items: center; gap: 14px;
+  padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.06);
+}
+.testimonial-avatar {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: linear-gradient(135deg, var(--cyan-dim), var(--blue-dim));
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 0.85rem; color: var(--cyan);
+}
+.testimonial-info .name { font-weight: 600; color: var(--pure); font-size: 0.9rem; }
+.testimonial-info .role { font-size: 0.8rem; color: var(--steel); }
+.testimonial-metrics {
+  display: flex; gap: 20px; margin-top: 16px;
+}
+.testimonial-metric {
+  font-size: 0.78rem; color: var(--cyan); font-weight: 600;
+  display: flex; align-items: center; gap: 4px;
+}
+
+/* ---- WHO IT'S FOR ---- */
+.personas-section { background: var(--navy); }
+.personas-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+}
+.persona-card {
+  background: var(--navy-light); border-radius: 20px; padding: 36px;
+  border: 1px solid rgba(255,255,255,0.05);
+  transition: transform 0.3s, border-color 0.3s;
+}
+.persona-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(6,214,160,0.15);
+}
+.persona-icon {
+  width: 48px; height: 48px; border-radius: 14px;
+  background: var(--cyan-dim);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; margin-bottom: 20px;
+}
+.persona-card h4 {
+  font-size: 1.05rem; font-weight: 600; color: var(--pure); margin-bottom: 10px;
+}
+.persona-card p { font-size: 0.88rem; color: var(--steel); line-height: 1.65; }
+
+/* ---- ROI ---- */
+.roi-section {
+  background: linear-gradient(135deg, rgba(6,214,160,0.06), rgba(59,130,246,0.04));
+  border-top: 1px solid rgba(6,214,160,0.1);
+  border-bottom: 1px solid rgba(6,214,160,0.1);
+}
+.roi-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 1px; background: rgba(255,255,255,0.04);
+  border-radius: 20px; overflow: hidden;
+}
+.roi-stat {
+  background: var(--navy-mid); padding: 48px 32px; text-align: center;
+}
+.roi-stat .num {
+  font-family: var(--font-display);
+  font-size: 3rem; color: var(--cyan); display: block;
+  margin-bottom: 8px;
+}
+.roi-stat .label { font-size: 0.85rem; color: var(--steel); line-height: 1.5; }
+
+/* ---- PARTNERS ---- */
+.partners-section { background: var(--navy-light); }
+.partners-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  gap: 2px; background: rgba(255,255,255,0.03);
+  border-radius: 20px; overflow: hidden;
+}
+.partner-item {
+  background: var(--navy-mid); padding: 36px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center; gap: 8px;
+  transition: background 0.3s;
+}
+.partner-item:hover { background: rgba(26,34,54,0.9); }
+.partner-name {
+  font-size: 1rem; font-weight: 600; color: var(--silver);
+}
+.partner-type { font-size: 0.75rem; color: var(--slate); text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* ---- FAQ ---- */
+.faq-section { background: var(--navy); }
+.faq-grid {
+  max-width: 800px;
+}
+.faq-item {
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.faq-q {
+  width: 100%; background: none; border: none;
+  padding: 24px 0; text-align: left;
+  font-family: var(--font-body);
+  font-size: 1.05rem; font-weight: 600; color: var(--pure);
+  cursor: pointer; display: flex; justify-content: space-between;
+  align-items: center; gap: 16px;
+  transition: color 0.2s;
+}
+.faq-q:hover { color: var(--cyan); }
+.faq-q .arrow {
+  font-size: 1.2rem; transition: transform 0.3s; color: var(--steel);
+  flex-shrink: 0;
+}
+.faq-item.open .faq-q .arrow { transform: rotate(45deg); color: var(--cyan); }
+.faq-a {
+  max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.3s;
+}
+.faq-item.open .faq-a {
+  max-height: 400px; padding-bottom: 24px;
+}
+.faq-a p { font-size: 0.92rem; color: var(--steel); line-height: 1.75; }
+
+/* ---- CTA ---- */
+.cta-section {
+  padding: var(--section-pad) 32px;
+  text-align: center;
+  background: var(--navy);
+  position: relative;
+}
+.cta-section::before {
+  content: '';
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 800px; height: 400px;
+  background: radial-gradient(ellipse, var(--cyan-dim) 0%, transparent 70%);
+  pointer-events: none;
+}
+.cta-inner {
+  max-width: 650px; margin: 0 auto; position: relative; z-index: 2;
+}
+.cta-inner h2 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3rem);
+  color: var(--pure); margin-bottom: 16px;
+  font-weight: 400;
+}
+.cta-inner h2 em {
+  font-style: italic; color: var(--cyan);
+}
+.cta-inner p {
+  color: var(--steel); margin-bottom: 36px; font-size: 1.05rem;
+}
+.cta-note {
+  font-size: 0.8rem; color: var(--slate); margin-top: 16px;
+}
+
+/* ---- CONTACT ---- */
+.contact-section { background: var(--navy-light); }
+.contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; }
+.contact-info h3 {
+  font-family: var(--font-display);
+  font-size: 1.6rem; color: var(--pure); margin-bottom: 16px;
+}
+.contact-info p { color: var(--steel); margin-bottom: 32px; }
+.contact-details { display: flex; flex-direction: column; gap: 20px; }
+.contact-detail {
+  display: flex; align-items: center; gap: 14px;
+}
+.contact-detail .icon-c {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: var(--cyan-dim);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+}
+.contact-detail .text .label-c { font-size: 0.78rem; color: var(--steel); text-transform: uppercase; letter-spacing: 0.06em; }
+.contact-detail .text .value { font-size: 0.95rem; color: var(--pure); font-weight: 500; }
+form { display: flex; flex-direction: column; gap: 16px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+label { font-size: 0.82rem; color: var(--steel); font-weight: 500; margin-bottom: 4px; display: block; }
+input, select, textarea {
+  width: 100%; padding: 13px 16px; border-radius: 10px;
+  background: var(--navy-mid); border: 1px solid rgba(255,255,255,0.08);
+  color: var(--pure); font-family: var(--font-body); font-size: 0.92rem;
+  transition: border-color 0.2s;
+  outline: none;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--cyan); }
+textarea { resize: vertical; min-height: 100px; }
+select { appearance: none; cursor: pointer; }
+select option { background: var(--navy-mid); }
+.form-submit {
+  margin-top: 8px;
+}
+.form-submit .btn-primary { width: 100%; justify-content: center; }
+
+/* ---- FOOTER ---- */
+footer {
+  padding: 64px 32px 32px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  background: var(--navy);
+}
+.footer-inner {
+  max-width: var(--max-w); margin: 0 auto;
+  display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 48px;
+}
+.footer-brand p { font-size: 0.85rem; color: var(--slate); margin-top: 12px; max-width: 280px; line-height: 1.6; }
+.footer-col h5 {
+  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--steel); margin-bottom: 16px; font-weight: 600;
+}
+.footer-col a {
+  display: block; font-size: 0.88rem; color: var(--slate);
+  padding: 4px 0; transition: color 0.2s;
+}
+.footer-col a:hover { color: var(--pure); }
+.footer-bottom {
+  max-width: var(--max-w); margin: 48px auto 0;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255,255,255,0.04);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.8rem; color: var(--slate);
+}
+
+/* ---- RESPONSIVE ---- */
+@media (max-width: 1024px) {
+  .approach-grid { grid-template-columns: repeat(3, 1fr); }
+  .partners-grid { grid-template-columns: repeat(3, 1fr); }
+  .roi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .mobile-toggle { display: block; }
+  .hero-stats { grid-template-columns: repeat(2, 1fr); }
+  .intro-grid, .tab-panel.active, .comparison-grid, .contact-grid { grid-template-columns: 1fr; gap: 40px; }
+  .testimonials-grid, .personas-grid { grid-template-columns: 1fr; }
+  .approach-grid { grid-template-columns: 1fr 1fr; }
+  .partners-grid { grid-template-columns: repeat(2, 1fr); }
+  .footer-inner { grid-template-columns: 1fr 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .hero-stats, .roi-grid { grid-template-columns: 1fr; }
+  .approach-grid { grid-template-columns: 1fr; }
+}
+
+/* ---- SCROLL ANIMATIONS ---- */
+.reveal {
+  opacity: 0; transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+</style>
 </head>
 <body>
 
 <!-- NAV -->
-<nav id="navbar">
-    <div class="nav-inner">
-        <a href="#" class="logo">
-            <div class="logo-mark">M</div>
-            <span class="logo-text">MOD.fyi</span>
-        </a>
-        <ul class="nav-links" id="navLinks">
-            <li><a href="#services">Solutions</a></li>
-            <li><a href="#process">Approach</a></li>
-            <li><a href="#why">Why Us</a></li>
-            <li><a href="#results">Results</a></li>
-            <li><a href="#contact" class="nav-cta">Talk to Us</a></li>
-        </ul>
-        <button class="mobile-toggle" id="mobileToggle" aria-label="Menu">
-            <span></span><span></span><span></span>
-        </button>
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">MOD<span>.</span>fyi</a>
+    <div class="nav-links">
+      <a href="#solutions">Solutions</a>
+      <a href="#approach">Approach</a>
+      <a href="#results">Results</a>
+      <a href="#who">Who It's For</a>
+      <a href="#faq">FAQ</a>
+      <a href="#contact" class="nav-cta">Book a Consultation</a>
     </div>
+    <button class="mobile-toggle" onclick="document.querySelector('.nav-links').classList.toggle('show')" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
 </nav>
 
 <!-- HERO -->
 <section class="hero">
-    <div class="hero-bg-shape shape-1"></div>
-    <div class="hero-bg-shape shape-2"></div>
-    <div class="hero-bg-grid"></div>
-    <div class="hero-inner">
-        <div class="hero-content">
-            <div class="hero-badge">
-                <span class="hero-badge-dot"></span>
-                AI Solutions Architects
-            </div>
-            <h1>Welcome to <em>MOD.fyi.</em></h1>
-            <p class="hero-desc">We are your growth partner, bringing clarity to the complexities of AI transformation — architecting, implementing, and optimizing solutions that deliver measurable business outcomes.</p>
-            <div class="hero-buttons">
-                <a href="#contact" class="btn-primary">
-                    Schedule a Consultation
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10m0 0L9 4m4 4L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </a>
-                <a href="#services" class="btn-secondary">Explore Our Solutions</a>
-            </div>
-        </div>
-        <div class="hero-visual">
-            <div class="hero-card">
-                <div class="hero-card-header">
-                    <div class="hero-card-icon">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                    </div>
-                    <div>
-                        <div class="hero-card-label">Enterprise AI Implementation</div>
-                        <div class="hero-card-sublabel">Dedicated solution architects</div>
-                    </div>
-                </div>
-                <div class="hero-stats">
-                    <div class="hero-stat">
-                        <div class="hero-stat-value">50+</div>
-                        <div class="hero-stat-label">Projects Delivered</div>
-                    </div>
-                    <div class="hero-stat">
-                        <div class="hero-stat-value blue">27%</div>
-                        <div class="hero-stat-label">Avg. ROI Increase</div>
-                    </div>
-                    <div class="hero-stat">
-                        <div class="hero-stat-value">100%</div>
-                        <div class="hero-stat-label">Client Retention</div>
-                    </div>
-                    <div class="hero-stat">
-                        <div class="hero-stat-value blue">24/7</div>
-                        <div class="hero-stat-label">Managed Support</div>
-                    </div>
-                </div>
-            </div>
-            <div class="hero-floating-badge">
-                <span class="check">✓</span>
-                Certified AI Partner
-            </div>
-        </div>
+  <div class="hero-inner">
+    <div class="hero-badge">
+      <span class="dot"></span>
+      B2B AI Solutions Partner
     </div>
+    <h1>Generic Software Doesn't Solve <em>Your</em> Business Problems</h1>
+    <p class="hero-sub">MOD.fyi is a B2B consulting and AI solutions firm that architects, builds, and implements custom software and intelligent systems — tailored precisely to how your business actually works.</p>
+    <div class="hero-actions">
+      <a href="#contact" class="btn-primary">Schedule a Strategy Session →</a>
+      <a href="#solutions" class="btn-secondary">Explore Solutions</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="num">50+</span>
+        <span class="label">Projects Delivered</span>
+      </div>
+      <div class="hero-stat">
+        <span class="num">15+</span>
+        <span class="label">Years B2B Expertise</span>
+      </div>
+      <div class="hero-stat">
+        <span class="num">100%</span>
+        <span class="label">Client Retention</span>
+      </div>
+      <div class="hero-stat">
+        <span class="num">27%</span>
+        <span class="label">Avg. ROI Increase</span>
+      </div>
+    </div>
+  </div>
 </section>
 
-<!-- PARTNERS BAR -->
-<div class="partners-bar">
-    <div class="partners-inner">
-        <div class="partners-label">Technology Partners</div>
-        <div class="partners-logos">
-            <span class="partner-logo">OpenAI</span>
-            <span class="partner-logo">Anthropic</span>
-            <span class="partner-logo">AWS</span>
-            <span class="partner-logo">Google Cloud</span>
-            <span class="partner-logo">Microsoft Azure</span>
-        </div>
+<!-- LOGOS -->
+<section class="logos-section">
+  <div class="logos-inner">
+    <p class="logos-label">Trusted by B2B Leaders</p>
+    <div class="logos-row">
+      <span>Rainforest Distribution</span>
+      <span>Seoul Trading</span>
+      <span>Vega Wholesale</span>
+      <span>Ensystex</span>
+      <span>Robin Ruth</span>
+      <span>Bazic Products</span>
+      <span>Macar Foods</span>
+      <span>Tru Fragrance</span>
     </div>
-</div>
-
-<!-- ABOUT STRIP -->
-<div class="about-strip fade-in">
-    <div class="about-inner">
-        <h2>We understand your business and appreciate your challenges — bringing empathy to technology that only experience can do.</h2>
-        <p>MOD.fyi is a premier AI consulting firm and certified solutions partner. We guide organizations through every phase of their AI journey, combining deep industry expertise with the powerful capabilities of modern AI to deliver solutions that help you meet today's challenges and seize tomorrow's opportunities.</p>
-    </div>
-</div>
-
-<!-- SERVICES -->
-<section class="services" id="services">
-    <div class="section-inner">
-        <div class="section-header center fade-in">
-            <span class="section-label">Solutions</span>
-            <h2 class="section-title">End-to-End AI Solutions Tailored to Your Business</h2>
-            <p class="section-desc">From strategic advisory to hands-on implementation, we guide organizations through every phase of their AI journey.</p>
-        </div>
-        <div class="services-grid">
-            <div class="service-card fade-in">
-                <div class="service-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4m0 14v4m-9-11h4m14 0h4m-3.3-7.7-2.8 2.8M6.1 17.9l-2.8 2.8m0-14.1 2.8 2.8M17.9 17.9l2.8 2.8"/></svg>
-                </div>
-                <h3>AI Strategy &amp; Advisory</h3>
-                <p>Expert guidance to identify high-impact AI opportunities, build business cases, and develop a strategic roadmap tailored to your goals.</p>
-                <a href="#contact" class="service-link">Learn more <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8h10m0 0L9 4m4 4L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-            </div>
-            <div class="service-card fade-in">
-                <div class="service-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>
-                </div>
-                <h3>Custom AI Development</h3>
-                <p>End-to-end development of bespoke AI solutions — from LLM-powered applications and intelligent automation to predictive analytics.</p>
-                <a href="#contact" class="service-link">Learn more <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8h10m0 0L9 4m4 4L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-            </div>
-            <div class="service-card fade-in">
-                <div class="service-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                </div>
-                <h3>System Integration</h3>
-                <p>Seamlessly connect AI capabilities with your existing enterprise systems, ERPs, CRMs, and data infrastructure for unified operations.</p>
-                <a href="#contact" class="service-link">Learn more <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8h10m0 0L9 4m4 4L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-            </div>
-            <div class="service-card fade-in">
-                <div class="service-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-                </div>
-                <h3>AI Training &amp; Enablement</h3>
-                <p>Comprehensive training programs to upskill your teams on AI tools, best practices, and responsible AI principles for sustainable adoption.</p>
-                <a href="#contact" class="service-link">Learn more <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8h10m0 0L9 4m4 4L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-            </div>
-            <div class="service-card fade-in">
-                <div class="service-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                </div>
-                <h3>Managed AI Services</h3>
-                <p>Ongoing optimization, monitoring, and support to ensure your AI systems deliver continuous value and adapt to evolving business needs.</p>
-                <a href="#contact" class="service-link">Learn more <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8h10m0 0L9 4m4 4L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-            </div>
-            <div class="service-card fade-in">
-                <div class="service-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                </div>
-                <h3>AI Governance &amp; Compliance</h3>
-                <p>Implement robust AI governance frameworks, ensure regulatory compliance, and establish ethical AI practices across your organization.</p>
-                <a href="#contact" class="service-link">Learn more <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8h10m0 0L9 4m4 4L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-            </div>
-        </div>
-    </div>
+  </div>
 </section>
 
-<!-- PROCESS -->
-<section class="process" id="process">
-    <div class="section-inner">
-        <div class="section-header center fade-in">
-            <span class="section-label">Our Approach</span>
-            <h2 class="section-title">A Proven Path from Vision to Value</h2>
-            <p class="section-desc">Our structured methodology ensures every AI initiative delivers measurable business impact.</p>
+<!-- INTRO VALUE PROP -->
+<section class="section intro-section">
+  <div class="section-inner">
+    <div class="intro-grid reveal">
+      <div>
+        <p class="section-label">Why MOD.fyi</p>
+        <h2 class="section-title">We understand your business — bringing <em>empathy to technology</em> that only experience can.</h2>
+        <p class="section-desc">Most consulting firms hand you a strategy deck and disappear. We're different. With 15 years in B2B enterprise software — managing ERP integrations, eCommerce platforms, and distributed teams across continents — we've lived the operational complexities you face every day.</p>
+        <p style="color: var(--steel); line-height: 1.75; font-size: 0.95rem;">We combine that hard-won B2B fluency with the most powerful AI capabilities available today. The result: solutions that aren't just technically impressive — they actually fit your workflows, your data, and your team.</p>
+      </div>
+      <div class="intro-visual">
+        <div class="intro-code">
+          <span class="comment">// Your business logic, encoded</span><br>
+          <span class="keyword">const</span> solution = <span class="fn">architect</span>({<br>
+          &nbsp;&nbsp;industry: <span class="string">"B2B Distribution"</span>,<br>
+          &nbsp;&nbsp;challenge: <span class="string">"manual order workflows"</span>,<br>
+          &nbsp;&nbsp;systems: [<span class="string">"NetSuite"</span>, <span class="string">"Dynamics 365"</span>],<br>
+          &nbsp;&nbsp;ai: {<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;automation: <span class="keyword">true</span>,<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;predictions: <span class="keyword">true</span>,<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;nlp: <span class="keyword">true</span><br>
+          &nbsp;&nbsp;}<br>
+          });<br><br>
+          <span class="comment">// → 40% faster order processing</span><br>
+          <span class="comment">// → 3x reporting efficiency</span><br>
+          <span class="comment">// → Zero manual data entry</span>
         </div>
-        <div class="process-steps fade-in">
-            <div class="process-step">
-                <div class="step-number">1</div>
-                <h3>Discovery</h3>
-                <p>Deep-dive into your business challenges, data landscape, and strategic objectives.</p>
-            </div>
-            <div class="process-step">
-                <div class="step-number">2</div>
-                <h3>Strategy</h3>
-                <p>Develop a tailored AI roadmap with clear priorities and success metrics.</p>
-            </div>
-            <div class="process-step">
-                <div class="step-number">3</div>
-                <h3>Build</h3>
-                <p>Architect and develop solutions using industry best practices and modern tooling.</p>
-            </div>
-            <div class="process-step">
-                <div class="step-number">4</div>
-                <h3>Deploy</h3>
-                <p>Seamless integration with your systems and comprehensive testing and validation.</p>
-            </div>
-            <div class="process-step">
-                <div class="step-number">5</div>
-                <h3>Optimize</h3>
-                <p>Continuous refinement and scaling based on real-world performance data.</p>
-            </div>
-        </div>
+      </div>
     </div>
+  </div>
 </section>
 
-<!-- WHY US -->
-<section class="why-us" id="why">
-    <div class="why-us-bg"></div>
-    <div class="section-inner">
-        <div class="section-header center fade-in">
-            <span class="section-label">Why MOD.fyi</span>
-            <h2 class="section-title">The Difference That Drives Results</h2>
-            <p class="section-desc">We're not just consultants — we're your dedicated AI partners committed to your success.</p>
-        </div>
-        <div class="why-grid fade-in">
-            <div class="why-card">
-                <div class="why-card-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                </div>
-                <h3>Dedicated Solution Architect</h3>
-                <p>Every client receives a dedicated solution architect as their primary contact — ensuring deep understanding and continuity throughout the engagement.</p>
-            </div>
-            <div class="why-card">
-                <div class="why-card-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                </div>
-                <h3>Practical ROI Focus</h3>
-                <p>We measure success by business outcomes, not technical complexity. Every solution delivers measurable returns and sustainable competitive advantage.</p>
-            </div>
-            <div class="why-card">
-                <div class="why-card-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                </div>
-                <h3>Enterprise &amp; SMB Expertise</h3>
-                <p>Whether you're a Fortune 500 or a growing midsize company, we scale our approach to match your organizational context and resources.</p>
-            </div>
-            <div class="why-card">
-                <div class="why-card-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg>
-                </div>
-                <h3>Transparency First</h3>
-                <p>No black boxes. We provide clear documentation, knowledge transfer, and full visibility into our methodologies and recommendations.</p>
-            </div>
-        </div>
+<!-- SOLUTIONS TABS -->
+<section class="section solutions-section" id="solutions">
+  <div class="section-inner">
+    <p class="section-label">Solutions</p>
+    <h2 class="section-title">End-to-End Solutions <em>Built for B2B</em></h2>
+    <p class="section-desc">From strategic consulting to production-ready software — we don't just advise, we build, integrate, and stand behind every solution.</p>
+
+    <div class="tabs-row">
+      <button class="tab-btn active" onclick="switchTab(0)">B2B Consulting</button>
+      <button class="tab-btn" onclick="switchTab(1)">Custom AI Solutions</button>
+      <button class="tab-btn" onclick="switchTab(2)">Tailored Software</button>
+      <button class="tab-btn" onclick="switchTab(3)">System Integration</button>
+      <button class="tab-btn" onclick="switchTab(4)">Training & Support</button>
     </div>
+
+    <!-- Tab 0: B2B Consulting -->
+    <div class="tab-panel active" id="tab-0">
+      <div class="tab-content">
+        <h3>Strategic B2B Consulting That Starts With Listening</h3>
+        <p>We don't arrive with a pre-built playbook. We immerse ourselves in your operations — understanding your sales cycles, distribution networks, customer relationships, and pain points — before recommending a single solution.</p>
+        <ul class="tab-features">
+          <li>Operational workflow analysis and process mapping</li>
+          <li>Technology stack audit and modernization roadmap</li>
+          <li>AI opportunity identification with clear ROI projections</li>
+          <li>Go-to-market and digital transformation strategy</li>
+        </ul>
+        <a href="#contact" class="btn-primary">Start the Conversation →</a>
+      </div>
+      <div class="tab-card">
+        <div class="tab-card-icon">🧭</div>
+        <span class="tab-card-stat">15+ yrs</span>
+        <span class="tab-card-stat-label">Enterprise B2B implementation experience</span>
+        <div class="tab-card-stack">
+          <span class="tag">Distribution</span>
+          <span class="tag">Wholesale</span>
+          <span class="tag">Manufacturing</span>
+          <span class="tag">eCommerce</span>
+          <span class="tag">CPG</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 1: AI -->
+    <div class="tab-panel" id="tab-1">
+      <div class="tab-content">
+        <h3>AI That's Purpose-Built for Your Operations</h3>
+        <p>We don't bolt on generic AI. We design intelligent systems around your specific data, workflows, and business rules — from LLM-powered tools and predictive analytics to fully autonomous process automation.</p>
+        <ul class="tab-features">
+          <li>LLM-powered applications with custom fine-tuning</li>
+          <li>Intelligent document processing and data extraction</li>
+          <li>Predictive analytics for inventory, demand, and sales</li>
+          <li>AI-driven workflow automation and decision support</li>
+        </ul>
+        <a href="#contact" class="btn-primary">Explore AI Solutions →</a>
+      </div>
+      <div class="tab-card">
+        <div class="tab-card-icon">🧠</div>
+        <span class="tab-card-stat">Certified</span>
+        <span class="tab-card-stat-label">AI Solutions Partner — OpenAI, Anthropic, AWS</span>
+        <div class="tab-card-stack">
+          <span class="tag">OpenAI</span>
+          <span class="tag">Anthropic</span>
+          <span class="tag">AWS Bedrock</span>
+          <span class="tag">LangChain</span>
+          <span class="tag">RAG</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Software -->
+    <div class="tab-panel" id="tab-2">
+      <div class="tab-content">
+        <h3>Custom Software, Engineered to Fit</h3>
+        <p>Off-the-shelf tools force you to adapt your business to their limitations. We build bespoke platforms, portals, and applications that mold to your exact requirements — from B2B storefronts to internal operations tools.</p>
+        <ul class="tab-features">
+          <li>Multi-tenant B2B order portals and storefronts</li>
+          <li>Mobile-first field sales and offline-capable apps</li>
+          <li>Custom dashboards, admin panels, and reporting tools</li>
+          <li>API-first architecture for seamless ecosystem connectivity</li>
+        </ul>
+        <a href="#contact" class="btn-primary">Discuss Your Project →</a>
+      </div>
+      <div class="tab-card">
+        <div class="tab-card-icon">⚡</div>
+        <span class="tab-card-stat">10x</span>
+        <span class="tab-card-stat-label">Faster than traditional dev cycles with AI-accelerated builds</span>
+        <div class="tab-card-stack">
+          <span class="tag">React</span>
+          <span class="tag">Node.js</span>
+          <span class="tag">Next.js</span>
+          <span class="tag">PostgreSQL</span>
+          <span class="tag">Cloud Native</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Integration -->
+    <div class="tab-panel" id="tab-3">
+      <div class="tab-content">
+        <h3>Seamless Integration Across Your Entire Stack</h3>
+        <p>Your ERP, CRM, eCommerce platform, and data warehouse should talk to each other — fluently. We specialize in the complex B2B integrations that most firms struggle with, connecting the systems your business depends on.</p>
+        <ul class="tab-features">
+          <li>ERP integrations: NetSuite, SAP, Dynamics 365, QuickBooks, Sage, Acumatica</li>
+          <li>eCommerce and marketplace connectivity</li>
+          <li>Real-time data sync and EDI/API middleware</li>
+          <li>Legacy system modernization and migration</li>
+        </ul>
+        <a href="#contact" class="btn-primary">Map Your Integration →</a>
+      </div>
+      <div class="tab-card">
+        <div class="tab-card-icon">🔗</div>
+        <span class="tab-card-stat">50+</span>
+        <span class="tab-card-stat-label">Enterprise integrations delivered across 6 ERP platforms</span>
+        <div class="tab-card-stack">
+          <span class="tag">NetSuite</span>
+          <span class="tag">SAP B1</span>
+          <span class="tag">Dynamics 365</span>
+          <span class="tag">QuickBooks</span>
+          <span class="tag">Acumatica</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 4: Training -->
+    <div class="tab-panel" id="tab-4">
+      <div class="tab-content">
+        <h3>Enablement That Sticks</h3>
+        <p>Technology is only as good as the team using it. We provide hands-on training, documentation, and ongoing support to ensure your organization gets lasting value from every solution we deliver.</p>
+        <ul class="tab-features">
+          <li>AI literacy and tool adoption workshops</li>
+          <li>Technical training for development teams</li>
+          <li>Change management and rollout support</li>
+          <li>24/7 managed services and continuous optimization</li>
+        </ul>
+        <a href="#contact" class="btn-primary">Learn About Support →</a>
+      </div>
+      <div class="tab-card">
+        <div class="tab-card-icon">🎯</div>
+        <span class="tab-card-stat">100%</span>
+        <span class="tab-card-stat-label">Client retention — because we stay until it works</span>
+        <div class="tab-card-stack">
+          <span class="tag">Workshops</span>
+          <span class="tag">Documentation</span>
+          <span class="tag">24/7 Support</span>
+          <span class="tag">Managed Services</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- APPROACH -->
+<section class="section approach-section" id="approach">
+  <div class="section-inner">
+    <p class="section-label">Our Approach</p>
+    <h2 class="section-title">A Proven Path from <em>Vision to Value</em></h2>
+    <p class="section-desc">Our structured methodology ensures every initiative delivers measurable business impact — not just a polished demo.</p>
+    <div class="approach-grid reveal">
+      <div class="approach-step">
+        <span class="approach-num">01</span>
+        <h4>Discovery</h4>
+        <p>Deep-dive into your operations, data landscape, systems, and strategic goals. We listen before we prescribe.</p>
+      </div>
+      <div class="approach-step">
+        <span class="approach-num">02</span>
+        <h4>Strategy</h4>
+        <p>Tailored roadmap with clear priorities, technology recommendations, and success metrics tied to business outcomes.</p>
+      </div>
+      <div class="approach-step">
+        <span class="approach-num">03</span>
+        <h4>Architect</h4>
+        <p>System design, data modeling, and solution architecture — built for scale, security, and your specific constraints.</p>
+      </div>
+      <div class="approach-step">
+        <span class="approach-num">04</span>
+        <h4>Build & Deploy</h4>
+        <p>Rapid, iterative development with continuous client feedback. Seamless integration with your existing systems.</p>
+      </div>
+      <div class="approach-step">
+        <span class="approach-num">05</span>
+        <h4>Optimize</h4>
+        <p>Continuous refinement, monitoring, and scaling based on real-world performance data and evolving needs.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARISON -->
+<section class="section comparison-section">
+  <div class="section-inner">
+    <div style="text-align: center; margin-bottom: 56px;">
+      <p class="section-label" style="margin-left: auto; margin-right: auto;">The MOD.fyi Difference</p>
+      <h2 class="section-title" style="margin-left: auto; margin-right: auto; max-width: 600px;">Why Leading B2B Companies <em>Choose Us</em></h2>
+    </div>
+    <div class="comparison-grid reveal">
+      <div class="comparison-col without">
+        <h3>Without MOD.fyi</h3>
+        <div class="comparison-items">
+          <div class="comparison-item">
+            <div class="icon">✕</div>
+            <div><strong>Generic SaaS tools</strong> that force your team to work around limitations</div>
+          </div>
+          <div class="comparison-item">
+            <div class="icon">✕</div>
+            <div><strong>Strategy decks with no follow-through</strong> — consultants leave before the hard work begins</div>
+          </div>
+          <div class="comparison-item">
+            <div class="icon">✕</div>
+            <div><strong>Disconnected systems</strong> with manual data entry between your ERP, CRM, and sales tools</div>
+          </div>
+          <div class="comparison-item">
+            <div class="icon">✕</div>
+            <div><strong>AI hype without substance</strong> — chatbots and demos that never reach production</div>
+          </div>
+          <div class="comparison-item">
+            <div class="icon">✕</div>
+            <div><strong>Offshore dev teams</strong> that don't understand your B2B workflows or customer needs</div>
+          </div>
+        </div>
+      </div>
+      <div class="comparison-col with">
+        <h3>With MOD.fyi</h3>
+        <div class="comparison-items">
+          <div class="comparison-item">
+            <div class="icon">✓</div>
+            <div><strong>Custom-built software</strong> that maps to your exact workflows and scales with you</div>
+          </div>
+          <div class="comparison-item">
+            <div class="icon">✓</div>
+            <div><strong>A dedicated solution architect</strong> who owns strategy through deployment and beyond</div>
+          </div>
+          <div class="comparison-item">
+            <div class="icon">✓</div>
+            <div><strong>Unified systems</strong> with real-time data flowing between every platform in your stack</div>
+          </div>
+          <div class="comparison-item">
+            <div class="icon">✓</div>
+            <div><strong>Production-ready AI</strong> that solves real operational problems from day one</div>
+          </div>
+          <div class="comparison-item">
+            <div class="icon">✓</div>
+            <div><strong>B2B-native expertise</strong> from a team that's lived in distribution, wholesale, and enterprise software</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </section>
 
 <!-- TESTIMONIALS -->
-<section class="testimonials" id="results">
-    <div class="section-inner">
-        <div class="section-header center fade-in">
-            <span class="section-label">Client Success</span>
-            <h2 class="section-title">Backed by Industry Leaders</h2>
-            <p class="section-desc">See how we've helped organizations unlock the power of AI.</p>
+<section class="section testimonials-section" id="results">
+  <div class="section-inner">
+    <p class="section-label">Client Success</p>
+    <h2 class="section-title">Real Stories, <em>Measurable Results</em></h2>
+    <p class="section-desc">See how we've helped B2B organizations unlock new efficiency, revenue, and competitive advantage.</p>
+    <div class="testimonials-grid reveal">
+      <div class="testimonial-card">
+        <p class="testimonial-quote">"The MOD.fyi team delivered beyond our expectations. Their AI implementation transformed our sales operations and gave us visibility we never had before. They understood our distribution business from day one."</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">JM</div>
+          <div class="testimonial-info">
+            <div class="name">James Mitchell</div>
+            <div class="role">VP of Operations, Rainforest Distribution</div>
+          </div>
         </div>
-        <div class="testimonials-grid fade-in">
-            <div class="testimonial-card">
-                <div class="testimonial-stars">
-                    <svg viewBox="0 0 20 20"><path d="M10 1l2.39 4.84 5.34.78-3.87 3.77.91 5.32L10 13.28l-4.77 2.51.91-5.32L2.27 6.7l5.34-.78z"/></svg>
-                    <svg viewBox="0 0 20 20"><path d="M10 1l2.39 4.84 5.34.78-3.87 3.77.91 5.32L10 13.28l-4.77 2.51.91-5.32L2.27 6.7l5.34-.78z"/></svg>
-                    <svg viewBox="0 0 20 20"><path d="M10 1l2.39 4.84 5.34.78-3.87 3.77.91 5.32L10 13.28l-4.77 2.51.91-5.32L2.27 6.7l5.34-.78z"/></svg>
-                    <svg viewBox="0 0 20 20"><path d="M10 1l2.39 4.84 5.34.78-3.87 3.77.91 5.32L10 13.28l-4.77 2.51.91-5.32L2.27 6.7l5.34-.78z"/></svg>
-                    <svg viewBox="0 0 20 20"><path d="M10 1l2.39 4.84 5.34.78-3.87 3.77.91 5.32L10 13.28l-4.77 2.51.91-5.32L2.27 6.7l5.34-.78z"/></svg>
-                </div>
-                <p class="testimonial-quote">"The MOD.fyi team delivered beyond our expectations. Their AI implementation transformed our sales operations and gave us visibility we never had before."</p>
-                <div class="testimonial-author">
-                    <div class="testimonial-avatar">JM</div>
-                    <div>
-                        <div class="testimonial-name">James Mitchell</div>
-                        <div class="testimonial-role">VP of Operations, Rainforest Distribution</div>
-                    </div>
-                </div>
-                <div class="testimonial-metric">↑ 27% Sales Volume Increase</div>
-            </div>
-            <div class="testimonial-card">
-                <div class="testimonial-stars">
-                    <svg viewBox="0 0 20 20"><path d="M10 1l2.39 4.84 5.34.78-3.87 3.77.91 5.32L10 13.28l-4.77 2.51.91-5.32L2.27 6.7l5.34-.78z"/></svg>
-                    <svg viewBox="0 0 20 20"><path d="M10 1l2.39 4.84 5.34.78-3.87 3.77.91 5.32L10 13.28l-4.77 2.51.91-5.32L2.27 6.7l5.34-.78z"/></svg>
-                    <svg viewBox="0 0 20 20"><path d="M10 1l2.39 4.84 5.34.78-3.87 3.77.91 5.32L10 13.28l-4.77 2.51.91-5.32L2.27 6.7l5.34-.78z"/></svg>
-                    <svg viewBox="0 0 20 20"><path d="M10 1l2.39 4.84 5.34.78-3.87 3.77.91 5.32L10 13.28l-4.77 2.51.91-5.32L2.27 6.7l5.34-.78z"/></svg>
-                    <svg viewBox="0 0 20 20"><path d="M10 1l2.39 4.84 5.34.78-3.87 3.77.91 5.32L10 13.28l-4.77 2.51.91-5.32L2.27 6.7l5.34-.78z"/></svg>
-                </div>
-                <p class="testimonial-quote">"MOD.fyi's strategic approach helped us identify AI opportunities we hadn't even considered. The ROI was clear within the first quarter."</p>
-                <div class="testimonial-author">
-                    <div class="testimonial-avatar">SK</div>
-                    <div>
-                        <div class="testimonial-name">Sarah Kim</div>
-                        <div class="testimonial-role">CEO, Seoul Trading</div>
-                    </div>
-                </div>
-                <div class="testimonial-metric">↑ 3x Reporting Efficiency</div>
-            </div>
-            <div class="testimonial-card">
-                <div class="testimonial-stars">
-                    <svg viewBox="0 0 20 20"><path d="M10 1l2.39 4.84 5.34.78-3.87 3.77.91 5.32L10 13.28l-4.77 2.51.91-5.32L2.27 6.7l5.34-.78z"/></svg>
-                    <svg viewBox="0 0 20 20"><path d="M10 1l2.39 4.84 5.34.78-3.87 3.77.91 5.32L10 13.28l-4.77 2.51.91-5.32L2.27 6.7l5.34-.78z"/></svg>
-                    <svg viewBox="0 0 20 20"><path d="M10 1l2.39 4.84 5.34.78-3.87 3.77.91 5.32L10 13.28l-4.77 2.51.91-5.32L2.27 6.7l5.34-.78z"/></svg>
-                    <svg viewBox="0 0 20 20"><path d="M10 1l2.39 4.84 5.34.78-3.87 3.77.91 5.32L10 13.28l-4.77 2.51.91-5.32L2.27 6.7l5.34-.78z"/></svg>
-                    <svg viewBox="0 0 20 20"><path d="M10 1l2.39 4.84 5.34.78-3.87 3.77.91 5.32L10 13.28l-4.77 2.51.91-5.32L2.27 6.7l5.34-.78z"/></svg>
-                </div>
-                <p class="testimonial-quote">"Their dedicated solution architect model made all the difference. We always had someone who understood our business inside and out."</p>
-                <div class="testimonial-author">
-                    <div class="testimonial-avatar">DL</div>
-                    <div>
-                        <div class="testimonial-name">David Lee</div>
-                        <div class="testimonial-role">CTO, Vega Wholesale</div>
-                    </div>
-                </div>
-                <div class="testimonial-metric">↑ 40% Operational Efficiency</div>
-            </div>
+        <div class="testimonial-metrics">
+          <span class="testimonial-metric">↑ 27% Sales Volume</span>
         </div>
+      </div>
+      <div class="testimonial-card">
+        <p class="testimonial-quote">"MOD.fyi's strategic approach helped us identify AI opportunities we hadn't even considered. They didn't just build us software — they re-engineered how we think about our operations. ROI was clear within the first quarter."</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">SK</div>
+          <div class="testimonial-info">
+            <div class="name">Sarah Kim</div>
+            <div class="role">CEO, Seoul Trading</div>
+          </div>
+        </div>
+        <div class="testimonial-metrics">
+          <span class="testimonial-metric">↑ 3x Reporting Efficiency</span>
+        </div>
+      </div>
+      <div class="testimonial-card">
+        <p class="testimonial-quote">"Their dedicated solution architect model made all the difference. We always had someone who understood our business inside and out — not a rotating cast of junior consultants. They feel like part of our team."</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">DL</div>
+          <div class="testimonial-info">
+            <div class="name">David Lee</div>
+            <div class="role">CTO, Vega Wholesale</div>
+          </div>
+        </div>
+        <div class="testimonial-metrics">
+          <span class="testimonial-metric">↑ 40% Operational Efficiency</span>
+        </div>
+      </div>
     </div>
+  </div>
 </section>
 
-<!-- CLIENTS -->
-<div class="clients">
-    <div class="clients-inner">
-        <div class="clients-label">Trusted by Leading Organizations</div>
-        <div class="clients-logos">
-            <span class="client-logo">Rainforest Distribution</span>
-            <span class="client-logo">Vega</span>
-            <span class="client-logo">Seoul Trading</span>
-            <span class="client-logo">Ensystex</span>
-            <span class="client-logo">Robin Ruth</span>
-            <span class="client-logo">Bazic Products</span>
-            <span class="client-logo">Good Stuff</span>
-            <span class="client-logo">Macar Foods</span>
-            <span class="client-logo">Tru Fragrance</span>
-        </div>
+<!-- WHO IT'S FOR -->
+<section class="section personas-section" id="who">
+  <div class="section-inner">
+    <p class="section-label">Who It's For</p>
+    <h2 class="section-title">For Every B2B Team That's <em>Outgrown Their Tools</em></h2>
+    <p class="section-desc">Whether you're a VP trying to modernize operations or a founder building your next platform — we scale our approach to match.</p>
+    <div class="personas-grid reveal">
+      <div class="persona-card">
+        <div class="persona-icon">📦</div>
+        <h4>Distributors & Wholesalers</h4>
+        <p>Streamline order management, automate sales workflows, and connect your ERP to the field. Built for businesses running complex B2B fulfillment.</p>
+      </div>
+      <div class="persona-card">
+        <div class="persona-icon">🏢</div>
+        <h4>Operations & IT Leaders</h4>
+        <p>Modernize legacy systems, unify disconnected data sources, and deploy AI that your team will actually adopt — with full training and support.</p>
+      </div>
+      <div class="persona-card">
+        <div class="persona-icon">🚀</div>
+        <h4>Founders & Product Teams</h4>
+        <p>Go from concept to production-ready SaaS product in weeks, not months. We architect and build MVPs and V1 platforms with enterprise-grade foundations.</p>
+      </div>
+      <div class="persona-card">
+        <div class="persona-icon">📊</div>
+        <h4>Sales & Revenue Teams</h4>
+        <p>Custom portals, mobile ordering tools, and AI-driven insights that give your reps an edge — online and offline, in the warehouse or on the road.</p>
+      </div>
+      <div class="persona-card">
+        <div class="persona-icon">🔧</div>
+        <h4>Facility & Field Services</h4>
+        <p>Automate commissioning, compliance checklists, and field documentation with AI that reads your specs and generates audit-ready outputs.</p>
+      </div>
+      <div class="persona-card">
+        <div class="persona-icon">🌐</div>
+        <h4>Global & Multilingual Teams</h4>
+        <p>We manage distributed projects across the US, Israel, and Latin America — fluent in Spanish, and experienced in the dynamics of cross-border collaboration.</p>
+      </div>
     </div>
-</div>
+  </div>
+</section>
+
+<!-- ROI SECTION -->
+<section class="section roi-section">
+  <div class="section-inner" style="text-align: center; margin-bottom: 48px;">
+    <p class="section-label" style="margin-left: auto; margin-right: auto;">By the Numbers</p>
+    <h2 class="section-title" style="margin-left: auto; margin-right: auto;">Solutions That <em>Pay for Themselves</em></h2>
+  </div>
+  <div class="section-inner">
+    <div class="roi-grid reveal">
+      <div class="roi-stat">
+        <span class="num">27%</span>
+        <span class="label">Average ROI<br>Increase</span>
+      </div>
+      <div class="roi-stat">
+        <span class="num">40%</span>
+        <span class="label">Operational<br>Efficiency Gains</span>
+      </div>
+      <div class="roi-stat">
+        <span class="num">3x</span>
+        <span class="label">Faster Reporting<br>& Analytics</span>
+      </div>
+      <div class="roi-stat">
+        <span class="num">&lt;90 days</span>
+        <span class="label">Average Time<br>to Value</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TECHNOLOGY PARTNERS -->
+<section class="section partners-section">
+  <div class="section-inner">
+    <p class="section-label">Technology Partners</p>
+    <h2 class="section-title">Smart Connections to the <em>Platforms You Trust</em></h2>
+    <p class="section-desc">We're certified partners and deep practitioners across the AI and enterprise platforms that power modern B2B businesses.</p>
+    <div class="partners-grid reveal">
+      <div class="partner-item">
+        <span class="partner-name">Anthropic</span>
+        <span class="partner-type">AI Partner</span>
+      </div>
+      <div class="partner-item">
+        <span class="partner-name">OpenAI</span>
+        <span class="partner-type">AI Partner</span>
+      </div>
+      <div class="partner-item">
+        <span class="partner-name">AWS</span>
+        <span class="partner-type">Cloud</span>
+      </div>
+      <div class="partner-item">
+        <span class="partner-name">Google Cloud</span>
+        <span class="partner-type">Cloud</span>
+      </div>
+      <div class="partner-item">
+        <span class="partner-name">Microsoft Azure</span>
+        <span class="partner-type">Cloud</span>
+      </div>
+      <div class="partner-item">
+        <span class="partner-name">NetSuite</span>
+        <span class="partner-type">ERP</span>
+      </div>
+      <div class="partner-item">
+        <span class="partner-name">SAP Business One</span>
+        <span class="partner-type">ERP</span>
+      </div>
+      <div class="partner-item">
+        <span class="partner-name">Dynamics 365</span>
+        <span class="partner-type">ERP</span>
+      </div>
+      <div class="partner-item">
+        <span class="partner-name">QuickBooks</span>
+        <span class="partner-type">ERP</span>
+      </div>
+      <div class="partner-item">
+        <span class="partner-name">Acumatica</span>
+        <span class="partner-type">ERP</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="section faq-section" id="faq">
+  <div class="section-inner">
+    <p class="section-label">FAQ</p>
+    <h2 class="section-title">Common Questions</h2>
+    <p class="section-desc" style="margin-bottom: 40px;">Everything you need to know before we start working together.</p>
+    <div class="faq-grid">
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          What makes MOD.fyi different from other consultancies?
+          <span class="arrow">+</span>
+        </button>
+        <div class="faq-a">
+          <p>Three things: First, we have 15+ years of hands-on B2B enterprise software experience — not just advisory work, but building and deploying real systems across distribution, wholesale, and eCommerce. Second, every client gets a dedicated solution architect who owns the relationship from strategy through deployment and beyond. Third, we don't just recommend AI — we build production-ready AI solutions tailored to your specific operations and data.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          What industries do you specialize in?
+          <span class="arrow">+</span>
+        </button>
+        <div class="faq-a">
+          <p>Our deepest expertise is in B2B distribution, wholesale, manufacturing, and eCommerce — companies that manage complex order workflows, multi-tier pricing, ERP integrations, and field sales operations. That said, our AI and custom software capabilities extend to any organization ready to modernize their operations, from facility services to SaaS startups.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          How long does a typical engagement take?
+          <span class="arrow">+</span>
+        </button>
+        <div class="faq-a">
+          <p>It depends on scope. A strategic assessment and AI opportunity analysis typically takes 2–4 weeks. Custom AI solutions and software builds range from 6–12 weeks for an MVP, with ongoing optimization after launch. System integrations vary by complexity, but most are fully operational within 8–16 weeks. We move fast because we've done this before.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Do you work with companies outside the US?
+          <span class="arrow">+</span>
+        </button>
+        <div class="faq-a">
+          <p>Absolutely. We manage distributed projects across the US, Israel, and Latin America, with team members fluent in English, Spanish, Portuguese, and Mandarin Chinese. We're experienced in the dynamics of cross-border collaboration and time zone management — it's been central to our work for years.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          What AI technologies do you work with?
+          <span class="arrow">+</span>
+        </button>
+        <div class="faq-a">
+          <p>We're certified partners with OpenAI, Anthropic, and major cloud AI platforms (AWS Bedrock, Google Cloud AI, Azure AI). Our solutions leverage large language models, retrieval-augmented generation (RAG), computer vision, predictive analytics, and intelligent automation — always chosen based on what best fits your problem, not what's trendiest.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          How much does it cost?
+          <span class="arrow">+</span>
+        </button>
+        <div class="faq-a">
+          <p>We offer flexible engagement models — from fixed-scope project pricing to monthly retainers for ongoing consulting and managed services. Every engagement starts with a free 30-minute strategy session where we scope your needs and provide a transparent estimate. We're not the cheapest option, but our clients consistently see ROI within the first quarter.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
 <!-- CTA -->
-<div class="cta-section">
-    <div class="cta-card fade-in">
-        <h2>Ready to Transform Your<br>Business with AI?</h2>
-        <p>Schedule a free consultation to discover how MOD.fyi can help you unlock the full potential of artificial intelligence.</p>
-        <a href="#contact" class="btn-primary">
-            Book Your Free Consultation
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10m0 0L9 4m4 4L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </a>
-        <div class="cta-note">No commitment required · 30-minute strategy session</div>
-    </div>
-</div>
+<section class="cta-section">
+  <div class="cta-inner">
+    <h2>Your Business Deserves Software That <em>Actually Fits</em></h2>
+    <p>Schedule a free strategy session and discover how MOD.fyi can transform your operations with AI-powered solutions built specifically for you.</p>
+    <a href="#contact" class="btn-primary">Book Your Free Consultation →</a>
+    <p class="cta-note">No commitment required · 30-minute strategy session</p>
+  </div>
+</section>
 
 <!-- CONTACT -->
-<section class="contact" id="contact">
-    <div class="section-inner">
-        <div class="contact-grid">
-            <div class="contact-info fade-in">
-                <span class="section-label">Get in Touch</span>
-                <h2>Let's Build Something Intelligent Together</h2>
-                <p>Whether you're exploring AI possibilities or ready to launch your next initiative, we're here to help. Tell us about your challenges — we'll show you how AI can make a difference.</p>
-                <div class="contact-details">
-                    <div class="contact-detail">
-                        <div class="contact-detail-icon">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                        </div>
-                        <div>
-                            <div class="contact-detail-label">Location</div>
-                            <div class="contact-detail-value">New York, NY (EST)</div>
-                        </div>
-                    </div>
-                    <div class="contact-detail">
-                        <div class="contact-detail-icon">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                        </div>
-                        <div>
-                            <div class="contact-detail-label">Email</div>
-                            <div class="contact-detail-value">hello@mod.fyi</div>
-                        </div>
-                    </div>
-                    <div class="contact-detail">
-                        <div class="contact-detail-icon">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
-                        </div>
-                        <div>
-                            <div class="contact-detail-label">LinkedIn</div>
-                            <div class="contact-detail-value">@modfyi</div>
-                        </div>
-                    </div>
-                </div>
+<section class="section contact-section" id="contact">
+  <div class="section-inner">
+    <div class="contact-grid">
+      <div class="contact-info">
+        <p class="section-label">Get in Touch</p>
+        <h3>Let's Build Something <em style="font-family: var(--font-display); background: linear-gradient(135deg, var(--cyan) 0%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Intelligent</em> Together</h3>
+        <p>Whether you're exploring AI possibilities, need to modernize your B2B stack, or are ready to build your next platform — we're here. Tell us about your challenges and we'll show you what's possible.</p>
+        <div class="contact-details">
+          <div class="contact-detail">
+            <div class="icon-c">📍</div>
+            <div class="text">
+              <div class="label-c">Location</div>
+              <div class="value">New York, NY (EST)</div>
             </div>
-            <div class="contact-form-card fade-in">
-                <form>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Full Name</label>
-                            <input type="text" placeholder="John Smith">
-                        </div>
-                        <div class="form-group">
-                            <label>Company</label>
-                            <input type="text" placeholder="Your company">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Email</label>
-                            <input type="email" placeholder="john@company.com">
-                        </div>
-                        <div class="form-group">
-                            <label>Phone</label>
-                            <input type="tel" placeholder="+1 (555) 000-0000">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Primary Interest</label>
-                        <select>
-                            <option value="">Select an option...</option>
-                            <option>AI Strategy &amp; Advisory</option>
-                            <option>Custom AI Development</option>
-                            <option>System Integration</option>
-                            <option>AI Training &amp; Enablement</option>
-                            <option>Managed AI Services</option>
-                            <option>Other / Not Sure</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Tell Us About Your Project</label>
-                        <textarea placeholder="Describe your challenges and goals..."></textarea>
-                    </div>
-                    <button type="submit" class="form-submit">Request Consultation</button>
-                </form>
+          </div>
+          <div class="contact-detail">
+            <div class="icon-c">📧</div>
+            <div class="text">
+              <div class="label-c">Email</div>
+              <div class="value">hello@mod.fyi</div>
             </div>
+          </div>
+          <div class="contact-detail">
+            <div class="icon-c">🔗</div>
+            <div class="text">
+              <div class="label-c">LinkedIn</div>
+              <div class="value">@modfyi</div>
+            </div>
+          </div>
         </div>
+      </div>
+      <div>
+        <form onsubmit="event.preventDefault(); alert('Thanks! We\'ll be in touch within 24 hours.');">
+          <div class="form-row">
+            <div>
+              <label>Full Name</label>
+              <input type="text" placeholder="Jane Smith" required>
+            </div>
+            <div>
+              <label>Company</label>
+              <input type="text" placeholder="Acme Distribution">
+            </div>
+          </div>
+          <div class="form-row">
+            <div>
+              <label>Email</label>
+              <input type="email" placeholder="jane@company.com" required>
+            </div>
+            <div>
+              <label>Phone</label>
+              <input type="tel" placeholder="+1 (555) 000-0000">
+            </div>
+          </div>
+          <div>
+            <label>Primary Interest</label>
+            <select>
+              <option value="">Select an option...</option>
+              <option>B2B Strategy & Consulting</option>
+              <option>Custom AI Solution</option>
+              <option>Tailored Software Development</option>
+              <option>System Integration (ERP/CRM)</option>
+              <option>AI Training & Enablement</option>
+              <option>Managed Services & Support</option>
+              <option>Other / Not Sure</option>
+            </select>
+          </div>
+          <div>
+            <label>Tell Us About Your Project</label>
+            <textarea placeholder="Describe your challenge, goals, or the solution you're envisioning..."></textarea>
+          </div>
+          <div class="form-submit">
+            <button type="submit" class="btn-primary">Request Consultation →</button>
+          </div>
+        </form>
+      </div>
     </div>
+  </div>
 </section>
 
 <!-- FOOTER -->
 <footer>
-    <div class="footer-inner">
-        <div class="footer-grid">
-            <div class="footer-brand">
-                <a href="#" class="logo">
-                    <div class="logo-mark">M</div>
-                    <span class="logo-text">MOD.fyi</span>
-                </a>
-                <p class="footer-brand-desc">Premier AI consulting and solutions architecture. We help organizations transform with intelligent technology that delivers measurable business value.</p>
-            </div>
-            <div class="footer-col">
-                <h4>Solutions</h4>
-                <ul>
-                    <li><a href="#services">AI Strategy</a></li>
-                    <li><a href="#services">Custom Development</a></li>
-                    <li><a href="#services">Integration</a></li>
-                    <li><a href="#services">Training</a></li>
-                    <li><a href="#services">Managed Services</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h4>Company</h4>
-                <ul>
-                    <li><a href="#results">Case Studies</a></li>
-                    <li><a href="#process">Our Approach</a></li>
-                    <li><a href="#contact">Contact</a></li>
-                    <li><a href="#">Careers</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h4>Connect</h4>
-                <ul>
-                    <li><a href="#">LinkedIn</a></li>
-                    <li><a href="#">Twitter / X</a></li>
-                    <li><a href="#">GitHub</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <span class="footer-copy">&copy; 2025 MOD.fyi. All rights reserved.</span>
-            <div class="footer-legal">
-                <a href="#">Privacy Policy</a>
-                <a href="#">Terms of Service</a>
-            </div>
-        </div>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <a href="#" class="nav-logo">MOD<span style="color: var(--cyan)">.</span>fyi</a>
+      <p>B2B consulting, AI solutions architecture, and custom software development. We help organizations transform with intelligent technology that delivers measurable business value.</p>
     </div>
+    <div class="footer-col">
+      <h5>Solutions</h5>
+      <a href="#solutions">B2B Consulting</a>
+      <a href="#solutions">Custom AI</a>
+      <a href="#solutions">Software Development</a>
+      <a href="#solutions">System Integration</a>
+      <a href="#solutions">Training & Support</a>
+    </div>
+    <div class="footer-col">
+      <h5>Company</h5>
+      <a href="#results">Case Studies</a>
+      <a href="#approach">Our Approach</a>
+      <a href="#contact">Contact</a>
+      <a href="#">Careers</a>
+    </div>
+    <div class="footer-col">
+      <h5>Connect</h5>
+      <a href="#">LinkedIn</a>
+      <a href="#">Twitter / X</a>
+      <a href="#">GitHub</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2025 MOD.fyi. All rights reserved.</span>
+    <div>
+      <a href="#" style="margin-right: 16px;">Privacy Policy</a>
+      <a href="#">Terms of Service</a>
+    </div>
+  </div>
 </footer>
 
 <script>
-    // Scroll-based nav shadow
-    const navbar = document.getElementById('navbar');
-    window.addEventListener('scroll', () => {
-        navbar.classList.toggle('scrolled', window.scrollY > 10);
-    });
+// Tab switching
+function switchTab(index) {
+  document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', i === index);
+  });
+  document.querySelectorAll('.tab-panel').forEach((panel, i) => {
+    panel.classList.toggle('active', i === index);
+  });
+}
 
-    // Mobile menu toggle
-    const mobileToggle = document.getElementById('mobileToggle');
-    const navLinks = document.getElementById('navLinks');
-    mobileToggle.addEventListener('click', () => {
-        navLinks.classList.toggle('open');
-    });
+// FAQ toggle
+function toggleFaq(btn) {
+  const item = btn.parentElement;
+  const wasOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+  if (!wasOpen) item.classList.add('open');
+}
 
-    // Close mobile menu on link click
-    navLinks.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', () => navLinks.classList.remove('open'));
-    });
+// Scroll reveal
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-    // Scroll reveal
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-            }
-        });
-    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
-
-    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+// Nav scroll effect
+window.addEventListener('scroll', () => {
+  const nav = document.querySelector('nav');
+  nav.style.background = window.scrollY > 50
+    ? 'rgba(10, 14, 26, 0.95)'
+    : 'rgba(10, 14, 26, 0.8)';
+});
 </script>
-
 </body>
 </html>
